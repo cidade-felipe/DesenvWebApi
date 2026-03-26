@@ -1,7 +1,7 @@
 # Ritmo (Personal Analytics Dashboard) - Primeiro Checkpoint
 
 Esse é um repositório para o trabalho da matéria Desenvolvimento Web, do curso de TIC da UFSC de Araranguá.
-**Alunos**: Felipe Cidade Soares e Leonardo Boteon
+**Aluno**: Felipe Cidade Soares
 **Professor**: Matheus Cataneo
 
 ---
