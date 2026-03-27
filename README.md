@@ -105,46 +105,77 @@ Tecnologias sugeridas:
 
 ---
 
-### Backend (.NET)
+### Backend (.NET 8)
 
 API REST com:
 
-* Autenticação de usuário
+* CRUD de usuários
 * CRUD de registros diários
-* Cálculo de métricas
-* Geração de insights
+* CRUD de metas
+* Geração e consulta de insights
+* Swagger em `http://localhost:5066/swagger`
 
 ---
 
-### Banco de Dados (simples e funcional)
+### Banco de Dados (PostgreSQL)
 
-**Usuário**
+**Usuario**
 
-* Id
-* Nome
-* Email
-* Senha
+| Campo | Tipo | Obs |
+|---|---|---|
+| Id | int PK | |
+| Nome | string | |
+| Email | string | único |
+| Senha | string | |
+| DataCriacao | DateTime | |
 
-**Registro Diário**
+**RegistroDiario**
 
-* Id
-* UserId
-* Data
-* Humor
-* Sono
-* Estudo
-* Produtividade
-* Energia
-* Exercício
-* Água
-* Observações
+| Campo | Tipo | Obs |
+|---|---|---|
+| Id | int PK | |
+| UsuarioId | int FK | cascade delete |
+| Data | DateOnly | |
+| Humor | int | 1–5 |
+| Sono | decimal | horas |
+| Estudo | decimal | horas |
+| Produtividade | int | 1–5 |
+| Energia | int | 1–5 |
+| Exercicio | bool | |
+| Agua | decimal | litros |
+| Observacoes | string? | |
+
+**Meta**
+
+| Campo | Tipo | Obs |
+|---|---|---|
+| Id | int PK | |
+| UsuarioId | int FK | cascade delete |
+| Categoria | string | ex: "Sono", "Estudo" |
+| ValorAlvo | decimal | ex: 7.5 horas |
+| Descricao | string? | |
+| DataInicio | DateOnly | |
+| DataFim | DateOnly? | null = sem prazo |
+| Ativa | bool | pode desativar sem deletar |
+
+**Insight**
+
+| Campo | Tipo | Obs |
+|---|---|---|
+| Id | int PK | |
+| UsuarioId | int FK | cascade delete |
+| Mensagem | string | texto para o frontend |
+| Categoria | string | ex: "Produtividade" |
+| Nivel | string | "info", "positivo", "atencao" |
+| DataGeracao | DateTime | |
+| Lido | bool | controla badge de não lidos |
 
 ---
 
 ## 🔄 Fluxo do Sistema
 
-1. Usuário faz login
-2. Registra dados do dia
-3. Backend salva no banco
-4. Dashboard consome os dados
-5. Sistema gera gráficos + insights automaticamente
+1. Usuário se cadastra/loga
+2. Registra dados do dia (`RegistroDiario`)
+3. Define metas (`Meta`) para acompanhar seu desempenho
+4. Backend gera e salva `Insights` com base nos registros
+5. Dashboard exibe gráficos, compara metas vs real e mostra insights
