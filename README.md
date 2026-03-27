@@ -1,4 +1,4 @@
-# Ritmo (Personal Analytics Dashboard) - Primeiro Checkpoint
+# Ritmo (Personal Analytics Dashboard)
 
 Esse é um repositório para o trabalho da matéria Desenvolvimento Web, do curso de TIC da UFSC de Araranguá.
 **Aluno**: Felipe Cidade Soares
