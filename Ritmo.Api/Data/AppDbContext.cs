@@ -9,31 +9,39 @@ public class AppDbContext : DbContext
 {
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
-    // DbSet de Usuarios — tabela "Usuarios" no banco.
     public DbSet<Usuario> Usuarios { get; set; }
-
-    // DbSet de RegistrosDiarios — tabela "RegistrosDiarios" no banco.
     public DbSet<RegistroDiario> RegistrosDiarios { get; set; }
+    public DbSet<Meta> Metas { get; set; }
+    public DbSet<Insight> Insights { get; set; }
 
-    // OnModelCreating permite configurações extras de mapeamento.
-    // Aqui garantimos que o email do usuário é único no banco,
-    // evitando cadastros duplicados a nível de banco de dados.
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
 
-        // Índice único para o email — não pode haver dois usuários com o mesmo email.
+        // Email único — não pode haver dois usuários com o mesmo email.
         modelBuilder.Entity<Usuario>()
             .HasIndex(u => u.Email)
             .IsUnique();
 
-        // Configura a relação 1:N entre Usuario e RegistroDiario.
-        // Um usuário tem muitos registros diários.
-        // Ao deletar um usuário, seus registros são deletados em cascata.
+        // Relação 1:N — Usuario → RegistrosDiarios (cascade delete)
         modelBuilder.Entity<RegistroDiario>()
             .HasOne(r => r.Usuario)
             .WithMany(u => u.RegistrosDiarios)
             .HasForeignKey(r => r.UsuarioId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Relação 1:N — Usuario → Metas (cascade delete)
+        modelBuilder.Entity<Meta>()
+            .HasOne(m => m.Usuario)
+            .WithMany(u => u.Metas)
+            .HasForeignKey(m => m.UsuarioId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Relação 1:N — Usuario → Insights (cascade delete)
+        modelBuilder.Entity<Insight>()
+            .HasOne(i => i.Usuario)
+            .WithMany(u => u.Insights)
+            .HasForeignKey(i => i.UsuarioId)
             .OnDelete(DeleteBehavior.Cascade);
     }
 }

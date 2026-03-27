@@ -29,6 +29,56 @@ namespace Ritmo.Api.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Insights",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    UsuarioId = table.Column<int>(type: "integer", nullable: false),
+                    Mensagem = table.Column<string>(type: "text", nullable: false),
+                    Categoria = table.Column<string>(type: "text", nullable: false),
+                    Nivel = table.Column<string>(type: "text", nullable: false),
+                    DataGeracao = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Lido = table.Column<bool>(type: "boolean", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Insights", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Insights_Usuarios_UsuarioId",
+                        column: x => x.UsuarioId,
+                        principalTable: "Usuarios",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Metas",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    UsuarioId = table.Column<int>(type: "integer", nullable: false),
+                    Categoria = table.Column<string>(type: "text", nullable: false),
+                    ValorAlvo = table.Column<decimal>(type: "numeric", nullable: false),
+                    Descricao = table.Column<string>(type: "text", nullable: true),
+                    DataInicio = table.Column<DateOnly>(type: "date", nullable: false),
+                    DataFim = table.Column<DateOnly>(type: "date", nullable: true),
+                    Ativa = table.Column<bool>(type: "boolean", nullable: false),
+                    DataCriacao = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Metas", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Metas_Usuarios_UsuarioId",
+                        column: x => x.UsuarioId,
+                        principalTable: "Usuarios",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "RegistrosDiarios",
                 columns: table => new
                 {
@@ -58,6 +108,16 @@ namespace Ritmo.Api.Migrations
                 });
 
             migrationBuilder.CreateIndex(
+                name: "IX_Insights_UsuarioId",
+                table: "Insights",
+                column: "UsuarioId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Metas_UsuarioId",
+                table: "Metas",
+                column: "UsuarioId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_RegistrosDiarios_UsuarioId",
                 table: "RegistrosDiarios",
                 column: "UsuarioId");
@@ -72,6 +132,12 @@ namespace Ritmo.Api.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropTable(
+                name: "Insights");
+
+            migrationBuilder.DropTable(
+                name: "Metas");
+
             migrationBuilder.DropTable(
                 name: "RegistrosDiarios");
 

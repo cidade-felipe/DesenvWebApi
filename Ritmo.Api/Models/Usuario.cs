@@ -22,7 +22,8 @@ public class Usuario
     // Data de criação da conta.
     public DateTime DataCriacao { get; set; } = DateTime.UtcNow;
 
-    // Propriedade de navegação — um usuário tem muitos registros diários.
-    // O EF usa isso para montar JOINs automaticamente.
+    // Propriedades de navegação — relações 1:N.
     public ICollection<RegistroDiario> RegistrosDiarios { get; set; } = new List<RegistroDiario>();
+    public ICollection<Meta> Metas { get; set; } = new List<Meta>();
+    public ICollection<Insight> Insights { get; set; } = new List<Insight>();
 }

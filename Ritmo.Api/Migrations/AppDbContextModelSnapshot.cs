@@ -22,6 +22,82 @@ namespace Ritmo.Api.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Ritmo.Api.Models.Insight", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Categoria")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("DataGeracao")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("Lido")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Mensagem")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Nivel")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("UsuarioId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UsuarioId");
+
+                    b.ToTable("Insights");
+                });
+
+            modelBuilder.Entity("Ritmo.Api.Models.Meta", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("Ativa")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Categoria")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("DataCriacao")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateOnly?>("DataFim")
+                        .HasColumnType("date");
+
+                    b.Property<DateOnly>("DataInicio")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Descricao")
+                        .HasColumnType("text");
+
+                    b.Property<int>("UsuarioId")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("ValorAlvo")
+                        .HasColumnType("numeric");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UsuarioId");
+
+                    b.ToTable("Metas");
+                });
+
             modelBuilder.Entity("Ritmo.Api.Models.RegistroDiario", b =>
                 {
                     b.Property<int>("Id")
@@ -101,6 +177,28 @@ namespace Ritmo.Api.Migrations
                     b.ToTable("Usuarios");
                 });
 
+            modelBuilder.Entity("Ritmo.Api.Models.Insight", b =>
+                {
+                    b.HasOne("Ritmo.Api.Models.Usuario", "Usuario")
+                        .WithMany("Insights")
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Usuario");
+                });
+
+            modelBuilder.Entity("Ritmo.Api.Models.Meta", b =>
+                {
+                    b.HasOne("Ritmo.Api.Models.Usuario", "Usuario")
+                        .WithMany("Metas")
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Usuario");
+                });
+
             modelBuilder.Entity("Ritmo.Api.Models.RegistroDiario", b =>
                 {
                     b.HasOne("Ritmo.Api.Models.Usuario", "Usuario")
@@ -114,6 +212,10 @@ namespace Ritmo.Api.Migrations
 
             modelBuilder.Entity("Ritmo.Api.Models.Usuario", b =>
                 {
+                    b.Navigation("Insights");
+
+                    b.Navigation("Metas");
+
                     b.Navigation("RegistrosDiarios");
                 });
 #pragma warning restore 612, 618
