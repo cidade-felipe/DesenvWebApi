@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\felip\\OneDrive\\git_work\\DesenvWebApi\\Ritmo.Api\\Ritmo.Api.csproj": {}
+    "C:\\Users\\felip\\OneDrive\\git_work\\RitmoApi\\Ritmo.Api\\Ritmo.Api.csproj": {}
   },
   "projects": {
-    "C:\\Users\\felip\\OneDrive\\git_work\\DesenvWebApi\\Ritmo.Api\\Ritmo.Api.csproj": {
+    "C:\\Users\\felip\\OneDrive\\git_work\\RitmoApi\\Ritmo.Api\\Ritmo.Api.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\felip\\OneDrive\\git_work\\DesenvWebApi\\Ritmo.Api\\Ritmo.Api.csproj",
+        "projectUniqueName": "C:\\Users\\felip\\OneDrive\\git_work\\RitmoApi\\Ritmo.Api\\Ritmo.Api.csproj",
         "projectName": "Ritmo.Api",
-        "projectPath": "C:\\Users\\felip\\OneDrive\\git_work\\DesenvWebApi\\Ritmo.Api\\Ritmo.Api.csproj",
+        "projectPath": "C:\\Users\\felip\\OneDrive\\git_work\\RitmoApi\\Ritmo.Api\\Ritmo.Api.csproj",
         "packagesPath": "C:\\Users\\felip\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\felip\\OneDrive\\git_work\\DesenvWebApi\\Ritmo.Api\\obj\\",
+        "outputPath": "C:\\Users\\felip\\OneDrive\\git_work\\RitmoApi\\Ritmo.Api\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\felip\\AppData\\Roaming\\NuGet\\NuGet.Config"
@@ -56,6 +56,10 @@
             "Npgsql.EntityFrameworkCore.PostgreSQL": {
               "target": "Package",
               "version": "[8.0.0, )"
+            },
+            "Swashbuckle.AspNetCore": {
+              "target": "Package",
+              "version": "[6.9.0, )"
             }
           },
           "imports": [
