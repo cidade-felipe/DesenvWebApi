@@ -74,6 +74,9 @@ public class UsuariosController : ControllerBase
         // Define a data de criação pelo servidor.
         usuario.DataCriacao = DateTime.UtcNow;
 
+        // Cria automaticamente as configurações padrão de perfil (relação 1:1)
+        usuario.ConfiguracaoPerfil = new ConfiguracaoPerfil();
+
         _context.Usuarios.Add(usuario);
         await _context.SaveChangesAsync();
 

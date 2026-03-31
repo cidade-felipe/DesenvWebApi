@@ -26,4 +26,7 @@ public class Usuario
     public ICollection<RegistroDiario> RegistrosDiarios { get; set; } = new List<RegistroDiario>();
     public ICollection<Meta> Metas { get; set; } = new List<Meta>();
     public ICollection<Insight> Insights { get; set; } = new List<Insight>();
+
+    // Relação 1:1 com as configurações de perfil
+    public ConfiguracaoPerfil? ConfiguracaoPerfil { get; set; }
 }
