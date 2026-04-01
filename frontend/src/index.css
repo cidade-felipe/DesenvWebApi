@@ -165,6 +165,8 @@ h1, h2, h3, h4 {
   padding: 1rem 0;
   border-bottom: 1px solid var(--glass-border);
   margin-bottom: 2rem;
+  position: relative;
+  z-index: 9999;
 }
 
 .logo {
@@ -236,4 +238,123 @@ h1, h2, h3, h4 {
   }
   .form-sidebar { width: 350px; flex-shrink: 0; }
   .main-content { flex-grow: 1; min-width: 0; }
+}
+
+/* =========================================================
+   Módulo Premium Visual (Notificações, Animações e Extras)
+   ========================================================= */
+
+/* Animação de Surgimento em Cascata (Stagger Fade Up) */
+@keyframes fadeSlideUp {
+  0% { opacity: 0; transform: translateY(30px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-up {
+  opacity: 0;
+  animation: fadeSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.delay-1 { animation-delay: 0.1s; }
+.delay-2 { animation-delay: 0.2s; }
+.delay-3 { animation-delay: 0.3s; }
+.delay-4 { animation-delay: 0.4s; }
+
+/* Sino de Notificação (Menu Nav) */
+.notification-bell {
+  position: relative;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-main);
+  transition: color 0.3s ease, transform 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.notification-bell:hover {
+  color: var(--accent-cyan);
+  transform: scale(1.1);
+}
+
+.notification-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: #ff4757;
+  color: white;
+  font-size: 0.65rem;
+  font-weight: 700;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--bg-color);
+  box-shadow: 0 0 8px rgba(255, 71, 87, 0.6);
+  animation: pulse-red 2s infinite;
+}
+
+@keyframes pulse-red {
+  0% { box-shadow: 0 0 0 0 rgba(255, 71, 87, 0.7); }
+  70% { box-shadow: 0 0 0 6px rgba(255, 71, 87, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(255, 71, 87, 0); }
+}
+
+/* Painel de Notificações Pop-over */
+.insights-panel {
+  position: absolute;
+  top: 50px;
+  right: 0;
+  width: 320px;
+  background: rgba(11, 12, 16, 0.85); /* Fundo muito escuro com leve opacidade */
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--accent-cyan-dim); /* Borda de destaque */
+  border-radius: var(--radius);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.8), 0 0 20px rgba(102, 252, 241, 0.15); /* Sombra alta para flutuação extrema */
+  z-index: 99999;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  opacity: 0;
+  transform: translateY(-10px);
+  animation: fadeSlideDown 0.3s forwards cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes fadeSlideDown {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.insight-item {
+  background: rgba(0,0,0,0.2);
+  border-left: 3px solid var(--accent-purple);
+  padding: 0.8rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  color: var(--text-light);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  transition: background 0.2s;
+}
+
+.insight-item:hover {
+  background: rgba(0,0,0,0.4);
+}
+
+.insight-close-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-main);
+  padding: 4px;
+}
+
+.insight-close-btn:hover {
+  color: #ff6b6b;
 }
