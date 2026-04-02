@@ -381,7 +381,7 @@ export default function Dashboard() {
         {/* Dashboard de Visualização Nativa (Direita) */}
         <main className="main-content">
           <h3 style={{ marginBottom: '1.5rem', color: 'var(--text-light)' }}>Panorama Físico e Mental</h3>
-          <div className="dashboard-grid animate-fade-up delay-2" style={{ marginBottom: '2.5rem', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))' }}>
+          <div className="dashboard-grid animate-fade-up delay-2" style={{ marginBottom: '2.5rem', gridTemplateColumns: 'repeat(3, 1fr)' }}>
             
             {/* Seu IMC */}
             <div className="glass-panel" style={{ borderLeft: `4px solid ${imcMeta.color !== 'gray' ? imcMeta.color : 'var(--glass-border)'}` }}>
@@ -467,7 +467,7 @@ export default function Dashboard() {
           ) : (
             <>
               {/* Malha Inferior de Gráficos Cruzados */}
-              <div className="dashboard-grid animate-fade-up delay-3" style={{ marginBottom: '2.5rem', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))' }}>
+              <div className="dashboard-grid animate-fade-up delay-3" style={{ marginBottom: '2.5rem', gridTemplateColumns: 'repeat(3, 1fr)' }}>
                 
                 {/* O Radar Poligonal (Atributos Gerais) */}
                 <div className="glass-panel" style={{ height: '350px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
