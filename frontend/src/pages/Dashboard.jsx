@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { LogOut, Activity, Droplets, Moon, Brain, RefreshCw, Pencil, Trash2, Bell, X, Scale, Ruler, TrendingUp } from 'lucide-react';
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, AreaChart, Area,
-  Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis
+  Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ComposedChart, Bar
 } from 'recharts';
 import apiClient from '../api/apiClient';
 
@@ -221,13 +221,12 @@ export default function Dashboard() {
   const totalAgua = registros.reduce((acc, r) => acc + r.agua, 0).toFixed(1);
   const avgSono = registros.length > 0 ? (registros.reduce((acc, r) => acc + r.sono, 0) / registros.length).toFixed(1) : '0';
 
-  // O Polígono de Radar mapeando as estatísticas vitais convertidas para uma escala de 5 pontos
+  // O Polígono de Radar mapeando apenas métricas que operam nativamente na escala de 1 a 5 (ou % de consistência)
   const radarData = registros.length > 0 ? [
     { metric: 'Humor', value: Number((registros.reduce((acc, r) => acc + r.humor, 0) / registros.length).toFixed(1)) },
     { metric: 'Energia', value: Number((registros.reduce((acc, r) => acc + r.energia, 0) / registros.length).toFixed(1)) },
     { metric: 'Produtividade', value: Number((registros.reduce((acc, r) => acc + r.produtividade, 0) / registros.length).toFixed(1)) },
-    { metric: 'Sono', value: Number(((registros.reduce((acc, r) => acc + r.sono, 0) / registros.length) / 8 * 5).toFixed(1)) }, // Assumindo base 8h como Teto Perfeito 5
-    { metric: 'Água', value: Number(((registros.reduce((acc, r) => acc + r.agua, 0) / registros.length) / 3 * 5).toFixed(1)) }  // Assumindo 3L de Água como Teto Perfeito 5
+    { metric: 'Ação Física', value: Number(((registros.filter(r => r.exercicio).length / registros.length) * 5).toFixed(1)) } // Consistência de treino em peso 5
   ] : [];
 
   const imcAtual = calculaIMC();
@@ -498,23 +497,32 @@ export default function Dashboard() {
                   </ResponsiveContainer>
                 </div>
 
-                {/* Gráfico de Área Estético: Sono Acumulado */}
+                {/* Gráfico de Hábitos Vitais (Água e Sono com Escalas Duplas) */}
                 <div className="glass-panel" style={{ height: '350px' }}>
-                  <h4 style={{ marginBottom: '1.5rem', color: 'var(--text-main)' }}>Curva Físico-Recuperativa</h4>
+                  <h4 style={{ marginBottom: '1.5rem', color: 'var(--text-main)' }}>Hábitos Vitais</h4>
                   <ResponsiveContainer width="100%" height="80%">
-                    <AreaChart data={registros.slice().reverse()}>
+                    <ComposedChart data={registros.slice().reverse()}>
                       <defs>
                         <linearGradient id="colorSono" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="var(--accent-cyan)" stopOpacity={0.3}/>
-                          <stop offset="95%" stopColor="var(--accent-cyan)" stopOpacity={0}/>
+                          <stop offset="5%" stopColor="var(--accent-cyan-dim)" stopOpacity={0.3}/>
+                          <stop offset="95%" stopColor="var(--accent-cyan-dim)" stopOpacity={0}/>
+                        </linearGradient>
+                        <linearGradient id="colorAgua" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#3498db" stopOpacity={0.8}/>
+                          <stop offset="95%" stopColor="#2980b9" stopOpacity={0.4}/>
                         </linearGradient>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                      <XAxis dataKey="data" stroke="var(--text-main)" fontSize={12} tickLine={false} axisLine={false} />
-                      <YAxis stroke="var(--text-main)" fontSize={12} tickLine={false} axisLine={false} />
-                      <RechartsTooltip contentStyle={{ backgroundColor: 'var(--bg-color-alt)', border: '1px solid var(--accent-cyan)', borderRadius: '8px' }} />
-                      <Area type="monotone" dataKey="sono" stroke="var(--accent-cyan)" strokeWidth={2} fillOpacity={1} fill="url(#colorSono)" />
-                    </AreaChart>
+                      <XAxis dataKey="data" stroke="var(--text-main)" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(val) => val.split('-').reverse().slice(0, 2).join('/')} />
+                      
+                      <YAxis yAxisId="left" stroke="var(--accent-cyan-dim)" fontSize={12} tickLine={false} axisLine={false} domain={[0, 'dataMax + 2']} />
+                      <YAxis yAxisId="right" orientation="right" stroke="#3498db" fontSize={12} tickLine={false} axisLine={false} domain={[0, 'dataMax + 1']} />
+                      
+                      <RechartsTooltip contentStyle={{ backgroundColor: 'var(--bg-color-alt)', border: '1px solid var(--glass-border)', borderRadius: '8px' }} />
+                      
+                      <Bar yAxisId="right" dataKey="agua" name="Água (L)" fill="url(#colorAgua)" radius={[4, 4, 0, 0]} maxBarSize={40} />
+                      <Area yAxisId="left" type="monotone" dataKey="sono" name="Sono (h)" stroke="var(--accent-cyan-dim)" strokeWidth={2} fillOpacity={1} fill="url(#colorSono)" />
+                    </ComposedChart>
                   </ResponsiveContainer>
                 </div>
               </div>
