@@ -306,7 +306,15 @@ export default function Dashboard() {
           <form onSubmit={handleSalvar} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <div>
               <label className="input-label">Data</label>
-              <input type="date" className="input-field" disabled={!!editandoId} value={formData.data} onChange={(e) => setFormData({...formData, data: e.target.value})} required />
+              <input 
+                type="date" 
+                className="input-field" 
+                disabled={!!editandoId} 
+                max={new Date().toISOString().split('T')[0]} 
+                value={formData.data} 
+                onChange={(e) => setFormData({...formData, data: e.target.value})} 
+                required 
+              />
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
