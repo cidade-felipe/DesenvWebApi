@@ -39,7 +39,7 @@ export function DashboardHeader({ user, config, insights, onMarkAsRead }) {
         <div ref={panelRef} style={{ position: 'relative' }}>
           <button className="notification-bell" onClick={() => setShowInsights(!showInsights)}>
             <Bell size={24} />
-            {insights.length > 0 && <span className="notification-badge">{insights.length}</span>}
+            {(insights?.length || 0) > 0 && <span className="notification-badge">{insights.length}</span>}
           </button>
           
           {showInsights && (
@@ -48,7 +48,7 @@ export function DashboardHeader({ user, config, insights, onMarkAsRead }) {
                 Avisos Analíticos
               </h4>
               <div style={{ maxHeight: '300px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                {insights.length === 0 ? (
+                {(!insights || insights.length === 0) ? (
                   <p style={{ color: 'var(--text-main)', fontSize: '0.85rem', margin: '0.5rem 0' }}>
                     Você está em dia com a sua saúde. Nenhum alerta pendente!
                   </p>

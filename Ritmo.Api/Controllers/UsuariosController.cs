@@ -51,15 +51,6 @@ public class UsuariosController : ControllerBase
         return NoContent();
     }
 
-    [HttpPatch("{id}/altura")]
-    public async Task<IActionResult> UpdateAltura(int id, [FromBody] int altura)
-    {
-        var sucesso = await _service.AtualizarAltura(id, altura);
-        if (!sucesso)
-            return NotFound(new { mensagem = $"Usuário com ID {id} não encontrado." });
-
-        return NoContent();
-    }
 
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteUsuario(int id)

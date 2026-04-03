@@ -10,8 +10,7 @@ export function useDashboardData() {
   const [insights, setInsights] = useState([]);
   const [metas, setMetas] = useState([]); // Novo estado de metas
   const [user, setUser] = useState(null);
-  const [pesos, setPesos] = useState([]);
-  const [altura, setAltura] = useState('');
+  const [biometria, setBiometria] = useState([]);
 
   const loadDashboard = useCallback(async () => {
     const usuarioLogado = JSON.parse(localStorage.getItem('usuarioLogado'));
@@ -20,12 +19,12 @@ export function useDashboardData() {
 
     try {
       setLoading(true);
-      const [registrosFetch, configFetch, insightsFetch, metasFetch, pesosFetch, userRefreshed] = await Promise.all([
+      const [registrosFetch, configFetch, insightsFetch, metasFetch, biometriaFetch, userRefreshed] = await Promise.all([
         apiClient.get(`/registrosdiarios/usuario/${usuarioLogado.id}`),
         apiClient.get(`/configuracoesperfil/usuario/${usuarioLogado.id}`),
         apiClient.get(`/insights/usuario/${usuarioLogado.id}?apenasNaoLidos=true`),
         apiClient.get(`/metas/usuario/${usuarioLogado.id}`),
-        apiClient.get(`/pesos/usuario/${usuarioLogado.id}`),
+        apiClient.get(`/biometria/usuario/${usuarioLogado.id}`),
         apiClient.get(`/usuarios/${usuarioLogado.id}`)
       ]);
 
@@ -33,8 +32,7 @@ export function useDashboardData() {
       setConfig(configFetch);
       setInsights(insightsFetch);
       setMetas(metasFetch);
-      setPesos(pesosFetch);
-      setAltura(userRefreshed.altura || '');
+      setBiometria(biometriaFetch);
       setUser(userRefreshed);
     } catch (err) {
       console.error("Falha ao puxar os dados:", err);
@@ -62,9 +60,7 @@ export function useDashboardData() {
     config,
     insights,
     user,
-    pesos,
-    altura,
-    setAltura,
+    biometria,
     metas,
     loadDashboard,
     handleMarcarInsightLido,

@@ -22,14 +22,12 @@ public class Usuario
     // Data de criação da conta.
     public DateTime DataCriacao { get; set; } = DateTime.UtcNow;
 
-    // Altura em centímetros (ex: 175)
-    public int? Altura { get; set; }
 
     // Propriedades de navegação — relações 1:N.
     public ICollection<RegistroDiario> RegistrosDiarios { get; set; } = new List<RegistroDiario>();
     public ICollection<Meta> Metas { get; set; } = new List<Meta>();
     public ICollection<Insight> Insights { get; set; } = new List<Insight>();
-    public ICollection<RegistroPeso> RegistrosPeso { get; set; } = new List<RegistroPeso>();
+    public ICollection<MedidaBiometrica> MedidasBiometricas { get; set; } = new List<MedidaBiometrica>();
 
     // Relação 1:1 com as configurações de perfil
     public ConfiguracaoPerfil? ConfiguracaoPerfil { get; set; }

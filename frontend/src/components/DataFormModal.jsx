@@ -1,6 +1,14 @@
-import { X, Scale, Activity } from 'lucide-react';
+import { useEffect } from 'react';
+import { X, Scale, Ruler } from 'lucide-react';
 
-export function DataFormModal({ isOpen, onClose, onSubmit, formData, setFormData, editandoId, altura, setAltura, onSaveAltura }) {
+export function DataFormModal({ isOpen, onClose, onSubmit, formData, setFormData, editandoId, ultimaAltura }) {
+  useEffect(() => {
+    // Se for um novo registro e tivermos a última altura salva, preenchemos automaticamente
+    if (!editandoId && ultimaAltura && !formData.altura) {
+      setFormData(prev => ({ ...prev, altura: ultimaAltura }));
+    }
+  }, [isOpen, editandoId, ultimaAltura, setFormData, formData.altura]);
+
   if (!isOpen) return null;
 
   return (
@@ -35,8 +43,12 @@ export function DataFormModal({ isOpen, onClose, onSubmit, formData, setFormData
               <input type="number" min="1" max="5" className="input-field" value={formData.humor} onChange={(e) => setFormData({...formData, humor: e.target.value})} />
             </div>
             <div>
-              <label className="input-label">Peso Hoje (kg)</label>
+              <label className="input-label">Peso (kg)</label>
               <input type="number" step="0.1" min="10" max="600" className="input-field" value={formData.peso} onChange={(e) => setFormData({...formData, peso: e.target.value})} placeholder="Ex: 75.5" />
+            </div>
+            <div>
+              <label className="input-label">Altura (cm)</label>
+              <input type="number" min="50" max="280" className="input-field" value={formData.altura} onChange={(e) => setFormData({...formData, altura: e.target.value})} placeholder="Ex: 175" />
             </div>
           </div>
 
@@ -72,19 +84,6 @@ export function DataFormModal({ isOpen, onClose, onSubmit, formData, setFormData
           </button>
         </form>
 
-        <div style={{ marginTop: '2rem', paddingTop: '1.5rem', borderTop: '1px solid var(--glass-border)' }}>
-          <h4 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem', color: 'var(--text-main)', marginBottom: '0.5rem' }}>
-            <Scale size={16} /> Ajuste de Perfil (Altura)
-          </h4>
-          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end' }}>
-            <div style={{ flex: 1 }}>
-              <input type="number" min="50" max="300" className="input-field" style={{ padding: '8px 12px', fontSize: '0.9rem' }} value={altura} onChange={(e) => setAltura(e.target.value)} placeholder="Altura (cm)" />
-            </div>
-            <button onClick={onSaveAltura} className="btn-primary" style={{ padding: '8px 16px', fontSize: '0.9rem', width: 'auto' }}>
-              Salvar
-            </button>
-          </div>
-        </div>
       </div>
     </div>
   );

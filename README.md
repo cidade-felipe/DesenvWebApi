@@ -41,9 +41,8 @@ Ajudar o usuário a entender padrões da própria vida, respondendo coisas como:
 
 Usuário preenche dados do dia, por exemplo:
 
-* Humor (escala ou emojis)
-* Horas de sono
-* Horas de estudo
+* Humor (escala 1-5)
+* Horas de sono (decimal)
 * Produtividade (1 a 5)
 * Energia
 * Exercício físico (sim/não)
@@ -128,7 +127,7 @@ API REST com:
 | Email | string | único |
 | Senha | string | |
 | DataCriacao | DateTime | |
-| Altura | int? | centímetros |
+| (Removido) | - | Altura movida para Biometria |
 
 **RegistroDiario**
 
@@ -139,21 +138,23 @@ API REST com:
 | Data | DateOnly | |
 | Humor | int | 1–5 |
 | Sono | decimal | horas |
-| Estudo | decimal | horas |
+| (Removido) | - | Campo Estudo desativado |
 | Produtividade | int | 1–5 |
 | Energia | int | 1–5 |
 | Exercicio | bool | |
 | Agua | decimal | litros |
 | Observacoes | string? | |
 
-**RegistroPeso (Novo)**
+**MedidaBiometrica (Unificada)**
 
 | Campo | Tipo | Obs |
 |---|---|---|
 | Id | int PK | |
 | UsuarioId | int FK | cascade delete |
-| Valor | decimal | peso em kg |
-| Data | DateTime | gerado automaticamente |
+| Peso | decimal | peso em kg |
+| Altura | int | altura em cm |
+| IMC | (Cálculo) | Calculado via DTO (API) |
+| Data | DateTime | snapshot do momento |
 
 **Meta**
 
@@ -192,14 +193,14 @@ API REST com:
 
 ---
 
-## 🆕 Atualizações Recentes (Módulo Biometria & UI)
+---
 
-Nesta última atualização, o projeto recebeu um intenso aprimoramento focado no monitoramento corporal e na melhoria espacial do Dashboard:
+## 🆕 Unificação Biométrica & Refinamento Analítico
 
-* **Monitoramento Biométrico Fixado:** Inclusão de um novo modelo `RegistroPeso` no PostgreSQL suportado por um novo `PesosController`. O sistema agora coleta a *Altura* (perfil permanente) do usuário e seu *Peso Hoje* através do formulário diário unificado.
-* **Métricas em Tempo Real:** O painel processa matematicamente a biometria para exibir o IMC exato e estabelecer a Faixa de Peso Saudável em cartões no topo da tela.
-* **Layout "Cockpit" (1600px):** 
-    * Expansão lateral das bordas do container.
-    * A interface agora foi cravada em uma *Grid* rígida e previsível: 6 cartões no formato `3x2` e logo abaixo, 3 grandes gráficos no formato `3x1`.
-* **Escalas Híbridas (ComposedChart):** Para contornar a distorção do Polígono de Habilidades, o gráfico de Curva Físico-Recuperativa foi transformado em um gráfico Misto. Ele sobrepõe o Consumo de Água (Barras) com Horas de Sono (Área), respeitando os eixos numéricos originais de ambos sem distorcê-los.
-* **Novo Repositório de Dados:** Toda a cadeia de conexão foi transferida oficialmente do `produtosdb` antigo, para a nova raiz conceitual `ritmodb`.
+O Ritmo atingiu um novo patamar de coesão técnica com a última atualização de arquitetura:
+
+*   **Biometria Centralizada**: Peso e Altura agora viajam juntos na entidade `MedidaBiometrica`. Isso permite que o sistema mantenha um histórico real da evolução física do usuário, ideal para quem está em processos de mudança corporal.
+*   **Inteligência no Backend**: O cálculo de **IMC** foi movido para a camada de serviço da API. O frontend apenas exibe o valor pronto, garantindo que a regra de negócio seja única e imune a erros de arredondamento no cliente.
+*   **UI Resiliente**: O Dashboard agora é "à prova de falhas", com proteções (optional chaining e guards) que garantem carregamentos fluidos mesmo em conexões instáveis.
+*   **Limpeza de Escopo**: Removemos métricas que dispersavam o foco (como o campo Estudo), consolidando o Ritmo como uma ferramenta de **Bem-estar e Saúde Comportamental**.
+*   **Base de Dados Única**: Migração oficial concluída para o schema `ritmodb`, com suporte total a `DeleteBehavior.Cascade` para garantir a higienização dos dados do usuário.

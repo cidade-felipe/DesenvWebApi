@@ -71,14 +71,13 @@ erDiagram
     USUARIOS ||--o{ METAS : "ID_usuario_1_N"
     USUARIOS ||--o{ INSIGHTS : "ID_usuario_1_N"
     USUARIOS ||--|| CONFIGURACOES_PERFIL : "ID_usuario_1_1"
-    USUARIOS ||--o{ REGISTROS_PESO : "ID_usuario_1_N"
+    USUARIOS ||--o{ MEDIDAS_BIOMETRICAS : "ID_usuario_1_N"
 
     USUARIOS {
         int id PK
         string nome
         string email
         string senha
-        int altura
         datetime data_criacao
     }
 
@@ -108,10 +107,11 @@ erDiagram
         datetime data_criacao
     }
 
-    REGISTROS_PESO {
+    MEDIDAS_BIOMETRICAS {
         int id PK
         int usuarioId FK
-        decimal valor
+        decimal peso
+        int altura
         datetime data
     }
 
@@ -141,11 +141,14 @@ Cada decisão lógica ligada a escolha dos campos do modelo C# contou com propó
 É a porta de ingresso e o núcleo conectivo de identificação principal nas operações da sessão. O emprego contínuo sob uma chave primária referencial do tipo numérico que autoincrementa confere buscas de índices relativas muito ágeis e econômicas. O `Email` exige configuração ímpar de validação unívoca referenciada a diretiva universal de checagem contra duplicidades sistêmicas. Ao encapar a entidade, ela serve de núcleo-pai de referência para três tabelamentos filhos: registros diários, metas pessoais preestabelecidas e insights compilados de análise final.
 
 ### 4.2. Registro Diário (`RegistroDiario`)
-Reflete diretamente as variáveis instáveis vividas pelo utilizador comum prestando submissão referencial absoluta ao identificador atrelado numérico do dono logado.
-* Empregamos as ferramentas de armazenamento do campo específico do subconjunto pontual `DateOnly` para a entrada da Data rotineira. Este pequeno artifício de estrutura garante economia preciosa ao ignorarmos os longos trechos adicionais acoplados de horas e de fragmentos atípicos pertencentes geralmente ao campo mais antigo e de alto peso logístico apelidado de `DateTime`.
-* Exibimos o rigor absoluto matemático mediante aos atributos fixados nas escalas chamadas decimais (a diretiva de compilação `decimal`), atuando sobre métricas pontuais instáveis ou particionadas na metade em quesitos relativos a copos de água volumétricos aferidos ou escalas que demandem fracionamentos no relógio de descanso físico do indivíduo submetido. Os números de formato flutuante genéricos promovem falhas ou imprecisão microscópica de adição cumulativa passíveis de manchar grandes estatísticas relativas anuais com arredondamentos falsos ao longo do processamento lógico. O Decimal protege o negócio mantendo toda clareza imune contra incertezas indesejadas analíticas.
+Reflete as métricas de rotina (sono, água, humor) e está estritamente ligado ao usuário.
+* **Simplificação**: O campo `Estudo` foi removido para focar em métricas de saúde e bem-estar.
+* **Tipagem**: O uso de `decimal` para registros de Água e Sono garante precisão contra erros de arredondamento em somatórios anuais.
 
-### 4.3. Metas (`Meta`)
+### 4.3. Biometria Unificada (`MedidaBiometrica`)
+Subititui o antigo modelo de peso isolado e a altura estática no perfil.
+* **Snapshots de Saúde**: Cada registro salva Peso e Altura simultaneamente.
+* **Calculo de IMC**: O IMC não é salvo no banco, mas calculado pela API (DTO) no momento da entrega ao Frontend, garantindo que a métrica esteja sempre baseada nos dados mais recentes.
 Um artifício atemporal atrelado a progressões quantitativas focadas nas escolhas do usuário. No Ritmo, o progresso é dinâmico:
 * **Média de 7 Dias**: Para hábitos como Sono e Água, o sistema calcula a média da última semana e compara com o alvo.
 * **Consistência de Treino**: Para atividade física, a meta é baseada em "dias por semana" (ex: Treinar 5 de 7 dias).

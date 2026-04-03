@@ -40,7 +40,6 @@ public class UsuarioService
             Nome = request.Nome,
             Email = request.Email,
             Senha = request.Senha,
-            Altura = request.Altura ?? 0,
             DataCriacao = DateTime.UtcNow,
             ConfiguracaoPerfil = new ConfiguracaoPerfil()
         };
@@ -59,24 +58,12 @@ public class UsuarioService
 
         usuarioExistente.Nome = request.Nome;
         usuarioExistente.Senha = request.Senha;
-        usuarioExistente.Altura = request.Altura ?? usuarioExistente.Altura;
 
         await _context.SaveChangesAsync();
 
         return true;
     }
 
-    public async Task<bool> AtualizarAltura(int id, int altura)
-    {
-        var usuarioExistente = await _context.Usuarios.FindAsync(id);
-
-        if (usuarioExistente == null) return false;
-
-        usuarioExistente.Altura = altura;
-        await _context.SaveChangesAsync();
-
-        return true;
-    }
 
     public async Task<bool> Deletar(int id)
     {

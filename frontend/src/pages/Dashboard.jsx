@@ -12,8 +12,8 @@ import apiClient from '../api/apiClient';
 
 export default function Dashboard() {
   const {
-    loading, registros, config, insights, user, pesos, altura, metas,
-    setAltura, loadDashboard, handleMarcarInsightLido
+    loading, registros, config, insights, user, biometria, metas,
+    loadDashboard, handleMarcarInsightLido
   } = useDashboardData();
 
   const [activeTab, setActiveTab] = useState('panorama'); // 'panorama', 'analise', 'relatorios'
@@ -22,7 +22,7 @@ export default function Dashboard() {
   const [editandoId, setEditandoId] = useState(null);
   const [formData, setFormData] = useState({
     data: new Date().toISOString().split('T')[0],
-    humor: 3, sono: 8, estudo: 0, produtividade: 3, energia: 3, exercicio: false, agua: 2.0, observacoes: '', peso: ''
+    humor: 3, sono: 8, produtividade: 3, energia: 3, exercicio: false, agua: 2.0, observacoes: '', peso: '', altura: ''
   });
 
   // --- Handlers de Ações ---
@@ -36,8 +36,13 @@ export default function Dashboard() {
         await apiClient.post('/registrosdiarios', payload);
       }
 
-      if (formData.peso) {
-        await apiClient.post('/pesos', { usuarioId: user.id, valor: parseFloat(formData.peso), data: formData.data });
+      if (formData.peso && formData.altura) {
+        await apiClient.post('/biometria', { 
+          usuarioId: user.id, 
+          peso: parseFloat(formData.peso), 
+          altura: parseInt(formData.altura),
+          data: formData.data 
+        });
       }
 
       setIsModalOpen(false);
@@ -64,17 +69,6 @@ export default function Dashboard() {
     }
   };
 
-  const handleSalvarAltura = async () => {
-    try {
-      await apiClient.patch(`/usuarios/${user.id}/altura`, parseInt(altura), {
-        headers: { 'Content-Type': 'application/json' }
-      });
-      alert("Altura atualizada!");
-      await loadDashboard();
-    } catch (err) {
-      alert("Erro ao atualizar altura");
-    }
-  };
 
   // --- Exportações ---
   const handleExportCSV = () => {
@@ -100,8 +94,8 @@ export default function Dashboard() {
 
   // --- Cálculos de Estatísticas ---
   const calculaIMC = () => {
-    if (!altura || pesos.length === 0) return null;
-    return (pesos[0].valor / Math.pow(altura / 100, 2)).toFixed(1);
+    if (biometria.length === 0) return null;
+    return biometria[0].imc;
   };
 
   const getIMCCategory = (imc) => {
@@ -126,9 +120,9 @@ export default function Dashboard() {
     { metric: 'Ação Física', value: Number(((registros.filter(r => r.exercicio).length / registros.length) * 5).toFixed(1)) }
   ] : [];
 
-  const weightDataForChart = pesos.slice().reverse().map(p => ({
+  const weightDataForChart = biometria.slice().reverse().map(p => ({
     data: p.data.split('T')[0].split('-').reverse().slice(0, 2).join('/'),
-    peso: p.valor
+    peso: p.peso
   }));
 
   // --- Lógica de Metas ---
@@ -178,7 +172,7 @@ export default function Dashboard() {
         <DataFormModal 
           isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSubmit={handleSalvar} 
           formData={formData} setFormData={setFormData} editandoId={editandoId} 
-          altura={altura} setAltura={setAltura} onSaveAltura={handleSalvarAltura} 
+          ultimaAltura={biometria[0]?.altura}
         />
 
         <main className="main-content" style={{ width: '100%' }}>
@@ -192,7 +186,7 @@ export default function Dashboard() {
           <div className="tab-content">
             {activeTab === 'panorama' && (
               <>
-                <StatsCards imc={imcAtual} imcMeta={imcMeta} pesoAtual={pesos[0]?.valor} pesoAnterior={pesos[1]?.valor} avgHumor={avgHumor} avgSono={avgSono} avgAgua={avgAgua} />
+                <StatsCards imc={imcAtual} imcMeta={imcMeta} pesoAtual={biometria[0]?.peso} pesoAnterior={biometria[1]?.peso} avgHumor={avgHumor} avgSono={avgSono} avgAgua={avgAgua} />
                 <ChartsContainer type="panorama" data={registros} radarData={radarData} />
               </>
             )}
