@@ -88,7 +88,6 @@ erDiagram
         DateOnly Data
         int Humor
         decimal Sono
-        decimal Estudo
         int Produtividade
         int Energia
         bool Exercicio
@@ -149,7 +148,11 @@ Reflete diretamente as variáveis instáveis vividas pelo utilizador comum prest
 * Exibimos o rigor absoluto matemático mediante aos atributos fixados nas escalas chamadas decimais (a diretiva de compilação `decimal`), atuando sobre métricas pontuais instáveis ou particionadas na metade em quesitos relativos a copos de água volumétricos aferidos ou escalas que demandem fracionamentos no relógio de descanso físico do indivíduo submetido. Os números de formato flutuante genéricos promovem falhas ou imprecisão microscópica de adição cumulativa passíveis de manchar grandes estatísticas relativas anuais com arredondamentos falsos ao longo do processamento lógico. O Decimal protege o negócio mantendo toda clareza imune contra incertezas indesejadas analíticas.
 
 ### 4.3. Metas (`Meta`)
-Um artifício atemporal atrelado a progressões quantitativas focadas baseadas nas escolhas contínuas ou efêmeras dos indivíduos. Ele garante tolerância flexível as escolhas diárias ao utilizar os prazos permissíveis aceitativos da nulidade técnica no preenchimento final, traduzidos por declarações englobando a interrogação virtual sobre o campo limitante `DateOnly?`. Se alguém quer buscar acordar todos os dias e se exercitar incondicionalmente para o infinito sem pressa estipulando que isso ocorrerá para a vida remanescente então um tempo fim do registro nunca se manifestará de forma real num registro fechado físico de encerramento temporário imposto na linha da entidade associada. A proteção fundamental providencia então as inativações dos blocos preenchidos por chaves ativas do tipo Booleana nomeadas de `Ativa` sem recorrer a atitudes catastróficas passíveis sob métodos rudes de Deleção definitiva no banco ao evitar buracos nos somatórios da exibição total listada nas antigas e superadas linhas abandonadas.
+Um artifício atemporal atrelado a progressões quantitativas focadas nas escolhas do usuário. No Ritmo, o progresso é dinâmico:
+* **Média de 7 Dias**: Para hábitos como Sono e Água, o sistema calcula a média da última semana e compara com o alvo.
+* **Consistência de Treino**: Para atividade física, a meta é baseada em "dias por semana" (ex: Treinar 5 de 7 dias).
+* **Estados Visuais**: As barras de progresso utilizam cores neon para indicar se o usuário está Atrasado (amarelo), Em Dia (ciano) ou Concluiu (verde) o desafio.
+A proteção fundamental providencia as inativações dos blocos preenchidos por chaves ativas do tipo Booleana nomeadas de `Ativa` sem recorrer a deleções definitivas.
 
 ### 4.4. Insights Automáticos (`Insight`)
 O subsistema enlaçado as projeções dinâmicas formadas a base do comparativo do cruzamento central temporal estabelecido unindo os traçados numéricos fixados nas metas contra o acumulado matemático capturado no preenchimento individual gerando as descobertas verbais prontas que transitam na página central. Ao consolidarmos tais impressões pré-moldadas na estrutura definitiva das persistências num campo descritível formal como uma entidade viva, a API suprime o ato de promover reprocessamentos analíticos infinitos sempre engatados sob leituras superficiais que derrubam o tráfego regular na demanda do Frontend e consome largura valiosa computacional despropositada de verificação, garantindo alta fluidez em consultas secundárias relâmpago ao atrelar marcadores interativos ligados às insignias virtuais preenchendo as tags de controle temporal `Lido` ativadas mediante a navegação rotineira dos quadros das observações ativas.
@@ -159,6 +162,12 @@ Uma extensão direta e atrelada de forma um-para-um com o registro primordial. E
 
 ### 4.6. Integridade Referencial e Estratégia de Remoção (Cascade)
 Todos os blocos de entidades criados no modelo gravitam ancorados as ordens vinculativas exigentes providenciadas pelas Chaves Estrangeiras associadas unicamente às ligações com usuários mestre no diagrama primário formador representadas integralmente na identificação contendo o `UsuarioId`. Visando não deixar qualquer esqueleto referencial flutuante ocupando porções mortas operacionais com os registros remanescentes provenientes do lixo orgânico na máquina quando for promovido o fim de vida atrelado no rompimento deliberado na base pelo indivíduo solicitante original das propriedades conectadas virtuais, o emprego mandatório severo acoplado dos recursos regrados restritos chamados formalmente no projeto pelos comandos diretos `DeleteBehavior.Cascade` garantem o extermínio sincronizado implacável extirpando do banco subjacente qualquer bloco de metas desativadas obsoletas, assim como toda poeira das percepções escritas isoladas no passado gerando a harmonia da higienização lógica imediata da estrutura orgânica vinculada que cessa a presença residual morta ali no ato perfeitamente efetuado livre contaminações indesejadas futuras residuais em banco.
+
+### 4.7. Validações Dinâmicas e Sanitização
+Para garantir a veracidade estatística, o sistema implementa travas lógicas em duas camadas:
+* **Front-end**: Inputs com limites `min` e `max` dinâmicos. (Ex: Meta de sono travada em 24h, Humor entre 1 e 5).
+* **Back-end**: Validação de tipos e ranges antes da persistência via Entity Framework.
+Isso impede que valores discrepantes (outliers impossíveis) poluam o histórico e distorçam as médias analíticas de longo prazo.
 
 ## 5. A Construção do Fluxo Natural 
 

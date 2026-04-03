@@ -8,7 +8,6 @@ public class RegistroDiarioRequest
     public DateOnly Data { get; set; }
     public int Humor { get; set; }
     public decimal Sono { get; set; }
-    public decimal Estudo { get; set; }
     public int Produtividade { get; set; }
     public int Energia { get; set; }
     public bool Exercicio { get; set; }
@@ -23,7 +22,6 @@ public class RegistroDiarioRequest
             Data = this.Data,
             Humor = this.Humor,
             Sono = this.Sono,
-            Estudo = this.Estudo,
             Produtividade = this.Produtividade,
             Energia = this.Energia,
             Exercicio = this.Exercicio,
@@ -37,7 +35,6 @@ public class RegistroDiarioRequest
     {
         entity.Humor = this.Humor;
         entity.Sono = this.Sono;
-        entity.Estudo = this.Estudo;
         entity.Produtividade = this.Produtividade;
         entity.Energia = this.Energia;
         entity.Exercicio = this.Exercicio;
@@ -53,7 +50,6 @@ public class RegistroDiarioResponse
     public DateOnly Data { get; set; }
     public int Humor { get; set; }
     public decimal Sono { get; set; }
-    public decimal Estudo { get; set; }
     public int Produtividade { get; set; }
     public int Energia { get; set; }
     public bool Exercicio { get; set; }
@@ -69,7 +65,6 @@ public class RegistroDiarioResponse
             Data = entity.Data,
             Humor = entity.Humor,
             Sono = entity.Sono,
-            Estudo = entity.Estudo,
             Produtividade = entity.Produtividade,
             Energia = entity.Energia,
             Exercicio = entity.Exercicio,

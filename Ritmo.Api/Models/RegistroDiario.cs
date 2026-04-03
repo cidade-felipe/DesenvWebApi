@@ -26,9 +26,6 @@ public class RegistroDiario
     // Horas de sono na noite anterior (ex: 7.5).
     public decimal Sono { get; set; }
 
-    // Horas de estudo no dia (ex: 3.0).
-    public decimal Estudo { get; set; }
-
     // Nível de produtividade: escala de 1 a 5.
     public int Produtividade { get; set; }
 
