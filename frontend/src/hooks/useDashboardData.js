@@ -8,6 +8,7 @@ export function useDashboardData() {
   const [registros, setRegistros] = useState([]);
   const [config, setConfig] = useState(null);
   const [insights, setInsights] = useState([]);
+  const [metas, setMetas] = useState([]); // Novo estado de metas
   const [user, setUser] = useState(null);
   const [pesos, setPesos] = useState([]);
   const [altura, setAltura] = useState('');
@@ -19,10 +20,11 @@ export function useDashboardData() {
 
     try {
       setLoading(true);
-      const [registrosFetch, configFetch, insightsFetch, pesosFetch, userRefreshed] = await Promise.all([
+      const [registrosFetch, configFetch, insightsFetch, metasFetch, pesosFetch, userRefreshed] = await Promise.all([
         apiClient.get(`/registrosdiarios/usuario/${usuarioLogado.id}`),
         apiClient.get(`/configuracoesperfil/usuario/${usuarioLogado.id}`),
         apiClient.get(`/insights/usuario/${usuarioLogado.id}?apenasNaoLidos=true`),
+        apiClient.get(`/metas/usuario/${usuarioLogado.id}`),
         apiClient.get(`/pesos/usuario/${usuarioLogado.id}`),
         apiClient.get(`/usuarios/${usuarioLogado.id}`)
       ]);
@@ -30,6 +32,7 @@ export function useDashboardData() {
       setRegistros(registrosFetch);
       setConfig(configFetch);
       setInsights(insightsFetch);
+      setMetas(metasFetch);
       setPesos(pesosFetch);
       setAltura(userRefreshed.altura || '');
       setUser(userRefreshed);
@@ -62,6 +65,7 @@ export function useDashboardData() {
     pesos,
     altura,
     setAltura,
+    metas,
     loadDashboard,
     handleMarcarInsightLido,
     setInsights

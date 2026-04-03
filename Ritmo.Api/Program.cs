@@ -27,6 +27,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // Serviços de Negócio (Desacoplados)
 builder.Services.AddScoped<Ritmo.Api.Services.RegistroDiarioService>();
 builder.Services.AddScoped<Ritmo.Api.Services.UsuarioService>();
+builder.Services.AddScoped<Ritmo.Api.Services.MetaService>();
 
 // Adiciona o Swagger/OpenAPI — interface web para testar a API.
 // AddEndpointsApiExplorer() descobre os endpoints disponíveis.

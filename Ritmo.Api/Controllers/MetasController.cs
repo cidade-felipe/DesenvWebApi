@@ -1,9 +1,6 @@
-// Controllers/MetasController.cs
-
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Ritmo.Api.Data;
-using Ritmo.Api.Models;
+using Ritmo.Api.DTOs;
+using Ritmo.Api.Services;
 
 namespace Ritmo.Api.Controllers;
 
@@ -11,140 +8,44 @@ namespace Ritmo.Api.Controllers;
 [Route("api/[controller]")]
 public class MetasController : ControllerBase
 {
-    private readonly AppDbContext _context;
+    private readonly MetaService _metaService;
 
-    public MetasController(AppDbContext context)
+    public MetasController(MetaService metaService)
     {
-        _context = context;
+        _metaService = metaService;
     }
 
-    // =====================================================================
-    // GET /api/metas/usuario/{usuarioId}
-    // Retorna todas as metas de um usuário, com opção de filtrar por ativas.
-    // Exemplo: GET /api/metas/usuario/1?apenasAtivas=true
-    // =====================================================================
     [HttpGet("usuario/{usuarioId}")]
-    public async Task<ActionResult<IEnumerable<Meta>>> GetMetasPorUsuario(
-        int usuarioId,
-        [FromQuery] bool? apenasAtivas = null)
+    public async Task<ActionResult<IEnumerable<MetaDTO>>> GetMetasPorUsuario(int usuarioId)
     {
-        var usuarioExiste = await _context.Usuarios.AnyAsync(u => u.Id == usuarioId);
-        if (!usuarioExiste)
-            return NotFound(new { mensagem = $"Usuário com ID {usuarioId} não encontrado." });
-
-        var query = _context.Metas.Where(m => m.UsuarioId == usuarioId);
-
-        // Filtra por status ativo se o parâmetro foi enviado.
-        if (apenasAtivas.HasValue)
-            query = query.Where(m => m.Ativa == apenasAtivas.Value);
-
-        var metas = await query
-            .OrderByDescending(m => m.DataCriacao)
-            .ToListAsync();
-
+        var metas = await _metaService.ListarPorUsuario(usuarioId);
         return Ok(metas);
     }
 
-    // =====================================================================
-    // GET /api/metas/5
-    // =====================================================================
-    [HttpGet("{id}")]
-    public async Task<ActionResult<Meta>> GetMeta(int id)
-    {
-        var meta = await _context.Metas.FindAsync(id);
-
-        if (meta == null)
-            return NotFound(new { mensagem = $"Meta com ID {id} não encontrada." });
-
-        return Ok(meta);
-    }
-
-    // =====================================================================
-    // POST /api/metas
-    // Cria uma nova meta para o usuário.
-    //
-    // Body esperado:
-    // {
-    //   "usuarioId": 1,
-    //   "categoria": "Sono",
-    //   "valorAlvo": 7.5,
-    //   "descricao": "Dormir pelo menos 7h30 por dia",
-    //   "dataInicio": "2026-03-26",
-    //   "dataFim": null
-    // }
-    // =====================================================================
     [HttpPost]
-    public async Task<ActionResult<Meta>> PostMeta(Meta meta)
+    public async Task<ActionResult<MetaDTO>> PostMeta(MetaDTO dto)
     {
-        var usuarioExiste = await _context.Usuarios.AnyAsync(u => u.Id == meta.UsuarioId);
-        if (!usuarioExiste)
-            return NotFound(new { mensagem = $"Usuário com ID {meta.UsuarioId} não encontrado." });
-
-        meta.DataCriacao = DateTime.UtcNow;
-        meta.Ativa = true;
-
-        _context.Metas.Add(meta);
-        await _context.SaveChangesAsync();
-
-        return CreatedAtAction(nameof(GetMeta), new { id = meta.Id }, meta);
+        var novaMeta = await _metaService.Criar(dto);
+        return CreatedAtAction(nameof(GetMetasPorUsuario), new { usuarioId = novaMeta.UsuarioId }, novaMeta);
     }
 
-    // =====================================================================
-    // PUT /api/metas/5
-    // Atualiza uma meta existente.
-    // =====================================================================
     [HttpPut("{id}")]
-    public async Task<IActionResult> PutMeta(int id, Meta meta)
+    public async Task<IActionResult> PutMeta(int id, MetaDTO dto)
     {
-        if (id != meta.Id)
-            return BadRequest(new { mensagem = "O ID da URL não corresponde ao ID no body." });
-
-        var metaExistente = await _context.Metas.FindAsync(id);
-        if (metaExistente == null)
-            return NotFound(new { mensagem = $"Meta com ID {id} não encontrada." });
-
-        metaExistente.Categoria = meta.Categoria;
-        metaExistente.ValorAlvo = meta.ValorAlvo;
-        metaExistente.Descricao = meta.Descricao;
-        metaExistente.DataInicio = meta.DataInicio;
-        metaExistente.DataFim = meta.DataFim;
-        metaExistente.Ativa = meta.Ativa;
-
-        await _context.SaveChangesAsync();
-
+        if (id != dto.Id) return BadRequest();
+        
+        var sucesso = await _metaService.Atualizar(id, dto);
+        if (!sucesso) return NotFound();
+        
         return NoContent();
     }
 
-    // =====================================================================
-    // PATCH /api/metas/5/desativar
-    // Desativa uma meta sem deletá-la — mantém o histórico.
-    // =====================================================================
-    [HttpPatch("{id}/desativar")]
-    public async Task<IActionResult> DesativarMeta(int id)
-    {
-        var meta = await _context.Metas.FindAsync(id);
-        if (meta == null)
-            return NotFound(new { mensagem = $"Meta com ID {id} não encontrada." });
-
-        meta.Ativa = false;
-        await _context.SaveChangesAsync();
-
-        return NoContent();
-    }
-
-    // =====================================================================
-    // DELETE /api/metas/5
-    // =====================================================================
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteMeta(int id)
     {
-        var meta = await _context.Metas.FindAsync(id);
-        if (meta == null)
-            return NotFound(new { mensagem = $"Meta com ID {id} não encontrada." });
-
-        _context.Metas.Remove(meta);
-        await _context.SaveChangesAsync();
-
+        var sucesso = await _metaService.Deletar(id);
+        if (!sucesso) return NotFound();
+        
         return NoContent();
     }
 }

@@ -1,22 +1,24 @@
 import { useState } from 'react';
 import * as XLSX from 'xlsx';
-import { Pencil, Trash2, LayoutDashboard, ClipboardList, Download, BarChart3, Activity, RefreshCw } from 'lucide-react';
+import { Pencil, Trash2, LayoutDashboard, ClipboardList, Download, BarChart3, Activity, RefreshCw, X, TrendingUp } from 'lucide-react';
 
 import { useDashboardData } from '../hooks/useDashboardData';
 import { DashboardHeader } from '../components/DashboardHeader';
 import { StatsCards } from '../components/StatsCards';
 import { DataFormModal } from '../components/DataFormModal';
 import { ChartsContainer } from '../components/ChartsContainer';
+import { MetaFormModal } from '../components/MetaFormModal'; // Novo Import
 import apiClient from '../api/apiClient';
 
 export default function Dashboard() {
   const {
-    loading, registros, config, insights, user, pesos, altura, 
+    loading, registros, config, insights, user, pesos, altura, metas,
     setAltura, loadDashboard, handleMarcarInsightLido
   } = useDashboardData();
 
   const [activeTab, setActiveTab] = useState('panorama'); // 'panorama', 'analise', 'relatorios'
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isMetaModalOpen, setIsMetaModalOpen] = useState(false);
   const [editandoId, setEditandoId] = useState(null);
   const [formData, setFormData] = useState({
     data: new Date().toISOString().split('T')[0],
@@ -129,6 +131,43 @@ export default function Dashboard() {
     peso: p.valor
   }));
 
+  // --- Lógica de Metas ---
+  const handleExcluirMeta = async (id) => {
+    if (window.confirm("Deseja realmente remover esta meta?")) {
+      try {
+        await apiClient.delete(`/metas/${id}`);
+        await loadDashboard();
+      } catch (err) {
+        alert("Erro ao excluir meta");
+      }
+    }
+  };
+
+  const getMetaProgress = (meta) => {
+    const hoje = new Date();
+    const seteDiasAtras = new Date();
+    seteDiasAtras.setDate(hoje.getDate() - 7);
+
+    const registrosRecentes = registros.filter(r => new Date(r.data) >= seteDiasAtras);
+    if (registrosRecentes.length === 0) return { percent: 0, current: 0, status: 'atrasado' };
+
+    let total = 0;
+    const cat = meta.categoria.toLowerCase();
+
+    if (cat === 'treino') {
+      total = registrosRecentes.filter(r => r.exercicio).length;
+    } else {
+      total = registrosRecentes.reduce((acc, r) => acc + (r[cat] || 0), 0) / registrosRecentes.length;
+    }
+
+    const progresso = (total / meta.valorAlvo) * 100;
+    return {
+      percent: Math.min(Math.round(progresso), 120),
+      current: total.toFixed(1),
+      status: progresso >= 100 ? 'concluido' : progresso >= 50 ? 'em_dia' : 'atrasado'
+    };
+  };
+
   if (loading) return <div className="center-wrapper"><RefreshCw className="animate-spin" size={32} color="var(--accent-cyan)" /></div>;
 
   return (
@@ -146,6 +185,7 @@ export default function Dashboard() {
           <div className="tabs-wrapper animate-fade-up">
             <button className={`tab-btn ${activeTab === 'panorama' ? 'active' : ''}`} onClick={() => setActiveTab('panorama')}><LayoutDashboard size={18} /> Panorama</button>
             <button className={`tab-btn ${activeTab === 'analise' ? 'active' : ''}`} onClick={() => setActiveTab('analise')}><BarChart3 size={18} /> Análise</button>
+            <button className={`tab-btn ${activeTab === 'metas' ? 'active' : ''}`} onClick={() => setActiveTab('metas')}><TrendingUp size={18} /> Metas</button>
             <button className={`tab-btn ${activeTab === 'relatorios' ? 'active' : ''}`} onClick={() => setActiveTab('relatorios')}><ClipboardList size={18} /> Relatórios</button>
           </div>
 
@@ -187,11 +227,83 @@ export default function Dashboard() {
                 </div>
               </div>
             )}
+            {activeTab === 'metas' && (
+              <div className="animate-fade-up">
+                <div className="chart-header">
+                  <h3 style={{ color: 'var(--text-light)' }}>Seus Desafios</h3>
+                  <button className="btn-primary" style={{ width: 'auto' }} onClick={() => setIsMetaModalOpen(true)}>
+                    <TrendingUp size={18} /> Nova Meta
+                  </button>
+                </div>
+
+                {metas.length === 0 ? (
+                  <div className="glass-panel" style={{ textAlign: 'center', padding: '4rem' }}>
+                    <p style={{ color: 'var(--text-main)' }}>Você ainda não definiu nenhuma meta.</p>
+                    <p style={{ fontSize: '0.9rem', opacity: 0.7 }}>Metas ajudam você a manter a consistência e o foco!</p>
+                  </div>
+                ) : (
+                  <div className="goals-grid">
+                    {metas.map(meta => {
+                      const prog = getMetaProgress(meta);
+                      const isTreino = meta.categoria.toLowerCase() === 'treino';
+                      const color = prog.status === 'concluido' ? '#2ecc71' : prog.status === 'em_dia' ? 'var(--accent-cyan)' : '#f1c40f';
+                      
+                      return (
+                        <div key={meta.id} className="glass-panel goal-card">
+                          <div className="goal-header">
+                            <div>
+                              <span className="goal-title">{meta.categoria}</span>
+                              <p style={{ fontSize: '0.8rem', opacity: 0.6, margin: '4px 0 0 0' }}>{meta.descricao || 'Sem descrição'}</p>
+                            </div>
+                            <button 
+                              className="action-btn delete" 
+                              onClick={() => handleExcluirMeta(meta.id)}
+                              style={{ padding: '4px' }}
+                            >
+                              <X size={16} />
+                            </button>
+                          </div>
+
+                          <div className="goal-progress-wrapper">
+                            <div className="progress-info">
+                              <span>Sua média (7d): <strong>{prog.current}{isTreino ? ' dias' : ''}</strong></span>
+                              <span>Meta: {meta.valorAlvo}{isTreino ? ' dias' : ''}</span>
+                            </div>
+                            <div className="progress-track">
+                              <div 
+                                className="progress-fill" 
+                                style={{ width: `${prog.percent}%`, backgroundColor: color, color: color }}
+                              ></div>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '10px' }}>
+                              <span style={{ fontSize: '0.75rem', fontWeight: 700, color: color }}>
+                                {prog.percent}% {prog.percent >= 100 ? 'CONCLUÍDO!' : 'EM ANDAMENTO'}
+                              </span>
+                              <span style={{ fontSize: '0.75rem', opacity: 0.5 }}>
+                                Atualizado agora
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </main>
       </div>
 
       <button className="fab-btn animate-fade-up" onClick={() => { setEditandoId(null); setIsModalOpen(true); }}><Activity size={32} /></button>
+
+      {/* Novo Modal de Gestão de Metas */}
+      <MetaFormModal 
+        isOpen={isMetaModalOpen} 
+        onClose={() => setIsMetaModalOpen(false)} 
+        onSave={loadDashboard} 
+        user={user} 
+      />
     </div>
   );
 }

@@ -1,0 +1,111 @@
+import { useState } from 'react';
+import { X, TrendingUp } from 'lucide-react';
+import apiClient from '../api/apiClient';
+
+export function MetaFormModal({ isOpen, onClose, onSave, user }) {
+  const [metaData, setMetaData] = useState({
+    categoria: 'Sono',
+    valorAlvo: 8,
+    descricao: '',
+    dataInicio: new Date().toISOString().split('T')[0],
+    ativa: true
+  });
+
+  if (!isOpen) return null;
+
+  const getValidationConfig = () => {
+    switch(metaData.categoria) {
+      case 'Sono': return { min: 0, max: 24, step: 0.5, unit: 'h' };
+      case 'Agua': return { min: 0, max: 25, step: 0.1, unit: 'L' };
+      case 'Treino': return { min: 1, max: 7, step: 1, unit: 'dias' };
+      default: return { min: 1, max: 5, step: 0.1, unit: 'pontos' };
+    }
+  };
+
+  const config = getValidationConfig();
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const val = parseFloat(metaData.valorAlvo);
+    
+    if (isNaN(val) || val < config.min || val > config.max) {
+      return alert(`Por favor, insira um valor válido entre ${config.min} e ${config.max} para ${metaData.categoria}.`);
+    }
+
+    try {
+      const payload = {
+        ...metaData,
+        usuarioId: user.id,
+        valorAlvo: val
+      };
+      await apiClient.post('/metas', payload);
+      onSave(); // Recarrega o dashboard
+      onClose(); // Fecha o modal
+    } catch (err) {
+      alert("Erro ao salvar meta: " + (err.response?.data?.mensagem || err.message));
+    }
+  };
+
+  return (
+    <div className="modal-overlay" onClick={(e) => e.target.className === 'modal-overlay' && onClose()}>
+      <div className="modal-content glass-panel animate-fade-up">
+        <div className="modal-close-header">
+          <h3 style={{ margin: 0, color: 'var(--accent-cyan)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <TrendingUp size={22} /> Definir Nova Meta
+          </h3>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-main)', cursor: 'pointer' }}>
+            <X size={24} />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          <div>
+            <label className="input-label">Categoria do Desafio</label>
+            <select 
+              className="input-field" 
+              value={metaData.categoria} 
+              onChange={(e) => setMetaData({...metaData, categoria: e.target.value})}
+              style={{ background: 'rgba(31, 40, 51, 0.9)' }}
+            >
+              <option value="Sono">Qualidade de Sono (Média h)</option>
+              <option value="Agua">Hidratação Diária (L)</option>
+              <option value="Humor">Bem-estar Mental (Média 1-5)</option>
+              <option value="Produtividade">Foco e Entrega (Média 1-5)</option>
+              <option value="Energia">Nível de Vitalidade (Média 1-5)</option>
+              <option value="Treino">Consistência de Treino (Dias p/ Semana)</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="input-label">Valor Alvo ({config.unit})</label>
+            <input 
+              type="number" 
+              step={config.step}
+              min={config.min}
+              max={config.max}
+              className="input-field" 
+              value={metaData.valorAlvo} 
+              onChange={(e) => setMetaData({...metaData, valorAlvo: e.target.value})} 
+              placeholder={`Min: ${config.min} - Max: ${config.max}`}
+            />
+          </div>
+
+          <div>
+            <label className="input-label">Por que esta meta é importante?</label>
+            <textarea 
+              className="input-field" 
+              style={{ height: '80px', paddingTop: '10px' }}
+              value={metaData.descricao} 
+              onChange={(e) => setMetaData({...metaData, descricao: e.target.value})} 
+              placeholder="Ex: Melhorar minha disposição matinal..."
+            />
+          </div>
+
+          <button type="submit" className="btn-primary" style={{ marginTop: '0.5rem' }}>
+            Ativar Desafio
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
