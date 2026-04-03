@@ -67,73 +67,71 @@ Abaixo apresentamos o Diagrama de Entidade-Relacionamento (ER), ilustrando a dis
 
 ```mermaid
 erDiagram
-    Usuario ||--o{ RegistroDiario : "Possui (1,1) -> (0,*)"
-    Usuario ||--o{ Meta : "Possui (1,1) -> (0,*)"
-    Usuario ||--o{ Insight : "Possui (1,1) -> (0,*)"
-    Usuario ||--|| ConfiguracaoPerfil : "Possui (1,1) -> (1,1)"
-    Usuario ||--o{ RegistroPeso : "Possui (1,1) -> (0,*)"
+    USUARIOS ||--o{ REGISTROS_DIARIOS : "ID_usuario_1_N"
+    USUARIOS ||--o{ METAS : "ID_usuario_1_N"
+    USUARIOS ||--o{ INSIGHTS : "ID_usuario_1_N"
+    USUARIOS ||--|| CONFIGURACOES_PERFIL : "ID_usuario_1_1"
+    USUARIOS ||--o{ REGISTROS_PESO : "ID_usuario_1_N"
 
-    Usuario {
-        int Id PK
-        string Nome
-        string Email
-        string Senha
-        DateTime DataCriacao
-        int Altura
+    USUARIOS {
+        int id PK
+        string nome
+        string email
+        string senha
+        int altura
+        datetime data_criacao
     }
 
-    RegistroDiario {
-        int Id PK
-        int UsuarioId FK
-        DateOnly Data
-        int Humor
-        decimal Sono
-        int Produtividade
-        int Energia
-        bool Exercicio
-        decimal Agua
-        string Observacoes
-        DateTime DataCriacao
+    REGISTROS_DIARIOS {
+        int id PK
+        int usuarioId FK
+        date data
+        int humor
+        decimal sono
+        int produtividade
+        int energia
+        bool exercicio
+        decimal agua
+        string observacoes
+        datetime data_criacao
     }
 
-    Meta {
-        int Id PK
-        int UsuarioId FK
-        string Categoria
-        decimal ValorAlvo
-        string Descricao
-        DateOnly DataInicio
-        DateOnly DataFim
-        bool Ativa
-        DateTime DataCriacao
+    METAS {
+        int id PK
+        int usuarioId FK
+        string categoria
+        decimal valor_alvo
+        string descricao
+        date data_inicio
+        date data_fim
+        bool ativa
+        datetime data_criacao
     }
 
-    Insight {
-        int Id PK
-        int UsuarioId FK
-        string Mensagem
-        string Categoria
-        string Nivel
-        DateTime DataGeracao
-        bool Lido
+    REGISTROS_PESO {
+        int id PK
+        int usuarioId FK
+        decimal valor
+        datetime data
     }
 
-    ConfiguracaoPerfil {
-        int Id PK
-        int UsuarioId FK
-        bool TemaEscuro
-        string Idioma
-        string FusoHorario
-        bool ExibirMetaNoDashboard
-        bool ReceberNotificacoes
-        bool ReceberRelatorioSemanal
+    INSIGHTS {
+        int id PK
+        int usuarioId FK
+        string mensagem
+        string categoria
+        string nivel
+        bool lido
+        datetime data_geracao
     }
 
-    RegistroPeso {
-        int Id PK
-        int UsuarioId FK
-        decimal Valor
-        DateTime Data
+    CONFIGURACOES_PERFIL {
+        int id PK
+        int usuarioId FK
+        bool tema_escuro
+        string idioma
+        string fuso_horario
+        bool receber_notificacoes
     }
 ```
 
