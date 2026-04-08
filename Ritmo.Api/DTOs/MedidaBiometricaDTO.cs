@@ -1,12 +1,20 @@
+using System.ComponentModel.DataAnnotations;
 using Ritmo.Api.Models;
 
 namespace Ritmo.Api.DTOs;
 
 public class MedidaBiometricaRequest
 {
+    [Range(1, int.MaxValue, ErrorMessage = "UsuarioId deve ser maior que zero.")]
     public int UsuarioId { get; set; }
+
+    [Range(typeof(decimal), "10", "600", ErrorMessage = "Peso deve estar entre 10 e 600 kg.")]
     public decimal Peso { get; set; }
+
+    [Range(50, 280, ErrorMessage = "Altura deve estar entre 50 e 280 cm.")]
     public int Altura { get; set; }
+
+    [Required(ErrorMessage = "Data da medição é obrigatória.")]
     public DateTime Data { get; set; } = DateTime.UtcNow;
 
     public MedidaBiometrica ToEntity()

@@ -1,17 +1,33 @@
+using System.ComponentModel.DataAnnotations;
 namespace Ritmo.Api.DTOs;
 
 using Ritmo.Api.Models;
 
 public class RegistroDiarioRequest
 {
+    [Range(1, int.MaxValue, ErrorMessage = "UsuarioId deve ser maior que zero.")]
     public int UsuarioId { get; set; }
+
+    [Required(ErrorMessage = "Data é obrigatória.")]
     public DateOnly Data { get; set; }
+
+    [Range(1, 5, ErrorMessage = "Humor deve estar entre 1 e 5.")]
     public int Humor { get; set; }
+
+    [Range(typeof(decimal), "0", "24", ErrorMessage = "Sono deve estar entre 0 e 24 horas.")]
     public decimal Sono { get; set; }
+
+    [Range(1, 5, ErrorMessage = "Produtividade deve estar entre 1 e 5.")]
     public int Produtividade { get; set; }
+
+    [Range(1, 5, ErrorMessage = "Energia deve estar entre 1 e 5.")]
     public int Energia { get; set; }
     public bool Exercicio { get; set; }
+
+    [Range(typeof(decimal), "0", "25", ErrorMessage = "Água deve estar entre 0 e 25 litros.")]
     public decimal Agua { get; set; }
+
+    [StringLength(1000, ErrorMessage = "Observações devem ter no máximo 1000 caracteres.")]
     public string? Observacoes { get; set; }
 
     public RegistroDiario ToEntity()

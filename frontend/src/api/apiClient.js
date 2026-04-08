@@ -32,7 +32,15 @@ apiClient.interceptors.response.use(
       }
     }
 
-    console.error('API Error:', error.response?.data?.mensagem || error.message);
+    const apiMessage = error.response?.data?.mensagem || error.message;
+    const validationErrors = error.response?.data?.erros;
+
+    if (validationErrors) {
+      console.error('API Validation Error:', apiMessage, validationErrors);
+    } else {
+      console.error('API Error:', apiMessage);
+    }
+
     return Promise.reject(error);
   }
 );

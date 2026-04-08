@@ -1,6 +1,7 @@
 // Program.cs
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Ritmo.Api.Data;
@@ -17,6 +18,26 @@ var builder = WebApplication.CreateBuilder(args);
 // Registra os Controllers no sistema de Injeção de Dependência.
 // Sem isso, o .NET não sabe que existem Controllers na aplicação.
 builder.Services.AddControllers();
+builder.Services.Configure<ApiBehaviorOptions>(options =>
+{
+    options.InvalidModelStateResponseFactory = context =>
+    {
+        var errors = context.ModelState
+            .Where(entry => entry.Value?.Errors.Count > 0)
+            .ToDictionary(
+                entry => entry.Key,
+                entry => entry.Value!.Errors.Select(error =>
+                    string.IsNullOrWhiteSpace(error.ErrorMessage)
+                        ? "Valor inválido."
+                        : error.ErrorMessage).ToArray());
+
+        return new BadRequestObjectResult(new
+        {
+            mensagem = "Os dados enviados são inválidos.",
+            erros = errors
+        });
+    };
+});
 
 // Registra o AppDbContext no sistema de Injeção de Dependência.
 // Isso permite que os Controllers recebam o AppDbContext automaticamente
