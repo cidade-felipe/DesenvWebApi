@@ -134,10 +134,17 @@ export default function Dashboard() {
     { metric: 'Ação Física', value: Number(((registros.filter(r => r.exercicio).length / registros.length) * 5).toFixed(1)) }
   ] : [];
 
-  const weightDataForChart = biometria.slice().reverse().map(p => ({
-    data: p.data.split('T')[0].split('-').reverse().slice(0, 2).join('/'),
-    peso: p.peso
-  }));
+  const weightDataForChart = [];
+  const datasVistas = new Set();
+  
+  for (const p of biometria) {
+    const dataFormatada = p.data.split('T')[0].split('-').reverse().slice(0, 2).join('/');
+    if (!datasVistas.has(dataFormatada)) {
+      datasVistas.add(dataFormatada);
+      weightDataForChart.push({ data: dataFormatada, peso: p.peso });
+    }
+  }
+  weightDataForChart.reverse(); // Inverte para ordem cronológica no gráfico
 
   // --- Lógica de Metas ---
   const handleExcluirMeta = async (id) => {
