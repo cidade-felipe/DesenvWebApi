@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Ritmo.Api.Data;
 using Ritmo.Api.DTOs;
 using Ritmo.Api.Models;
+using Ritmo.Api.Security;
 
 namespace Ritmo.Api.Services;
 
@@ -30,26 +31,39 @@ public class UsuarioService
 
     public async Task<UsuarioResponse?> Login(LoginRequest request)
     {
+        var emailNormalizado = request.Email.Trim().ToLowerInvariant();
         var usuario = await _context.Usuarios
-            .FirstOrDefaultAsync(u => u.Email == request.Email && u.Senha == request.Senha);
+            .FirstOrDefaultAsync(u => u.Email == emailNormalizado);
 
-        return usuario != null ? UsuarioResponse.FromEntity(usuario) : null;
+        if (usuario == null || !PasswordHasher.Verify(request.Senha, usuario.Senha))
+        {
+            return null;
+        }
+
+        if (PasswordHasher.NeedsRehash(usuario.Senha))
+        {
+            usuario.Senha = PasswordHasher.Hash(request.Senha);
+            await _context.SaveChangesAsync();
+        }
+
+        return UsuarioResponse.FromEntity(usuario);
     }
 
     public async Task<UsuarioResponse?> Criar(UsuarioRequest request)
     {
+        var emailNormalizado = request.Email.Trim().ToLowerInvariant();
         var emailExistente = await _context.Usuarios
-            .AnyAsync(u => u.Email == request.Email);
+            .AnyAsync(u => u.Email == emailNormalizado);
 
         if (emailExistente) return null;
 
         var usuario = new Usuario
         {
-            Nome = request.Nome,
-            Email = request.Email,
-            Senha = request.Senha,
+            Nome = request.Nome.Trim(),
+            Email = emailNormalizado,
+            Senha = PasswordHasher.Hash(request.Senha),
             DataNascimento = request.DataNascimento,
-            Sexo = request.Sexo,
+            Sexo = request.Sexo.Trim().ToUpperInvariant(),
             DataCriacao = DateTime.UtcNow,
             ConfiguracaoPerfil = new ConfiguracaoPerfil()
         };
@@ -66,8 +80,10 @@ public class UsuarioService
 
         if (usuarioExistente == null) return false;
 
-        usuarioExistente.Nome = request.Nome;
-        usuarioExistente.Senha = request.Senha;
+        usuarioExistente.Nome = request.Nome.Trim();
+        usuarioExistente.Senha = PasswordHasher.Hash(request.Senha);
+        usuarioExistente.DataNascimento = request.DataNascimento;
+        usuarioExistente.Sexo = request.Sexo.Trim().ToUpperInvariant();
 
         await _context.SaveChangesAsync();
 

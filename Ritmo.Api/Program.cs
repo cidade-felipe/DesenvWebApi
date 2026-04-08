@@ -21,8 +21,16 @@ builder.Services.AddControllers();
 // options.UseNpgsql(...) diz ao EF para usar o PostgreSQL como banco.
 // builder.Configuration.GetConnectionString("DefaultConnection") lê
 // a connection string do appsettings.json.
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+if (string.IsNullOrWhiteSpace(connectionString))
+{
+    throw new InvalidOperationException(
+        "ConnectionStrings:DefaultConnection não foi configurada. " +
+        "Defina esse valor via appsettings local ou variável de ambiente.");
+}
+
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(connectionString));
 
 // Serviços de Negócio (Desacoplados)
 builder.Services.AddScoped<Ritmo.Api.Services.RegistroDiarioService>();
@@ -43,9 +51,19 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("PermitirTudo", policy =>
     {
-        policy.AllowAnyOrigin()   // Permite qualquer origem (domínio/porta)
-              .AllowAnyMethod()   // Permite GET, POST, PUT, DELETE, etc.
-              .AllowAnyHeader();  // Permite qualquer cabeçalho HTTP
+        var allowedOrigins = builder.Configuration
+            .GetSection("Cors:AllowedOrigins")
+            .Get<string[]>() ?? [];
+
+        if (allowedOrigins.Length == 0)
+        {
+            throw new InvalidOperationException(
+                "Nenhuma origem foi configurada em Cors:AllowedOrigins.");
+        }
+
+        policy.WithOrigins(allowedOrigins)
+              .AllowAnyMethod()
+              .AllowAnyHeader();
     });
 });
 

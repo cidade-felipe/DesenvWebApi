@@ -1,3 +1,0 @@
-﻿<Project>
-  <Import Project="..\build\Ritmo.Api.props" />
-</Project>
