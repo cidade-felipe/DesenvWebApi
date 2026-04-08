@@ -7,6 +7,8 @@ public class UsuarioRequest
     public string Nome { get; set; } = null!;
     public string Email { get; set; } = null!;
     public string Senha { get; set; } = null!;
+    public DateOnly DataNascimento { get; set; }
+    public string Sexo { get; set; } = null!;
 }
 
 public class LoginRequest
@@ -22,6 +24,8 @@ public class UsuarioResponse
     public string Nome { get; set; } = null!;
     public string Email { get; set; } = null!;
     public DateTime DataCriacao { get; set; }
+    public DateOnly DataNascimento { get; set; }
+    public string Sexo { get; set; } = null!;
 
     public static UsuarioResponse FromEntity(Usuario entity)
     {
@@ -30,7 +34,9 @@ public class UsuarioResponse
             Id = entity.Id,
             Nome = entity.Nome,
             Email = entity.Email,
-            DataCriacao = entity.DataCriacao
+            DataCriacao = entity.DataCriacao,
+            DataNascimento = entity.DataNascimento,
+            Sexo = entity.Sexo
         };
     }
 }

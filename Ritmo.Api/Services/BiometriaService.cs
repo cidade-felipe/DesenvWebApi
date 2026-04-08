@@ -17,11 +17,12 @@ public class BiometriaService
     public async Task<IEnumerable<MedidaBiometricaResponse>> ListarPorUsuario(int usuarioId)
     {
         var medidas = await _context.MedidasBiometricas
+            .Include(m => m.Usuario)
             .Where(m => m.UsuarioId == usuarioId)
             .OrderByDescending(m => m.Data)
             .ToListAsync();
 
-        return medidas.Select(MedidaBiometricaResponse.FromEntity);
+        return medidas.Select(m => MedidaBiometricaResponse.FromEntity(m, m.Usuario!.DataNascimento));
     }
 
     public async Task<MedidaBiometricaResponse> Registrar(MedidaBiometricaRequest dto)
@@ -30,7 +31,9 @@ public class BiometriaService
         _context.MedidasBiometricas.Add(novaMedida);
         await _context.SaveChangesAsync();
 
-        return MedidaBiometricaResponse.FromEntity(novaMedida);
+        var usuario = await _context.Usuarios.FindAsync(dto.UsuarioId);
+
+        return MedidaBiometricaResponse.FromEntity(novaMedida, usuario!.DataNascimento);
     }
 
     public async Task<bool> Deletar(int id)

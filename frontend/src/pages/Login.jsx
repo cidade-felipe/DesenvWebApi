@@ -9,7 +9,9 @@ export default function Login() {
   const [formData, setFormData] = useState({
     nome: '',
     email: '',
-    senha: ''
+    senha: '',
+    dataNascimento: '',
+    sexo: 'M'
   });
   const [error, setError] = useState(null);
 
@@ -55,17 +57,42 @@ export default function Login() {
 
         <form onSubmit={handleSubmit}>
           {isRegistering && (
-            <div className="input-group">
-              <label className="input-label">Nome Completo</label>
-              <input 
-                type="text" 
-                className="input-field" 
-                placeholder="Ex: Felipe Cidade"
-                value={formData.nome}
-                onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
-                required={isRegistering}
-              />
-            </div>
+            <>
+              <div className="input-group">
+                <label className="input-label">Nome Completo</label>
+                <input 
+                  type="text" 
+                  className="input-field" 
+                  placeholder="Ex: Felipe Cidade"
+                  value={formData.nome}
+                  onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
+                  required={isRegistering}
+                />
+              </div>
+              <div className="input-group" style={{ display: 'flex', gap: '1rem' }}>
+                <div style={{ flex: 1 }}>
+                  <label className="input-label">Data de Nascimento</label>
+                  <input 
+                    type="date" 
+                    className="input-field" 
+                    value={formData.dataNascimento}
+                    onChange={(e) => setFormData({ ...formData, dataNascimento: e.target.value })}
+                    required={isRegistering}
+                  />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label className="input-label">Sexo Biológico</label>
+                  <select 
+                    className="input-field"
+                    value={formData.sexo}
+                    onChange={(e) => setFormData({ ...formData, sexo: e.target.value })}
+                  >
+                    <option value="M">Masculino</option>
+                    <option value="F">Feminino</option>
+                  </select>
+                </div>
+              </div>
+            </>
           )}
 
           <div className="input-group">

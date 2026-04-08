@@ -19,8 +19,11 @@ public class Usuario
     // será substituída por hash (ex: BCrypt).
     public required string Senha { get; set; }
 
-    // Data de criação da conta.
     public DateTime DataCriacao { get; set; } = DateTime.UtcNow;
+
+    // Campos médicos e demográficos necessários para o acompanhamento gerátrico/adulto
+    public DateOnly DataNascimento { get; set; }
+    public required string Sexo { get; set; }
 
 
     // Propriedades de navegação — relações 1:N.

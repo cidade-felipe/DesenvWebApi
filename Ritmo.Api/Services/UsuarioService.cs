@@ -48,6 +48,8 @@ public class UsuarioService
             Nome = request.Nome,
             Email = request.Email,
             Senha = request.Senha,
+            DataNascimento = request.DataNascimento,
+            Sexo = request.Sexo,
             DataCriacao = DateTime.UtcNow,
             ConfiguracaoPerfil = new ConfiguracaoPerfil()
         };

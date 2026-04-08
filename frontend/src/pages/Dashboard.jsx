@@ -98,19 +98,13 @@ export default function Dashboard() {
     return biometria[0].imc;
   };
 
-  const getIMCCategory = (imc) => {
-    if (!imc) return { label: 'Aguardando Dados', color: 'gray' };
-    const val = parseFloat(imc);
-    if (val < 18.5) return { label: 'Abaixo do peso', color: '#f1c40f' };
-    if (val < 25) return { label: 'Peso normal', color: '#2ecc71' };
-    if (val < 30) return { label: 'Sobrepeso', color: '#e67e22' };
-    if (val < 35) return { label: 'Obesidade grau I', color: '#e74c3c' };
-    if (val < 40) return { label: 'Obesidade grau II', color: '#c0392b' };
-    return { label: 'Obesidade grau III', color: '#900C3F' };
-  };
-
   const imcAtual = calculaIMC();
-  const imcMeta = getIMCCategory(imcAtual);
+  
+  // Pegamos a classificação e cor mastigadas enviadas pela API
+  const imcMeta = {
+    label: biometria.length > 0 && imcAtual ? biometria[0].imcClassificacao : 'Aguardando Dados',
+    color: biometria.length > 0 && imcAtual ? biometria[0].imcCor : 'gray'
+  };
   const avgHumor = registros.length > 0 ? (registros.reduce((acc, r) => acc + r.humor, 0) / registros.length).toFixed(1) : '0';
   const avgAgua = registros.length > 0 ? (registros.reduce((acc, r) => acc + r.agua, 0) / registros.length).toFixed(1) : '0';
   const avgSono = registros.length > 0 ? (registros.reduce((acc, r) => acc + r.sono, 0) / registros.length).toFixed(1) : '0';
