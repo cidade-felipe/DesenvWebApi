@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Ritmo.Api.Data;
+using Ritmo.Api.Exceptions;
 using Ritmo.Api.Security;
 
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
@@ -129,6 +130,32 @@ builder.Services.AddCors(options =>
 // requisição HTTP antes de chegar no Controller).
 // =====================================================================
 var app = builder.Build();
+
+app.UseExceptionHandler(exceptionHandler =>
+{
+    exceptionHandler.Run(async context =>
+    {
+        var exception = context.Features.Get<Microsoft.AspNetCore.Diagnostics.IExceptionHandlerFeature>()?.Error;
+
+        if (exception is DomainValidationException domainException)
+        {
+            context.Response.StatusCode = StatusCodes.Status400BadRequest;
+            context.Response.ContentType = "application/json";
+            await context.Response.WriteAsJsonAsync(new
+            {
+                mensagem = domainException.Message
+            });
+            return;
+        }
+
+        context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+        context.Response.ContentType = "application/json";
+        await context.Response.WriteAsJsonAsync(new
+        {
+            mensagem = "Ocorreu um erro interno inesperado."
+        });
+    });
+});
 
 // Ativa o Swagger apenas no ambiente de desenvolvimento.
 // Em produção, a documentação seria protegida ou desativada.

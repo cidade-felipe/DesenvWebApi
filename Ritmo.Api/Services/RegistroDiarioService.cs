@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Ritmo.Api.Data;
 using Ritmo.Api.DTOs;
+using Ritmo.Api.Exceptions;
 using Ritmo.Api.Models;
 
 namespace Ritmo.Api.Services;
@@ -41,6 +42,8 @@ public class RegistroDiarioService
 
     public async Task<RegistroDiarioResponse> UpsertRegistro(RegistroDiarioRequest dto)
     {
+        await ValidateRegistro(dto);
+
         // Lógica de "Um registro por dia" (Upsert)
         var registroExistente = await _context.RegistrosDiarios
             .FirstOrDefaultAsync(r => r.UsuarioId == dto.UsuarioId && r.Data == dto.Data);
@@ -62,6 +65,8 @@ public class RegistroDiarioService
 
     public async Task<bool> Atualizar(int id, RegistroDiarioRequest dto)
     {
+        await ValidateRegistro(dto);
+
         var registroExistente = await _context.RegistrosDiarios.FindAsync(id);
         if (registroExistente == null) return false;
 
@@ -78,5 +83,25 @@ public class RegistroDiarioService
         _context.RegistrosDiarios.Remove(registro);
         await _context.SaveChangesAsync();
         return true;
+    }
+
+    private async Task ValidateRegistro(RegistroDiarioRequest dto)
+    {
+        var usuario = await _context.Usuarios.FindAsync(dto.UsuarioId);
+        if (usuario == null)
+        {
+            throw new DomainValidationException("Usuário informado para o registro não existe.");
+        }
+
+        var hoje = DateOnly.FromDateTime(DateTime.UtcNow);
+        if (dto.Data > hoje)
+        {
+            throw new DomainValidationException("Data do registro não pode estar no futuro.");
+        }
+
+        if (dto.Data < usuario.DataNascimento)
+        {
+            throw new DomainValidationException("Data do registro não pode ser anterior ao nascimento do usuário.");
+        }
     }
 }

@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Ritmo.Api.Data;
 using Ritmo.Api.DTOs;
+using Ritmo.Api.Exceptions;
 using Ritmo.Api.Models;
 using Ritmo.Api.Security;
 
@@ -53,6 +54,8 @@ public class UsuarioService
 
     public async Task<UsuarioResponse?> Criar(UsuarioRequest request)
     {
+        ValidateUsuarioRequest(request);
+
         var emailNormalizado = request.Email.Trim().ToLowerInvariant();
         var emailExistente = await _context.Usuarios
             .AnyAsync(u => u.Email == emailNormalizado);
@@ -90,6 +93,8 @@ public class UsuarioService
 
     public async Task<bool> Atualizar(int id, UsuarioRequest request)
     {
+        ValidateUsuarioRequest(request);
+
         var usuarioExistente = await _context.Usuarios.FindAsync(id);
 
         if (usuarioExistente == null) return false;
@@ -126,5 +131,27 @@ public class UsuarioService
             ExpiresAt = tokenData.ExpiresAt,
             Usuario = UsuarioResponse.FromEntity(usuario)
         };
+    }
+
+    private static void ValidateUsuarioRequest(UsuarioRequest request)
+    {
+        var hoje = DateOnly.FromDateTime(DateTime.UtcNow);
+
+        if (request.DataNascimento > hoje)
+        {
+            throw new DomainValidationException("Data de nascimento não pode estar no futuro.");
+        }
+
+        var idade = hoje.Year - request.DataNascimento.Year;
+        if (hoje.Month < request.DataNascimento.Month ||
+            (hoje.Month == request.DataNascimento.Month && hoje.Day < request.DataNascimento.Day))
+        {
+            idade--;
+        }
+
+        if (idade < 0 || idade > 120)
+        {
+            throw new DomainValidationException("Data de nascimento deve resultar em idade entre 0 e 120 anos.");
+        }
     }
 }
