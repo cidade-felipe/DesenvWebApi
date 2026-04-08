@@ -16,6 +16,10 @@ AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 // =====================================================================
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Configuration
+    .AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true)
+    .AddEnvironmentVariables();
+
 // Registra os Controllers no sistema de Injeção de Dependência.
 // Sem isso, o .NET não sabe que existem Controllers na aplicação.
 builder.Services.AddControllers();

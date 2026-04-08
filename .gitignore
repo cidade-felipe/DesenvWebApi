@@ -15,3 +15,6 @@ frontend/dist/
 # Logs and temp files
 *.log
 *.tmp
+
+# Local secrets
+Ritmo.Api/appsettings.Local.json
