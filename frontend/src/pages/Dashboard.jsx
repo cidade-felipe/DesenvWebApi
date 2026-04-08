@@ -113,6 +113,18 @@ export default function Dashboard() {
   const avgAgua = registros.length > 0 ? (registros.reduce((acc, r) => acc + r.agua, 0) / registros.length).toFixed(1) : '0';
   const avgSono = registros.length > 0 ? (registros.reduce((acc, r) => acc + r.sono, 0) / registros.length).toFixed(1) : '0';
 
+  // Faixa de peso ideal: IMC saudável (18.5 a 24.9) aplicado à altura atual
+  const calcPesoIdeal = () => {
+    const altura = biometria[0]?.altura;
+    if (!altura) return null;
+    const alturaM = altura / 100;
+    return {
+      min: (18.5 * alturaM * alturaM).toFixed(1),
+      max: (24.9 * alturaM * alturaM).toFixed(1),
+    };
+  };
+  const pesoIdeal = calcPesoIdeal();
+
   const radarData = registros.length > 0 ? [
     { metric: 'Humor', value: Number(avgHumor) },
     { metric: 'Energia', value: Number((registros.reduce((acc, r) => acc + r.energia, 0) / registros.length).toFixed(1)) },
@@ -186,7 +198,7 @@ export default function Dashboard() {
           <div className="tab-content">
             {activeTab === 'panorama' && (
               <>
-                <StatsCards imc={imcAtual} imcMeta={imcMeta} pesoAtual={biometria[0]?.peso} pesoAnterior={biometria[1]?.peso} avgHumor={avgHumor} avgSono={avgSono} avgAgua={avgAgua} />
+                <StatsCards imc={imcAtual} imcMeta={imcMeta} pesoAtual={biometria[0]?.peso} pesoAnterior={biometria[1]?.peso} pesoIdeal={pesoIdeal} avgHumor={avgHumor} avgSono={avgSono} avgAgua={avgAgua} />
                 <ChartsContainer type="panorama" data={registros} radarData={radarData} />
               </>
             )}
