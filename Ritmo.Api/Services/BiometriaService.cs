@@ -23,7 +23,15 @@ public class BiometriaService
             .OrderByDescending(m => m.Data)
             .ToListAsync();
 
-        return medidas.Select(m => MedidaBiometricaResponse.FromEntity(m, m.Usuario!.DataNascimento));
+        var medidasConsolidadas = medidas
+            .GroupBy(m => DateOnly.FromDateTime(m.Data))
+            .Select(group => group
+                .OrderByDescending(m => m.Data)
+                .First())
+            .OrderByDescending(m => m.Data)
+            .ToList();
+
+        return medidasConsolidadas.Select(m => MedidaBiometricaResponse.FromEntity(m, m.Usuario!.DataNascimento));
     }
 
     public async Task<MedidaBiometricaResponse> Registrar(MedidaBiometricaRequest dto)
@@ -36,11 +44,30 @@ public class BiometriaService
 
         ValidateBiometria(dto, usuario);
 
+        var dataReferencia = dto.Data.Date;
+        var proximoDia = dataReferencia.AddDays(1);
+
+        var medidaExistente = await _context.MedidasBiometricas
+            .FirstOrDefaultAsync(m =>
+                m.UsuarioId == dto.UsuarioId &&
+                m.Data >= dataReferencia &&
+                m.Data < proximoDia);
+
+        if (medidaExistente != null)
+        {
+            medidaExistente.Peso = dto.Peso;
+            medidaExistente.Altura = dto.Altura;
+            medidaExistente.Data = dto.Data;
+            await _context.SaveChangesAsync();
+
+            return MedidaBiometricaResponse.FromEntity(medidaExistente, usuario.DataNascimento);
+        }
+
         var novaMedida = dto.ToEntity();
         _context.MedidasBiometricas.Add(novaMedida);
         await _context.SaveChangesAsync();
 
-        return MedidaBiometricaResponse.FromEntity(novaMedida, usuario!.DataNascimento);
+        return MedidaBiometricaResponse.FromEntity(novaMedida, usuario.DataNascimento);
     }
 
     public async Task<bool> Deletar(int id)
