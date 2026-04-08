@@ -19,6 +19,7 @@ public class BiometriaService
         var medidas = await _context.MedidasBiometricas
             .Where(m => m.UsuarioId == usuarioId)
             .OrderByDescending(m => m.Data)
+            .ThenByDescending(m => m.Id)
             .ToListAsync();
 
         return medidas.Select(MedidaBiometricaResponse.FromEntity);
