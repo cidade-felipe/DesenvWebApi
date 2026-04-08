@@ -25,29 +25,23 @@ export default function Dashboard() {
     humor: 3, sono: 8, produtividade: 3, energia: 3, exercicio: false, agua: 2.0, observacoes: '', peso: '', altura: ''
   });
 
-  // Verifica se já existe registro para hoje
-  const hoje = new Date().toISOString().split('T')[0];
-  const registroHoje = registros.find(r => r.data === hoje || r.data?.startsWith(hoje));
-
   // --- Handlers de Ações ---
   const handleSalvar = async (e) => {
     e.preventDefault();
     try {
       const payload = { ...formData, usuarioId: user.id };
       if (editandoId) {
-        // Edição explícita via lápis: usa PUT com o ID conhecido
         await apiClient.put(`/registrosdiarios/${editandoId}`, payload);
       } else {
-        // Novo registro via FAB: usa POST com Upsert (evita duplicação por data)
         await apiClient.post('/registrosdiarios', payload);
       }
 
       if (formData.peso && formData.altura) {
-        await apiClient.post('/biometria', {
-          usuarioId: user.id,
-          peso: parseFloat(formData.peso),
+        await apiClient.post('/biometria', { 
+          usuarioId: user.id, 
+          peso: parseFloat(formData.peso), 
           altura: parseInt(formData.altura),
-          data: formData.data
+          data: formData.data 
         });
       }
 
@@ -60,33 +54,7 @@ export default function Dashboard() {
 
   const handleEditar = (registro) => {
     setEditandoId(registro.id);
-    setFormData({
-      ...registro,
-      observacoes: registro.observacoes || '',
-      peso: '',   // campos de biometria são opcionais na edição
-      altura: ''
-    });
-    setIsModalOpen(true);
-  };
-
-  // Abre o FAB: se já tem registro hoje, carrega os dados para atualizar
-  const handleAbrirFab = () => {
-    if (registroHoje) {
-      setEditandoId(null); // usa upsert via POST, não precisa do ID
-      setFormData({
-        ...registroHoje,
-        observacoes: registroHoje.observacoes || '',
-        peso: '',
-        altura: ''
-      });
-    } else {
-      setEditandoId(null);
-      setFormData({
-        data: hoje,
-        humor: 3, sono: 8, produtividade: 3, energia: 3,
-        exercicio: false, agua: 2.0, observacoes: '', peso: '', altura: ''
-      });
-    }
+    setFormData({ ...registro, observacoes: registro.observacoes || '' });
     setIsModalOpen(true);
   };
 
@@ -217,7 +185,6 @@ export default function Dashboard() {
           isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSubmit={handleSalvar} 
           formData={formData} setFormData={setFormData} editandoId={editandoId} 
           ultimaAltura={biometria[0]?.altura}
-          ehHoje={!editandoId && !!registroHoje}
         />
 
         <main className="main-content" style={{ width: '100%' }}>
@@ -334,14 +301,7 @@ export default function Dashboard() {
         </main>
       </div>
 
-      <button className="fab-btn animate-fade-up" onClick={handleAbrirFab}>
-        <Activity size={32} />
-        {registroHoje && (
-          <span style={{ fontSize: '0.6rem', position: 'absolute', bottom: '6px', left: '50%', transform: 'translateX(-50%)', whiteSpace: 'nowrap', color: 'var(--accent-cyan)', fontWeight: 700 }}>
-            HOJE ✓
-          </span>
-        )}
-      </button>
+      <button className="fab-btn animate-fade-up" onClick={() => { setEditandoId(null); setIsModalOpen(true); }}><Activity size={32} /></button>
 
       {/* Novo Modal de Gestão de Metas */}
       <MetaFormModal 

@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { X, Scale, Ruler } from 'lucide-react';
 
-export function DataFormModal({ isOpen, onClose, onSubmit, formData, setFormData, editandoId, ultimaAltura, ehHoje }) {
+export function DataFormModal({ isOpen, onClose, onSubmit, formData, setFormData, editandoId, ultimaAltura }) {
   useEffect(() => {
     // Se for um novo registro e tivermos a última altura salva, preenchemos automaticamente
     if (!editandoId && ultimaAltura && !formData.altura) {
@@ -11,16 +11,12 @@ export function DataFormModal({ isOpen, onClose, onSubmit, formData, setFormData
 
   if (!isOpen) return null;
 
-  // Determina título e texto do botão conforme o contexto
-  const titulo = editandoId ? 'Editar Registro' : ehHoje ? 'Atualizar Hoje' : 'Novo Registro';
-  const textoBotao = editandoId ? 'Salvar Alterações' : ehHoje ? 'Atualizar Dados de Hoje' : 'Computar Dados';
-
   return (
     <div className="modal-overlay" onClick={(e) => e.target.className === 'modal-overlay' && onClose()}>
       <div className="modal-content glass-panel animate-fade-up">
         <div className="modal-close-header">
           <h3 style={{ margin: 0, color: 'var(--accent-cyan)' }}>
-            {titulo}
+            {editandoId ? 'Refinando o Dia' : 'Injetar Novo Registro'}
           </h3>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-main)', cursor: 'pointer' }}>
             <X size={24} />
@@ -84,7 +80,7 @@ export function DataFormModal({ isOpen, onClose, onSubmit, formData, setFormData
           </label>
 
           <button type="submit" className="btn-primary" style={{ marginTop: '1rem' }}>
-            {textoBotao}
+            {editandoId ? 'Atualizar Histórico' : 'Computar Dados'}
           </button>
         </form>
 
