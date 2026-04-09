@@ -132,10 +132,12 @@ export default function Dashboard() {
   const datasVistas = new Set();
   
   for (const p of biometria) {
-    const dataFormatada = p.data.split('T')[0].split('-').reverse().slice(0, 2).join('/');
+    const fullDate = p.data.split('T')[0];
+    const [year, month, day] = fullDate.split('-');
+    const dataFormatada = `${day}/${month}/${year.slice(-2)}`;
     if (!datasVistas.has(dataFormatada)) {
       datasVistas.add(dataFormatada);
-      weightDataForChart.push({ data: dataFormatada, peso: p.peso });
+      weightDataForChart.push({ data: dataFormatada, fullDate, peso: p.peso });
     }
   }
   weightDataForChart.reverse(); // Inverte para ordem cronológica no gráfico
