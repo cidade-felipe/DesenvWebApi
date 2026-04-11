@@ -169,7 +169,16 @@ export default function Dashboard() {
         .sort((a, b) => new Date(a.data) - new Date(b.data));
 
       if (medidasOrdenadas.length === 0) {
-        return { percent: 0, current: 0, status: 'atrasado', unit: 'kg', currentLabel: 'Peso atual' };
+        return {
+          percent: 0,
+          current: 0,
+          status: 'atrasado',
+          unit: 'kg',
+          currentLabel: 'Peso atual',
+          targetLabel: `${Number(meta.valorAlvo).toFixed(1)} kg`,
+          detailText: 'Sem biometria suficiente para comparar com a meta.',
+          secondaryText: 'Registre seu peso para ativar este acompanhamento.'
+        };
       }
 
       const dataInicioMeta = new Date(`${meta.dataInicio}T00:00:00`);
@@ -177,26 +186,64 @@ export default function Dashboard() {
       const baseline = medidasDesdeInicio[0] || medidasOrdenadas[0];
       const atual = medidasOrdenadas[medidasOrdenadas.length - 1];
 
-      const distanciaInicial = Math.abs(Number(baseline.peso) - Number(meta.valorAlvo));
-      const distanciaAtual = Math.abs(Number(atual.peso) - Number(meta.valorAlvo));
+      const pesoInicial = Number(baseline.peso);
+      const pesoAtual = Number(atual.peso);
+      const pesoMeta = Number(meta.valorAlvo);
+      const tolerancia = 0.5;
 
       let progresso = 0;
-      if (distanciaInicial === 0) {
-        progresso = 100;
-      } else {
-        progresso = ((distanciaInicial - distanciaAtual) / distanciaInicial) * 100;
-      }
+      let status = 'atrasado';
+      let detailText = '';
+      let secondaryText = '';
+      let targetLabel = `${pesoMeta.toFixed(1)} kg`;
 
-      if (distanciaAtual <= 0.5) {
-        progresso = 100;
+      if (Math.abs(pesoInicial - pesoMeta) <= tolerancia) {
+        const distanciaAtual = Math.abs(pesoAtual - pesoMeta);
+        progresso = distanciaAtual <= tolerancia ? 100 : 0;
+        status = distanciaAtual <= tolerancia ? 'concluido' : distanciaAtual <= 2 ? 'em_dia' : 'atrasado';
+        detailText = distanciaAtual <= tolerancia
+          ? 'Meta mantida na faixa do alvo'
+          : pesoAtual > pesoMeta
+            ? `${distanciaAtual.toFixed(1)} kg acima da faixa alvo`
+            : `${distanciaAtual.toFixed(1)} kg abaixo da faixa alvo`;
+        secondaryText = distanciaAtual <= tolerancia
+          ? `Objetivo de manutenção em torno de ${pesoMeta.toFixed(1)} kg`
+          : `Objetivo é voltar para perto de ${pesoMeta.toFixed(1)} kg`;
+      } else if (pesoInicial > pesoMeta) {
+        const distanciaInicial = pesoInicial - pesoMeta;
+        const distanciaAtual = Math.max(0, pesoAtual - pesoMeta);
+        progresso = distanciaInicial === 0 ? 100 : ((distanciaInicial - distanciaAtual) / distanciaInicial) * 100;
+        status = pesoAtual <= pesoMeta ? 'concluido' : distanciaAtual <= 2 ? 'em_dia' : 'atrasado';
+        targetLabel = `${pesoMeta.toFixed(1)} kg ou menos`;
+        detailText = pesoAtual <= pesoMeta
+          ? `Meta atingida, ${(pesoMeta - pesoAtual).toFixed(1)} kg abaixo da meta`
+          : `${distanciaAtual.toFixed(1)} kg acima da meta`;
+        secondaryText = pesoAtual <= pesoMeta
+          ? `Objetivo era chegar em ${pesoMeta.toFixed(1)} kg ou menos`
+          : `${Math.max(0, Math.min(Math.round(progresso), 100))}% do caminho até ${pesoMeta.toFixed(1)} kg ou menos`;
+      } else {
+        const distanciaInicial = pesoMeta - pesoInicial;
+        const distanciaAtual = Math.max(0, pesoMeta - pesoAtual);
+        progresso = distanciaInicial === 0 ? 100 : ((distanciaInicial - distanciaAtual) / distanciaInicial) * 100;
+        status = pesoAtual >= pesoMeta ? 'concluido' : distanciaAtual <= 2 ? 'em_dia' : 'atrasado';
+        targetLabel = `${pesoMeta.toFixed(1)} kg ou mais`;
+        detailText = pesoAtual >= pesoMeta
+          ? `Meta atingida, ${(pesoAtual - pesoMeta).toFixed(1)} kg acima da meta`
+          : `${distanciaAtual.toFixed(1)} kg abaixo da meta`;
+        secondaryText = pesoAtual >= pesoMeta
+          ? `Objetivo era chegar em ${pesoMeta.toFixed(1)} kg ou mais`
+          : `${Math.max(0, Math.min(Math.round(progresso), 100))}% do caminho até ${pesoMeta.toFixed(1)} kg ou mais`;
       }
 
       return {
         percent: Math.max(0, Math.min(Math.round(progresso), 100)),
-        current: Number(atual.peso).toFixed(1),
-        status: distanciaAtual <= 0.5 ? 'concluido' : distanciaAtual <= 2 ? 'em_dia' : 'atrasado',
+        current: pesoAtual.toFixed(1),
+        status,
         unit: 'kg',
-        currentLabel: 'Peso atual'
+        currentLabel: 'Peso atual',
+        targetLabel,
+        detailText,
+        secondaryText
       };
     }
 
@@ -320,7 +367,7 @@ export default function Dashboard() {
                           <div className="goal-progress-wrapper">
                             <div className="progress-info">
                               <span>{prog.currentLabel}: <strong>{prog.current}{prog.unit ? ` ${prog.unit}` : ''}</strong></span>
-                              <span>Meta: {meta.valorAlvo}{isTreino || isPeso ? ` ${prog.unit}` : ''}</span>
+                              <span>Meta: {isPeso ? prog.targetLabel : `${meta.valorAlvo}${isTreino ? ` ${prog.unit}` : ''}`}</span>
                             </div>
                             <div className="progress-track">
                               <div 
@@ -330,10 +377,12 @@ export default function Dashboard() {
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '10px' }}>
                               <span style={{ fontSize: '0.75rem', fontWeight: 700, color: color }}>
-                                {prog.percent}% {prog.percent >= 100 ? 'CONCLUÍDO!' : isPeso ? 'APROXIMANDO DO ALVO' : 'EM ANDAMENTO'}
+                                {isPeso
+                                  ? prog.detailText
+                                  : `${prog.percent}% ${prog.percent >= 100 ? 'CONCLUÍDO!' : 'EM ANDAMENTO'}`}
                               </span>
                               <span style={{ fontSize: '0.75rem', opacity: 0.5 }}>
-                                Atualizado agora
+                                {isPeso ? prog.secondaryText : 'Atualizado agora'}
                               </span>
                             </div>
                           </div>

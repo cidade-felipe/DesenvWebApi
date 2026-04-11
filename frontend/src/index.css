@@ -126,6 +126,56 @@ h1, h2, h3, h4 {
   background: rgba(0,0,0,0.5);
 }
 
+.date-input-shell {
+  position: relative;
+}
+
+.date-input-field {
+  padding-right: 170px;
+  color-scheme: dark;
+}
+
+.date-input-field::-webkit-calendar-picker-indicator {
+  opacity: 0;
+  cursor: pointer;
+}
+
+.date-picker-btn {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(102, 252, 241, 0.35);
+  background: rgba(102, 252, 241, 0.12);
+  color: var(--accent-cyan);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.date-picker-btn:hover:not(:disabled) {
+  background: rgba(102, 252, 241, 0.18);
+  border-color: rgba(102, 252, 241, 0.65);
+  box-shadow: 0 0 14px rgba(102, 252, 241, 0.14);
+}
+
+.date-picker-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.date-input-helper {
+  margin-top: 0.45rem;
+  font-size: 0.78rem;
+  color: var(--accent-cyan-dim);
+}
+
 /* Buttons */
 .btn-primary {
   display: inline-flex;
@@ -591,4 +641,21 @@ h1, h2, h3, h4 {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+}
+
+@media (max-width: 640px) {
+  .date-input-field {
+    padding-right: 56px;
+  }
+
+  .date-picker-btn {
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    justify-content: center;
+  }
+
+  .date-picker-btn span {
+    display: none;
+  }
 }

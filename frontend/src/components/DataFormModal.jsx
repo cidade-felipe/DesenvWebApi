@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
-import { X, Scale, Ruler } from 'lucide-react';
+import { X } from 'lucide-react';
+import { DateField } from './DateField';
 
 export function DataFormModal({ isOpen, onClose, onSubmit, formData, setFormData, editandoId, ultimaAltura }) {
   useEffect(() => {
@@ -24,18 +25,15 @@ export function DataFormModal({ isOpen, onClose, onSubmit, formData, setFormData
         </div>
 
         <form onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          <div>
-            <label className="input-label">Data</label>
-            <input 
-              type="date" 
-              className="input-field" 
-              disabled={!!editandoId} 
-              max={new Date().toISOString().split('T')[0]} 
-              value={formData.data} 
-              onChange={(e) => setFormData({...formData, data: e.target.value})} 
-              required 
-            />
-          </div>
+          <DateField
+            label="Data"
+            value={formData.data}
+            onChange={(e) => setFormData({ ...formData, data: e.target.value })}
+            disabled={!!editandoId}
+            max={new Date().toISOString().split('T')[0]}
+            required
+            helperText={editandoId ? 'A data do registro já existente fica travada para preservar o histórico.' : 'Use o botão ao lado para abrir o calendário com mais clareza.'}
+          />
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
             <div>

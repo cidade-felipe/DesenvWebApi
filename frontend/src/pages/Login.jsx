@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Activity } from 'lucide-react';
 import apiClient from '../api/apiClient';
 import { saveAuthSession } from '../auth/authStorage';
+import { DateField } from '../components/DateField';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -71,16 +72,14 @@ export default function Login() {
                 />
               </div>
               <div className="input-group" style={{ display: 'flex', gap: '1rem' }}>
-                <div style={{ flex: 1 }}>
-                  <label className="input-label">Data de Nascimento</label>
-                  <input 
-                    type="date" 
-                    className="input-field" 
-                    value={formData.dataNascimento}
-                    onChange={(e) => setFormData({ ...formData, dataNascimento: e.target.value })}
-                    required={isRegistering}
-                  />
-                </div>
+                <DateField
+                  label="Data de Nascimento"
+                  value={formData.dataNascimento}
+                  onChange={(e) => setFormData({ ...formData, dataNascimento: e.target.value })}
+                  required={isRegistering}
+                  max={new Date().toISOString().split('T')[0]}
+                  containerStyle={{ flex: 1 }}
+                />
                 <div style={{ flex: 1 }}>
                   <label className="input-label">Sexo Biológico</label>
                   <select 
