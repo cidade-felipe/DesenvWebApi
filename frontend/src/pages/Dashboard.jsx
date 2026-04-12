@@ -83,15 +83,26 @@ export default function Dashboard() {
     const weekDay = toLocalDate(value).getDay();
     return weekDay === 0 || weekDay === 6;
   };
-  const getAverageForMetric = (items, key) => items.reduce((acc, item) => acc + Number(item[key] || 0), 0) / items.length;
-  const getMetricTrend = (items, key, options = {}) => {
-    const { digits = 1, threshold = 0.2, unit = '', label = key } = options;
+  const getAverageForMetric = (items, metric) => {
+    const resolveValue = typeof metric === 'function'
+      ? metric
+      : (item) => Number(item[metric] || 0);
+
+    return items.reduce((acc, item) => acc + resolveValue(item), 0) / items.length;
+  };
+  const getMetricTrend = (items, metric, options = {}) => {
+    const { digits = 1, threshold = 0.2, unit = '', label = 'este indicador' } = options;
+    const resolveValue = typeof metric === 'function'
+      ? metric
+      : (item) => Number(item[metric] || 0);
 
     if (items.length < 2) {
       return {
         tone: 'neutral',
         value: 'Estável',
-        meta: `Ainda não há histórico suficiente para medir a tendência de ${label}.`
+        meta: `Ainda não há histórico suficiente para resumir ${label}.`,
+        trendArrow: '→',
+        trendPercent: '0%'
       };
     }
 
@@ -99,8 +110,8 @@ export default function Dashboard() {
     const windowSize = Math.max(1, Math.floor(orderedItems.length / 2));
     const firstWindow = orderedItems.slice(0, windowSize);
     const lastWindow = orderedItems.slice(-windowSize);
-    const firstAverage = getAverageForMetric(firstWindow, key);
-    const lastAverage = getAverageForMetric(lastWindow, key);
+    const firstAverage = getAverageForMetric(firstWindow, resolveValue);
+    const lastAverage = getAverageForMetric(lastWindow, resolveValue);
     const delta = lastAverage - firstAverage;
     const absDelta = Math.abs(delta);
 
@@ -108,16 +119,22 @@ export default function Dashboard() {
       return {
         tone: 'neutral',
         value: 'Estável',
-        meta: `${label} ficou praticamente estável, de ${formatMetric(firstAverage, digits)}${unit} para ${formatMetric(lastAverage, digits)}${unit}.`
+        meta: `Média atual ${formatMetric(lastAverage, digits)}${unit}.`,
+        trendArrow: '→',
+        trendPercent: '0%'
       };
     }
 
     const isUp = delta > 0;
+    const percentBase = Math.max(Math.abs(firstAverage), 0.1);
+    const relativePercent = Math.max(1, Math.round((absDelta / percentBase) * 100));
 
     return {
-      tone: isUp ? 'positive' : 'warning',
+      tone: isUp ? 'positive' : 'negative',
       value: isUp ? 'Em alta' : 'Em queda',
-      meta: `${label} ${isUp ? 'subiu' : 'caiu'} ${formatMetric(absDelta, digits)}${unit}, de ${formatMetric(firstAverage, digits)}${unit} para ${formatMetric(lastAverage, digits)}${unit}.`
+      meta: `Média atual ${formatMetric(lastAverage, digits)}${unit}.`,
+      trendArrow: isUp ? '↑' : '↓',
+      trendPercent: `${relativePercent}%`
     };
   };
 
@@ -241,8 +258,11 @@ export default function Dashboard() {
     return reportSort.direction === 'asc' ? 'ascending' : 'descending';
   };
   const currentSortSummary = `Ordenado por ${reportSortLabels[reportSort.key] || reportSort.key}, ${reportSort.direction === 'asc' ? 'crescente' : 'decrescente'}.`;
-  const humorTrend = getMetricTrend(historicoFiltrado, 'humor', { digits: 1, threshold: 0.2, unit: '/5', label: 'Humor' });
-  const sonoTrend = getMetricTrend(historicoFiltrado, 'sono', { digits: 1, threshold: 0.35, unit: ' h', label: 'Sono' });
+  const bemEstarTrend = getMetricTrend(
+    historicoFiltrado,
+    (item) => (Number(item.humor) + Number(item.energia) + Number(item.produtividade)) / 3,
+    { digits: 1, threshold: 0.15, unit: '/5', label: 'Bem-estar' }
+  );
   const reportSummary = (() => {
     if (historicoFiltrado.length === 0) {
       return {
@@ -250,8 +270,7 @@ export default function Dashboard() {
         periodoLabel: hasCustomReportRange
           ? `Nenhum registro em ${customRangeLabel || 'intervalo customizado'}`
           : 'Ajuste os filtros para explorar o histórico.',
-        avgHumor: '0',
-        avgEnergia: '0',
+        avgBemEstar: '0',
         avgSono: '0',
         avgAgua: '0',
         treinoDias: 0,
@@ -266,7 +285,6 @@ export default function Dashboard() {
     const ultimoRegistro = ordenadoCrescente[ordenadoCrescente.length - 1];
     const treinoDias = historicoFiltrado.filter(item => item.exercicio).length;
     const biometriaComPeso = ordenadoCrescente.filter(item => item.peso !== null && item.peso !== undefined);
-    const primeiraBiometria = biometriaComPeso[0];
     const ultimaBiometria = biometriaComPeso[biometriaComPeso.length - 1];
 
     let pesoLabel = 'Sem biometria';
@@ -279,22 +297,12 @@ export default function Dashboard() {
         : `Última biometria em ${formatDisplayDate(ultimaBiometria.data)}`;
     }
 
-    if (primeiraBiometria && ultimaBiometria && biometriaComPeso.length > 1) {
-      const deltaPeso = Number(ultimaBiometria.peso) - Number(primeiraBiometria.peso);
-      const deltaLabel = deltaPeso === 0
-        ? 'Peso estável no período filtrado.'
-        : `Variação no período: ${deltaPeso > 0 ? '+' : ''}${formatMetric(deltaPeso)} kg.`;
-
-      corpoLabel = `${corpoLabel} ${deltaLabel}`.trim();
-    }
-
     return {
       totalDias: historicoFiltrado.length,
       periodoLabel: getDateKey(primeiroRegistro.data) === getDateKey(ultimoRegistro.data)
         ? formatDisplayDate(primeiroRegistro.data)
         : `${formatDisplayDate(primeiroRegistro.data)} até ${formatDisplayDate(ultimoRegistro.data)}`,
-      avgHumor: formatMetric(historicoFiltrado.reduce((acc, item) => acc + item.humor, 0) / historicoFiltrado.length),
-      avgEnergia: formatMetric(historicoFiltrado.reduce((acc, item) => acc + item.energia, 0) / historicoFiltrado.length),
+      avgBemEstar: formatMetric(getAverageForMetric(historicoFiltrado, (item) => (Number(item.humor) + Number(item.energia) + Number(item.produtividade)) / 3)),
       avgSono: formatMetric(historicoFiltrado.reduce((acc, item) => acc + Number(item.sono || 0), 0) / historicoFiltrado.length),
       avgAgua: formatMetric(historicoFiltrado.reduce((acc, item) => acc + Number(item.agua || 0), 0) / historicoFiltrado.length),
       treinoDias,
@@ -312,15 +320,12 @@ export default function Dashboard() {
     },
     {
       label: 'Bem-estar',
-      value: `${reportSummary.avgHumor}/5`,
-      meta: `Energia média ${reportSummary.avgEnergia}/5`,
-      tone: 'default'
-    },
-    {
-      label: 'Recuperação',
-      value: `${reportSummary.avgSono} h`,
-      meta: `Água média ${reportSummary.avgAgua} L`,
-      tone: 'default'
+      value: bemEstarTrend.value,
+      secondaryValue: `${reportSummary.avgBemEstar}/5`,
+      trendArrow: bemEstarTrend.trendArrow,
+      trendPercent: bemEstarTrend.trendPercent,
+      meta: 'Humor, energia e produtividade',
+      tone: bemEstarTrend.tone
     },
     {
       label: 'Treino',
@@ -329,22 +334,16 @@ export default function Dashboard() {
       tone: 'default'
     },
     {
+      label: 'Recuperação',
+      value: `${reportSummary.avgSono} h de sono`,
+      meta: `Água média ${reportSummary.avgAgua} L`,
+      tone: 'default'
+    },
+    {
       label: 'Corpo',
       value: reportSummary.pesoLabel,
       meta: reportSummary.corpoLabel,
       tone: 'default'
-    },
-    {
-      label: 'Tendência do humor',
-      value: humorTrend.value,
-      meta: humorTrend.meta,
-      tone: humorTrend.tone
-    },
-    {
-      label: 'Tendência do sono',
-      value: sonoTrend.value,
-      meta: sonoTrend.meta,
-      tone: sonoTrend.tone
     }
   ];
 
@@ -786,7 +785,20 @@ export default function Dashboard() {
                   {reportSummaryCards.map(card => (
                     <div key={card.label} className={`glass-panel report-summary-card ${card.tone || 'default'}`}>
                       <span className="report-summary-label">{card.label}</span>
-                      <strong className={`report-summary-value ${card.tone || 'default'}`}>{card.value}</strong>
+                      {card.secondaryValue ? (
+                        <div className="report-summary-value-row">
+                          <strong className={`report-summary-value ${card.tone || 'default'}`}>{card.value}</strong>
+                          <strong className="report-summary-secondary-value">{card.secondaryValue}</strong>
+                          {card.trendPercent ? (
+                            <span className={`report-summary-trend ${card.tone || 'default'}`}>
+                              <span>{card.trendArrow}</span>
+                              <span>{card.trendPercent}</span>
+                            </span>
+                          ) : null}
+                        </div>
+                      ) : (
+                        <strong className={`report-summary-value ${card.tone || 'default'}`}>{card.value}</strong>
+                      )}
                       <span className="report-summary-meta">{card.meta}</span>
                     </div>
                   ))}

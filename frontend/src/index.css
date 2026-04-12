@@ -407,6 +407,10 @@ h1, h2, h3, h4 {
   border-color: rgba(241, 196, 15, 0.28);
 }
 
+.report-summary-card.negative {
+  border-color: rgba(231, 76, 60, 0.28);
+}
+
 .report-summary-label {
   color: var(--accent-cyan);
   font-size: 0.76rem;
@@ -417,8 +421,52 @@ h1, h2, h3, h4 {
 
 .report-summary-value {
   color: var(--text-light);
-  font-size: 1.55rem;
+  font-size: clamp(1.3rem, 1.8vw, 1.55rem);
   line-height: 1.15;
+  white-space: nowrap;
+}
+
+.report-summary-value-row {
+  display: grid;
+  grid-template-columns: max-content max-content max-content;
+  align-items: center;
+  column-gap: 0.7rem;
+  justify-content: space-between;
+}
+
+.report-summary-secondary-value {
+  color: var(--text-light);
+  font-size: clamp(1.1rem, 1.45vw, 1.3rem);
+  line-height: 1.15;
+  white-space: nowrap;
+}
+
+.report-summary-trend {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+  justify-self: end;
+}
+
+.report-summary-trend.positive {
+  background: rgba(46, 204, 113, 0.12);
+  color: #2ecc71;
+}
+
+.report-summary-trend.negative {
+  background: rgba(231, 76, 60, 0.12);
+  color: #e74c3c;
+}
+
+.report-summary-trend.neutral {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-main);
 }
 
 .report-summary-value.positive {
@@ -427,6 +475,10 @@ h1, h2, h3, h4 {
 
 .report-summary-value.warning {
   color: #f1c40f;
+}
+
+.report-summary-value.negative {
+  color: #e74c3c;
 }
 
 .report-summary-meta {
