@@ -20,10 +20,18 @@ export default function Dashboard() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isMetaModalOpen, setIsMetaModalOpen] = useState(false);
   const [editandoId, setEditandoId] = useState(null);
+  const [reportPeriod, setReportPeriod] = useState('all');
+  const [reportDateFilter, setReportDateFilter] = useState('');
   const [formData, setFormData] = useState({
     data: new Date().toISOString().split('T')[0],
     humor: 3, sono: 8, produtividade: 3, energia: 3, exercicio: false, agua: 2.0, observacoes: '', peso: '', altura: ''
   });
+  const reportPeriodOptions = [
+    { key: '7d', label: '7 dias' },
+    { key: '30d', label: '30 dias' },
+    { key: '90d', label: '90 dias' },
+    { key: 'all', label: 'Tudo' }
+  ];
 
   const getDateKey = (value) => String(value ?? '').split('T')[0];
   const formatDisplayDate = (value) => new Date(`${getDateKey(value)}T00:00:00`).toLocaleDateString('pt-BR');
@@ -56,6 +64,109 @@ export default function Dashboard() {
       imcCor: medida?.imcCor ?? 'var(--text-main)'
     };
   });
+  const getPeriodStartDate = (period) => {
+    const daysByPeriod = { '7d': 7, '30d': 30, '90d': 90 };
+    const days = daysByPeriod[period];
+
+    if (!days) return null;
+
+    const startDate = new Date();
+    startDate.setHours(0, 0, 0, 0);
+    startDate.setDate(startDate.getDate() - (days - 1));
+    return startDate;
+  };
+  const reportPeriodStart = getPeriodStartDate(reportPeriod);
+  const historicoFiltrado = historicoCompleto.filter((registro) => {
+    const recordDate = new Date(`${getDateKey(registro.data)}T00:00:00`);
+    const matchesPeriod = !reportPeriodStart || recordDate >= reportPeriodStart;
+    const matchesSpecificDate = !reportDateFilter || getDateKey(registro.data) === reportDateFilter;
+
+    return matchesPeriod && matchesSpecificDate;
+  });
+  const reportSummary = (() => {
+    if (historicoFiltrado.length === 0) {
+      return {
+        totalDias: 0,
+        periodoLabel: reportDateFilter ? `Nenhum registro em ${formatDisplayDate(reportDateFilter)}` : 'Ajuste os filtros para explorar o histórico.',
+        avgHumor: '0',
+        avgEnergia: '0',
+        avgSono: '0',
+        avgAgua: '0',
+        treinoDias: 0,
+        treinoPercent: 0,
+        pesoLabel: 'Sem biometria',
+        corpoLabel: 'Sem IMC no período filtrado'
+      };
+    }
+
+    const ordenadoCrescente = [...historicoFiltrado].sort((a, b) => new Date(`${getDateKey(a.data)}T00:00:00`) - new Date(`${getDateKey(b.data)}T00:00:00`));
+    const primeiroRegistro = ordenadoCrescente[0];
+    const ultimoRegistro = ordenadoCrescente[ordenadoCrescente.length - 1];
+    const treinoDias = historicoFiltrado.filter(item => item.exercicio).length;
+    const biometriaComPeso = ordenadoCrescente.filter(item => item.peso !== null && item.peso !== undefined);
+    const primeiraBiometria = biometriaComPeso[0];
+    const ultimaBiometria = biometriaComPeso[biometriaComPeso.length - 1];
+
+    let pesoLabel = 'Sem biometria';
+    let corpoLabel = 'Registre peso e altura para acompanhar sua evolução.';
+
+    if (ultimaBiometria) {
+      pesoLabel = `${formatMetric(ultimaBiometria.peso)} kg`;
+      corpoLabel = ultimaBiometria.imc
+        ? `IMC atual ${formatMetric(ultimaBiometria.imc)} (${ultimaBiometria.imcClassificacao})`
+        : `Última biometria em ${formatDisplayDate(ultimaBiometria.data)}`;
+    }
+
+    if (primeiraBiometria && ultimaBiometria && biometriaComPeso.length > 1) {
+      const deltaPeso = Number(ultimaBiometria.peso) - Number(primeiraBiometria.peso);
+
+      pesoLabel = deltaPeso === 0
+        ? 'Peso estável'
+        : `${deltaPeso > 0 ? '+' : ''}${formatMetric(deltaPeso)} kg`;
+    }
+
+    return {
+      totalDias: historicoFiltrado.length,
+      periodoLabel: getDateKey(primeiroRegistro.data) === getDateKey(ultimoRegistro.data)
+        ? formatDisplayDate(primeiroRegistro.data)
+        : `${formatDisplayDate(primeiroRegistro.data)} até ${formatDisplayDate(ultimoRegistro.data)}`,
+      avgHumor: formatMetric(historicoFiltrado.reduce((acc, item) => acc + item.humor, 0) / historicoFiltrado.length),
+      avgEnergia: formatMetric(historicoFiltrado.reduce((acc, item) => acc + item.energia, 0) / historicoFiltrado.length),
+      avgSono: formatMetric(historicoFiltrado.reduce((acc, item) => acc + Number(item.sono || 0), 0) / historicoFiltrado.length),
+      avgAgua: formatMetric(historicoFiltrado.reduce((acc, item) => acc + Number(item.agua || 0), 0) / historicoFiltrado.length),
+      treinoDias,
+      treinoPercent: Math.round((treinoDias / historicoFiltrado.length) * 100),
+      pesoLabel,
+      corpoLabel
+    };
+  })();
+  const reportSummaryCards = [
+    {
+      label: 'Cobertura',
+      value: `${reportSummary.totalDias} dia${reportSummary.totalDias === 1 ? '' : 's'}`,
+      meta: reportSummary.periodoLabel
+    },
+    {
+      label: 'Bem-estar',
+      value: `${reportSummary.avgHumor}/5`,
+      meta: `Energia média ${reportSummary.avgEnergia}/5`
+    },
+    {
+      label: 'Recuperação',
+      value: `${reportSummary.avgSono} h`,
+      meta: `Água média ${reportSummary.avgAgua} L`
+    },
+    {
+      label: 'Treino',
+      value: `${reportSummary.treinoPercent}% dos dias`,
+      meta: `${reportSummary.treinoDias} de ${reportSummary.totalDias} registro${reportSummary.totalDias === 1 ? '' : 's'} com treino`
+    },
+    {
+      label: 'Corpo',
+      value: reportSummary.pesoLabel,
+      meta: reportSummary.corpoLabel
+    }
+  ];
 
   // --- Handlers de Ações ---
   const handleSalvar = async (e) => {
@@ -131,10 +242,15 @@ export default function Dashboard() {
 
   // --- Exportações ---
   const handleExportCSV = () => {
+    if (historicoFiltrado.length === 0) {
+      alert('Não há dados filtrados para exportar.');
+      return;
+    }
+
     const headers = ["Data", "Humor", "Energia", "Produtividade", "Agua", "Sono", "Exercicio", "Peso", "Altura", "IMC", "ClassificacaoIMC", "Observacoes"];
     const csvContent = [
       headers.join(","),
-      ...historicoCompleto.map(r => [
+      ...historicoFiltrado.map(r => [
         r.data,
         r.humor,
         r.energia,
@@ -158,8 +274,13 @@ export default function Dashboard() {
   };
 
   const handleExportXLSX = () => {
+    if (historicoFiltrado.length === 0) {
+      alert('Não há dados filtrados para exportar.');
+      return;
+    }
+
     const wb = XLSX.utils.book_new();
-    const wsDiary = XLSX.utils.json_to_sheet(historicoCompleto.map(r => ({
+    const wsDiary = XLSX.utils.json_to_sheet(historicoFiltrado.map(r => ({
       "Data": r.data,
       "Humor": r.humor,
       "Energia": r.energia,
@@ -393,64 +514,119 @@ export default function Dashboard() {
                     <button className="btn-secondary" onClick={handleExportXLSX} style={{ color: '#2ecc71' }}><Download size={18} /> Excel</button>
                   </div>
                 </div>
+                <div className="glass-panel reports-toolbar">
+                  <div className="reports-toolbar-row">
+                    <div className="reports-filter-block">
+                      <span className="reports-filter-label">Período</span>
+                      <div className="reports-chip-group">
+                        {reportPeriodOptions.map(option => (
+                          <button
+                            key={option.key}
+                            type="button"
+                            className={`reports-chip ${reportPeriod === option.key ? 'active' : ''}`}
+                            onClick={() => setReportPeriod(option.key)}
+                          >
+                            {option.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="reports-filter-block">
+                      <label htmlFor="report-date-filter" className="reports-filter-label">Buscar por data</label>
+                      <div className="reports-date-inline">
+                        <input
+                          id="report-date-filter"
+                          type="date"
+                          className="input-field reports-date-input"
+                          value={reportDateFilter}
+                          onChange={(e) => setReportDateFilter(e.target.value)}
+                        />
+                        {reportDateFilter && (
+                          <button type="button" className="btn-secondary reports-clear-btn" onClick={() => setReportDateFilter('')}>
+                            Limpar
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <p className="reports-toolbar-caption">
+                    Exibindo {historicoFiltrado.length} de {historicoCompleto.length} registro{historicoCompleto.length === 1 ? '' : 's'}.
+                  </p>
+                </div>
+                <div className="report-summary-grid">
+                  {reportSummaryCards.map(card => (
+                    <div key={card.label} className="glass-panel report-summary-card">
+                      <span className="report-summary-label">{card.label}</span>
+                      <strong className="report-summary-value">{card.value}</strong>
+                      <span className="report-summary-meta">{card.meta}</span>
+                    </div>
+                  ))}
+                </div>
                 <div className="glass-panel" style={{ overflowX: 'auto' }}>
-                  <table className="history-table">
-                    <thead>
-                      <tr>
-                        <th>Data</th>
-                        <th>Humor</th>
-                        <th>Energia</th>
-                        <th>Produtiv.</th>
-                        <th>Água</th>
-                        <th>Sono</th>
-                        <th>Treino</th>
-                        <th>Biometria</th>
-                        <th>IMC</th>
-                        <th>Observações</th>
-                        <th style={{ textAlign: 'right' }}>Ações</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {historicoCompleto.map(r => (
-                        <tr key={r.id}>
-                          <td>{formatDisplayDate(r.data)}</td>
-                          <td>{r.humor}/5</td>
-                          <td>{r.energia}/5</td>
-                          <td>{r.produtividade}/5</td>
-                          <td>{formatMetric(r.agua)} L</td>
-                          <td>{formatMetric(r.sono)} h</td>
-                          <td>
-                            <span className={`history-pill ${r.exercicio ? 'success' : 'neutral'}`}>
-                              {r.exercicio ? 'Fez treino' : 'Sem treino'}
-                            </span>
-                          </td>
-                          <td>
-                            <div className="history-cell-stack">
-                              <strong>{r.peso ? `${formatMetric(r.peso)} kg` : 'Sem peso'}</strong>
-                              <span>{r.altura ? `${r.altura} cm` : 'Sem altura'}</span>
-                            </div>
-                          </td>
-                          <td>
-                            {r.imc ? (
-                              <div className="history-cell-stack">
-                                <strong>{formatMetric(r.imc)}</strong>
-                                <span style={{ color: r.imcCor }}>{r.imcClassificacao}</span>
-                              </div>
-                            ) : (
-                              <span className="history-muted">Sem IMC</span>
-                            )}
-                          </td>
-                          <td className="history-observacoes" title={r.observacoes || 'Sem observações'}>
-                            {r.observacoes || 'Sem observações'}
-                          </td>
-                          <td style={{ textAlign: 'right' }}>
-                            <button className="action-btn edit" onClick={() => handleEditar(r)}><Pencil size={18} /></button>
-                            <button className="action-btn delete" onClick={() => handleExcluir(r.id)}><Trash2 size={18} /></button>
-                          </td>
+                  {historicoFiltrado.length === 0 ? (
+                    <div className="history-empty-state">
+                      <strong>Nenhum registro encontrado</strong>
+                      <p>Experimente ampliar o período ou limpar a busca por data para recuperar mais informações.</p>
+                    </div>
+                  ) : (
+                    <table className="history-table">
+                      <thead>
+                        <tr>
+                          <th>Data</th>
+                          <th>Humor</th>
+                          <th>Energia</th>
+                          <th>Produtiv.</th>
+                          <th>Água</th>
+                          <th>Sono</th>
+                          <th>Treino</th>
+                          <th>Biometria</th>
+                          <th>IMC</th>
+                          <th>Observações</th>
+                          <th style={{ textAlign: 'right' }}>Ações</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {historicoFiltrado.map(r => (
+                          <tr key={r.id}>
+                            <td>{formatDisplayDate(r.data)}</td>
+                            <td>{r.humor}/5</td>
+                            <td>{r.energia}/5</td>
+                            <td>{r.produtividade}/5</td>
+                            <td>{formatMetric(r.agua)} L</td>
+                            <td>{formatMetric(r.sono)} h</td>
+                            <td>
+                              <span className={`history-pill ${r.exercicio ? 'success' : 'neutral'}`}>
+                                {r.exercicio ? 'Fez treino' : 'Sem treino'}
+                              </span>
+                            </td>
+                            <td>
+                              <div className="history-cell-stack">
+                                <strong>{r.peso ? `${formatMetric(r.peso)} kg` : 'Sem peso'}</strong>
+                                <span>{r.altura ? `${r.altura} cm` : 'Sem altura'}</span>
+                              </div>
+                            </td>
+                            <td>
+                              {r.imc ? (
+                                <div className="history-cell-stack">
+                                  <strong>{formatMetric(r.imc)}</strong>
+                                  <span style={{ color: r.imcCor }}>{r.imcClassificacao}</span>
+                                </div>
+                              ) : (
+                                <span className="history-muted">Sem IMC</span>
+                              )}
+                            </td>
+                            <td className="history-observacoes" title={r.observacoes || 'Sem observações'}>
+                              {r.observacoes || 'Sem observações'}
+                            </td>
+                            <td style={{ textAlign: 'right' }}>
+                              <button className="action-btn edit" onClick={() => handleEditar(r)}><Pencil size={18} /></button>
+                              <button className="action-btn delete" onClick={() => handleExcluir(r.id)}><Trash2 size={18} /></button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
                 </div>
               </div>
             )}
