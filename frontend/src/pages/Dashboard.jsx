@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Pencil, Trash2, LayoutDashboard, ClipboardList, Download, BarChart3, Activity, RefreshCw, X, TrendingUp } from 'lucide-react';
 
 import { useDashboardData } from '../hooks/useDashboardData';
@@ -7,6 +7,8 @@ import { StatsCards } from '../components/StatsCards';
 import { DataFormModal } from '../components/DataFormModal';
 import { ChartsContainer } from '../components/ChartsContainer';
 import { MetaFormModal } from '../components/MetaFormModal'; // Novo Import
+import { NoticeBanner } from '../components/NoticeBanner';
+import { ConfirmDialog } from '../components/ConfirmDialog';
 import apiClient from '../api/apiClient';
 
 export default function Dashboard() {
@@ -24,6 +26,9 @@ export default function Dashboard() {
   const [reportEndDate, setReportEndDate] = useState('');
   const [reportSort, setReportSort] = useState({ key: 'data', direction: 'desc' });
   const [isExportingExcel, setIsExportingExcel] = useState(false);
+  const [notice, setNotice] = useState(null);
+  const [confirmState, setConfirmState] = useState(null);
+  const [isConfirming, setIsConfirming] = useState(false);
   const [formData, setFormData] = useState({
     data: new Date().toISOString().split('T')[0],
     humor: 3, sono: 8, produtividade: 3, energia: 3, exercicio: false, agua: 2.0, observacoes: '', peso: '', altura: ''
@@ -46,6 +51,17 @@ export default function Dashboard() {
     imc: 'IMC',
     observacoes: 'observações'
   };
+  const showNotice = (tone, title, message = '') => setNotice({ tone, title, message, id: Date.now() });
+
+  useEffect(() => {
+    if (!notice) return undefined;
+
+    const timeoutId = setTimeout(() => {
+      setNotice(null);
+    }, 4500);
+
+    return () => clearTimeout(timeoutId);
+  }, [notice]);
 
   const getDateKey = (value) => String(value ?? '').split('T')[0];
   const weekdayShortNames = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'];
@@ -351,6 +367,7 @@ export default function Dashboard() {
   const handleSalvar = async (e) => {
     e.preventDefault();
     try {
+      const isEditing = Boolean(editandoId);
       const payload = { ...formData, usuarioId: user.id };
       if (editandoId) {
         await apiClient.put(`/registrosdiarios/${editandoId}`, payload);
@@ -371,9 +388,17 @@ export default function Dashboard() {
       }
 
       setIsModalOpen(false);
+      setEditandoId(null);
       await loadDashboard();
+      showNotice(
+        'success',
+        isEditing ? 'Registro atualizado' : 'Registro salvo',
+        isEditing
+          ? 'Seu histórico do dia foi atualizado com sucesso.'
+          : 'Seu novo registro já entrou para as análises da dashboard.'
+      );
     } catch (err) {
-      alert("Erro ao salvar: " + (err.response?.data?.mensagem || err.message));
+      showNotice('error', 'Não foi possível salvar', err.response?.data?.mensagem || err.message);
     }
   };
 
@@ -407,22 +432,29 @@ export default function Dashboard() {
     setIsModalOpen(true);
   };
 
-  const handleExcluir = async (id) => {
-    if (window.confirm("Tem certeza que deseja apagar permanentemente os dados deste dia?")) {
-      try {
-        await apiClient.delete(`/registrosdiarios/${id}`);
-        await loadDashboard();
-      } catch (err) {
-        alert("Erro ao excluir");
+  const handleExcluir = (id) => {
+    setConfirmState({
+      title: 'Excluir registro do dia',
+      message: 'Essa ação remove permanentemente os dados desse dia do seu histórico e dos relatórios.',
+      confirmLabel: 'Excluir registro',
+      tone: 'danger',
+      action: async () => {
+        try {
+          await apiClient.delete(`/registrosdiarios/${id}`);
+          await loadDashboard();
+          showNotice('success', 'Registro excluído', 'O dia removido não aparecerá mais no histórico.');
+        } catch (err) {
+          showNotice('error', 'Não foi possível excluir', err.response?.data?.mensagem || 'Tente novamente em instantes.');
+        }
       }
-    }
+    });
   };
 
 
   // --- Exportações ---
   const handleExportCSV = () => {
     if (historicoOrdenado.length === 0) {
-      alert('Não há dados filtrados para exportar.');
+      showNotice('warning', 'Nada para exportar', 'Ajuste os filtros para incluir pelo menos um registro.');
       return;
     }
 
@@ -450,11 +482,12 @@ export default function Dashboard() {
     link.href = URL.createObjectURL(blob);
     link.download = `ritmo_export_${new Date().toISOString().split('T')[0]}.csv`;
     link.click();
+    showNotice('info', 'CSV preparado', 'O download do relatório em CSV foi iniciado.');
   };
 
   const handleExportXLSX = async () => {
     if (historicoOrdenado.length === 0) {
-      alert('Não há dados filtrados para exportar.');
+      showNotice('warning', 'Nada para exportar', 'Ajuste os filtros para incluir pelo menos um registro.');
       return;
     }
 
@@ -478,8 +511,9 @@ export default function Dashboard() {
       })));
       XLSX.utils.book_append_sheet(wb, wsDiary, "Diário de Hábitos");
       XLSX.writeFile(wb, `Ritmo_Analitico_${new Date().toISOString().split('T')[0]}.xlsx`);
+      showNotice('info', 'Excel preparado', 'O download da planilha foi iniciado.');
     } catch (err) {
-      alert("Erro ao gerar Excel. Tente novamente.");
+      showNotice('error', 'Erro ao gerar Excel', 'Tente novamente em instantes.');
     } finally {
       setIsExportingExcel(false);
     }
@@ -536,15 +570,22 @@ export default function Dashboard() {
   weightDataForChart.reverse(); // Inverte para ordem cronológica no gráfico
 
   // --- Lógica de Metas ---
-  const handleExcluirMeta = async (id) => {
-    if (window.confirm("Deseja realmente remover esta meta?")) {
-      try {
-        await apiClient.delete(`/metas/${id}`);
-        await loadDashboard();
-      } catch (err) {
-        alert("Erro ao excluir meta");
+  const handleExcluirMeta = (id) => {
+    setConfirmState({
+      title: 'Remover meta',
+      message: 'Essa meta deixará de aparecer no seu painel de desafios e sairá do acompanhamento atual.',
+      confirmLabel: 'Remover meta',
+      tone: 'danger',
+      action: async () => {
+        try {
+          await apiClient.delete(`/metas/${id}`);
+          await loadDashboard();
+          showNotice('success', 'Meta removida', 'Seu painel de desafios foi atualizado.');
+        } catch (err) {
+          showNotice('error', 'Não foi possível remover a meta', err.response?.data?.mensagem || 'Tente novamente em instantes.');
+        }
       }
-    }
+    });
   };
 
   const getMetaProgress = (meta) => {
@@ -671,6 +712,17 @@ export default function Dashboard() {
       <span className="history-sort-indicator" aria-hidden="true">{getSortIndicator(key)}</span>
     </button>
   );
+  const handleConfirmAction = async () => {
+    if (!confirmState?.action) return;
+
+    try {
+      setIsConfirming(true);
+      await confirmState.action();
+      setConfirmState(null);
+    } finally {
+      setIsConfirming(false);
+    }
+  };
 
   if (loading) return <div className="center-wrapper"><RefreshCw className="animate-spin" size={32} color="var(--accent-cyan)" /></div>;
 
@@ -692,6 +744,8 @@ export default function Dashboard() {
             <button className={`tab-btn ${activeTab === 'metas' ? 'active' : ''}`} onClick={() => setActiveTab('metas')}><TrendingUp size={18} /> Metas</button>
             <button className={`tab-btn ${activeTab === 'relatorios' ? 'active' : ''}`} onClick={() => setActiveTab('relatorios')}><ClipboardList size={18} /> Relatórios</button>
           </div>
+
+          <NoticeBanner notice={notice} onClose={() => setNotice(null)} />
 
           <div className="tab-content">
             {activeTab === 'panorama' && (
@@ -905,7 +959,7 @@ export default function Dashboard() {
                           <div className="goal-header">
                             <div>
                               <span className="goal-title">{meta.categoria}</span>
-                              <p style={{ fontSize: '0.8rem', opacity: 0.6, margin: '4px 0 0 0' }}>{meta.descricao || 'Sem descrição'}</p>
+                              <p style={{ fontSize: '0.8rem', opacity: 0.6, margin: '4px 0 0 0' }}>{meta.descricao || 'Sem contexto informado'}</p>
                             </div>
                             <button 
                               className="action-btn delete" 
@@ -956,7 +1010,15 @@ export default function Dashboard() {
         isOpen={isMetaModalOpen} 
         onClose={() => setIsMetaModalOpen(false)} 
         onSave={loadDashboard} 
+        onStatusChange={(nextNotice) => setNotice({ ...nextNotice, id: Date.now() })}
         user={user} 
+      />
+
+      <ConfirmDialog
+        state={confirmState}
+        onCancel={() => !isConfirming && setConfirmState(null)}
+        onConfirm={handleConfirmAction}
+        busy={isConfirming}
       />
     </div>
   );

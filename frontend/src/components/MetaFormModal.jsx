@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { X, TrendingUp } from 'lucide-react';
 import apiClient from '../api/apiClient';
 
-export function MetaFormModal({ isOpen, onClose, onSave, user }) {
+export function MetaFormModal({ isOpen, onClose, onSave, onStatusChange, user }) {
   const [metaData, setMetaData] = useState({
     categoria: 'Sono',
     valorAlvo: 8,
@@ -10,6 +10,15 @@ export function MetaFormModal({ isOpen, onClose, onSave, user }) {
     dataInicio: new Date().toISOString().split('T')[0],
     ativa: true
   });
+  const [error, setError] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      setError('');
+      setIsSaving(false);
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -30,20 +39,30 @@ export function MetaFormModal({ isOpen, onClose, onSave, user }) {
     const val = parseFloat(metaData.valorAlvo);
     
     if (isNaN(val) || val < config.min || val > config.max) {
-      return alert(`Por favor, insira um valor válido entre ${config.min} e ${config.max} para ${metaData.categoria}.`);
+      setError(`Insira um valor entre ${config.min} e ${config.max} para ${metaData.categoria}.`);
+      return;
     }
 
     try {
+      setIsSaving(true);
+      setError('');
       const payload = {
         ...metaData,
         usuarioId: user.id,
         valorAlvo: val
       };
       await apiClient.post('/metas', payload);
-      onSave(); // Recarrega o dashboard
-      onClose(); // Fecha o modal
+      await onSave();
+      onStatusChange?.({
+        tone: 'success',
+        title: 'Meta criada',
+        message: 'Seu desafio já aparece na área de metas.'
+      });
+      onClose();
     } catch (err) {
-      alert("Erro ao salvar meta: " + (err.response?.data?.mensagem || err.message));
+      setError(err.response?.data?.mensagem || err.message || 'Não foi possível salvar a meta.');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -60,6 +79,8 @@ export function MetaFormModal({ isOpen, onClose, onSave, user }) {
         </div>
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          {error ? <div className="modal-feedback error">{error}</div> : null}
+
           <div>
             <label className="input-label">Categoria do Desafio</label>
             <select 
@@ -103,8 +124,8 @@ export function MetaFormModal({ isOpen, onClose, onSave, user }) {
             />
           </div>
 
-          <button type="submit" className="btn-primary" style={{ marginTop: '0.5rem' }}>
-            Ativar Desafio
+          <button type="submit" className="btn-primary" style={{ marginTop: '0.5rem' }} disabled={isSaving}>
+            {isSaving ? 'Salvando meta...' : 'Ativar Desafio'}
           </button>
         </form>
       </div>
