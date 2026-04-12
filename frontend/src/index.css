@@ -365,11 +365,59 @@ h1, h2, h3, h4 {
   margin-bottom: 1.1rem;
 }
 
+.analysis-toolbar {
+  margin-bottom: 1.5rem;
+}
+
 .reports-toolbar-row {
   display: grid;
   grid-template-columns: minmax(260px, 1fr) minmax(420px, 560px);
   gap: 1rem 1.4rem;
   align-items: start;
+}
+
+.reports-toolbar-row.toolbar-uniform-row {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+  align-items: end;
+}
+
+.toolbar-equal-block {
+  min-width: 0;
+}
+
+.toolbar-select {
+  margin: 0;
+  width: 100%;
+  appearance: none;
+  background-image:
+    linear-gradient(45deg, transparent 50%, rgba(255, 255, 255, 0.72) 50%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.72) 50%, transparent 50%);
+  background-position:
+    calc(100% - 18px) calc(50% - 3px),
+    calc(100% - 12px) calc(50% - 3px);
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+  padding-right: 2.6rem;
+}
+
+.toolbar-footer {
+  margin-top: 0.95rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.reports-toolbar .reports-toolbar-caption {
+  margin: 0;
+}
+
+.toolbar-clear-btn {
+  width: auto;
+  min-width: 150px;
+  padding-inline: 1rem;
 }
 
 .reports-filter-block {
@@ -387,67 +435,10 @@ h1, h2, h3, h4 {
   font-weight: 700;
 }
 
-.reports-chip-group {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.6rem;
-}
-
-.reports-chip {
-  background: rgba(255, 255, 255, 0.04);
-  color: var(--text-main);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 999px;
-  padding: 0.55rem 0.95rem;
-  font-size: 0.85rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.reports-chip:hover,
-.reports-chip.active {
-  border-color: var(--accent-cyan);
-  color: var(--accent-cyan);
-  box-shadow: 0 0 0 1px rgba(102, 252, 241, 0.15);
-}
-
-.reports-date-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
-  gap: 0.65rem;
-  align-items: end;
-}
-
-.reports-date-inline-field {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: 0.6rem;
-  align-items: center;
-  min-width: 0;
-}
-
 .reports-date-input {
   min-width: 0;
   margin: 0;
   width: 100%;
-}
-
-.reports-inline-label {
-  font-size: 0.78rem;
-  color: var(--text-main);
-  opacity: 0.72;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
-  white-space: nowrap;
-}
-
-.reports-clear-btn {
-  width: auto;
-  min-width: 96px;
-  padding-inline: 1rem;
-  align-self: end;
 }
 
 .reports-toolbar-caption {
@@ -455,6 +446,49 @@ h1, h2, h3, h4 {
   font-size: 0.88rem;
   color: var(--text-main);
   opacity: 0.74;
+}
+
+.chart-panel-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.1rem;
+}
+
+.chart-panel-header h4 {
+  margin: 0;
+}
+
+.chart-panel-subtitle {
+  margin: 0.35rem 0 0;
+  color: var(--text-main);
+  opacity: 0.74;
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+.chart-empty-state {
+  min-height: 380px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  color: var(--text-main);
+  padding: 1.4rem;
+}
+
+.chart-empty-state strong {
+  color: var(--text-light);
+  font-size: 1rem;
+  margin-bottom: 0.55rem;
+}
+
+.chart-empty-state p {
+  margin: 0;
+  max-width: 420px;
+  opacity: 0.72;
+  line-height: 1.55;
 }
 
 .report-summary-grid {
@@ -686,6 +720,11 @@ h1, h2, h3, h4 {
   .reports-toolbar-row {
     grid-template-columns: 1fr;
   }
+
+  .reports-toolbar-row.toolbar-uniform-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
 }
 
 @media (max-width: 760px) {
@@ -693,12 +732,17 @@ h1, h2, h3, h4 {
     flex-direction: column;
   }
 
-  .reports-date-grid {
+  .reports-toolbar-row.toolbar-uniform-row {
     grid-template-columns: 1fr;
   }
 
-  .reports-clear-btn {
-    justify-self: start;
+  .toolbar-footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .toolbar-clear-btn {
+    width: 100%;
   }
 
   .confirm-dialog-actions {

@@ -17,23 +17,38 @@ const formatTooltipDate = (value) => {
 
   const normalizedValue = String(value);
 
-  if (normalizedValue.includes('T')) {
+  if (normalizedValue.includes(' até ') || normalizedValue.includes(' a ')) {
+    return normalizedValue;
+  }
+
+  if (/^\d{4}-\d{2}-\d{2}(T.*)?$/.test(normalizedValue)) {
     const [year, month, day] = normalizedValue.split('T')[0].split('-');
     if (!year || !month || !day) return normalizedValue;
     return `${day}/${month}/${year}`;
+  }
+
+  if (/^\d{2}\/\d{2}\/\d{2,4}$/.test(normalizedValue)) {
+    const [day, month, year] = normalizedValue.split('/');
+    if (!day || !month || !year) return normalizedValue;
+    const fullYear = year.length === 2 ? `20${year}` : year;
+    return `${day}/${month}/${fullYear}`;
   }
 
   if (!normalizedValue.includes('/')) {
     return normalizedValue;
   }
 
-  const [day, month, year] = normalizedValue.split('/');
-  if (!day || !month || !year) return normalizedValue;
-  const fullYear = year.length === 2 ? `20${year}` : year;
-  return `${day}/${month}/${fullYear}`;
+  return normalizedValue;
 };
 
-export function ChartsContainer({ type, data, radarData, weightDataForChart }) {
+export function ChartsContainer({
+  type,
+  data,
+  radarData,
+  weightDataForChart,
+  analysisHabitsSubtitle,
+  analysisWeightSubtitle
+}) {
   const [isChartReady, setIsChartReady] = useState(false);
 
   useEffect(() => {
@@ -92,43 +107,67 @@ export function ChartsContainer({ type, data, radarData, weightDataForChart }) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', minWidth: 0 }}>
         <div className="glass-panel" style={{ height: '500px', minWidth: 0 }}>
-          <h4 style={{ marginBottom: '1.5rem', color: 'var(--text-main)' }}>Evolução de Peso e Zona Metabólica</h4>
-          <ResponsiveContainer width="100%" height={420} minWidth={0}>
-            <AreaChart data={weightDataForChart}>
-              <defs>
-                <linearGradient id="colorPeso" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="var(--accent-cyan)" stopOpacity={0.4}/>
-                  <stop offset="95%" stopColor="var(--accent-cyan)" stopOpacity={0}/>
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-              <XAxis dataKey="data" stroke="var(--text-main)" />
-              <YAxis domain={['dataMin - 3', 'dataMax + 3']} stroke="var(--text-main)" />
-              <RechartsTooltip
-                labelFormatter={(label, payload) => formatTooltipDate(payload?.[0]?.payload?.fullDate ?? label)}
-                contentStyle={{ backgroundColor: 'var(--bg-color-alt)', border: '1px solid var(--accent-cyan)', borderRadius: '12px' }}
-              />
-              <Area type="monotone" dataKey="peso" stroke="var(--accent-cyan)" strokeWidth={4} fillOpacity={1} fill="url(#colorPeso)" />
-            </AreaChart>
-          </ResponsiveContainer>
+          <div className="chart-panel-header">
+            <div>
+              <h4 style={{ color: 'var(--text-main)' }}>Evolução de Peso por Período</h4>
+              <p className="chart-panel-subtitle">{analysisWeightSubtitle}</p>
+            </div>
+          </div>
+          {weightDataForChart.length === 0 ? (
+            <div className="chart-empty-state">
+              <strong>Sem biometria suficiente nesse recorte</strong>
+              <p>Registre peso no intervalo escolhido para acompanhar a evolução por período.</p>
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height={420} minWidth={0}>
+              <AreaChart data={weightDataForChart}>
+                <defs>
+                  <linearGradient id="colorPeso" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="var(--accent-cyan)" stopOpacity={0.4}/>
+                    <stop offset="95%" stopColor="var(--accent-cyan)" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                <XAxis dataKey="data" stroke="var(--text-main)" />
+                <YAxis domain={['dataMin - 3', 'dataMax + 3']} stroke="var(--text-main)" />
+                <RechartsTooltip
+                  labelFormatter={(label, payload) => formatTooltipDate(payload?.[0]?.payload?.fullDate ?? label)}
+                  contentStyle={{ backgroundColor: 'var(--bg-color-alt)', border: '1px solid var(--accent-cyan)', borderRadius: '12px' }}
+                />
+                <Area type="monotone" dataKey="peso" stroke="var(--accent-cyan)" strokeWidth={4} fillOpacity={1} fill="url(#colorPeso)" />
+              </AreaChart>
+            </ResponsiveContainer>
+          )}
         </div>
 
         <div className="glass-panel" style={{ height: '500px', minWidth: 0 }}>
-          <h4 style={{ marginBottom: '1.5rem', color: 'var(--text-main)' }}>Correlação: Humor vs Sono vs Energia</h4>
-          <ResponsiveContainer width="100%" height={420} minWidth={0}>
-            <ComposedChart data={data.slice().reverse()}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-              <XAxis dataKey="data" stroke="var(--text-main)" tickFormatter={formatAxisDate} />
-              <YAxis stroke="var(--text-main)" />
-              <RechartsTooltip
-                labelFormatter={formatTooltipDate}
-                contentStyle={{ backgroundColor: 'var(--bg-color-alt)', border: '1px solid var(--glass-border)', borderRadius: '12px' }}
-              />
-              <Area type="monotone" dataKey="sono" fill="var(--accent-cyan-dim)" fillOpacity={0.1} stroke="var(--accent-cyan-dim)" strokeWidth={2} />
-              <Line type="monotone" dataKey="humor" stroke="var(--accent-purple)" strokeWidth={3} dot={{ r: 4 }} />
-              <Line type="monotone" dataKey="energia" stroke="#f1c40f" strokeWidth={2} strokeDasharray="5 5" />
-            </ComposedChart>
-          </ResponsiveContainer>
+          <div className="chart-panel-header">
+            <div>
+              <h4 style={{ color: 'var(--text-main)' }}>Humor, Sono e Energia por Período</h4>
+              <p className="chart-panel-subtitle">{analysisHabitsSubtitle}</p>
+            </div>
+          </div>
+          {data.length === 0 ? (
+            <div className="chart-empty-state">
+              <strong>Sem registros suficientes nesse recorte</strong>
+              <p>Ajuste o período ou registre novos dias para ver a correlação entre os indicadores.</p>
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height={420} minWidth={0}>
+              <ComposedChart data={data}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                <XAxis dataKey="data" stroke="var(--text-main)" tickFormatter={formatAxisDate} />
+                <YAxis stroke="var(--text-main)" />
+                <RechartsTooltip
+                  labelFormatter={(label, payload) => formatTooltipDate(payload?.[0]?.payload?.fullDate ?? label)}
+                  contentStyle={{ backgroundColor: 'var(--bg-color-alt)', border: '1px solid var(--glass-border)', borderRadius: '12px' }}
+                />
+                <Area type="monotone" dataKey="sono" fill="var(--accent-cyan-dim)" fillOpacity={0.1} stroke="var(--accent-cyan-dim)" strokeWidth={2} />
+                <Line type="monotone" dataKey="humor" stroke="var(--accent-purple)" strokeWidth={3} dot={{ r: 4 }} />
+                <Line type="monotone" dataKey="energia" stroke="#f1c40f" strokeWidth={2} strokeDasharray="5 5" />
+              </ComposedChart>
+            </ResponsiveContainer>
+          )}
         </div>
       </div>
     );
