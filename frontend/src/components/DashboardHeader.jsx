@@ -7,6 +7,13 @@ export function DashboardHeader({ user, config, insights, onMarkAsRead }) {
   const navigate = useNavigate();
   const [showInsights, setShowInsights] = useState(false);
   const panelRef = useRef(null);
+  const firstName = String(user?.nome || user?.name || '')
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)[0];
+  const currentHour = new Date().getHours();
+  const greetingPrefix = currentHour < 12 ? 'Bom dia' : currentHour < 18 ? 'Boa tarde' : 'Boa noite';
+  const greetingMessage = firstName ? `${greetingPrefix}, ${firstName}` : `${greetingPrefix}`;
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -25,14 +32,17 @@ export function DashboardHeader({ user, config, insights, onMarkAsRead }) {
 
   return (
     <nav className="top-nav animate-fade-up">
-      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+      <div className="top-nav-brand">
         <Activity size={32} color="var(--accent-cyan)" />
-        <div className="logo">Ritmo Analytics</div>
+        <div className="top-nav-brand-copy">
+          <div className="logo">Ritmo Analytics</div>
+          <span className="top-nav-greeting">{greetingMessage}</span>
+        </div>
       </div>
       
-      <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
+      <div className="top-nav-actions">
         {config?.idioma && (
-          <span style={{ color: 'var(--text-main)', fontSize: '0.9rem' }}>
+          <span className="top-nav-language">
             Idioma: {config.idioma}
           </span>
         )}
@@ -74,7 +84,7 @@ export function DashboardHeader({ user, config, insights, onMarkAsRead }) {
         </div>
 
         <button 
-          style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'none', border: 'none', color: '#ff6b6b', cursor: 'pointer', fontWeight: '500' }}
+          className="top-nav-logout"
           onClick={handleLogout}
         >
           Sair <LogOut size={18} />
