@@ -257,6 +257,54 @@ h1, h2, h3, h4 {
   letter-spacing: 1px;
 }
 
+.history-cell-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.history-cell-stack strong {
+  color: var(--text-light);
+  font-size: 0.95rem;
+}
+
+.history-cell-stack span,
+.history-muted {
+  font-size: 0.8rem;
+  opacity: 0.72;
+}
+
+.history-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.3rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.history-pill.success {
+  background: rgba(46, 204, 113, 0.12);
+  color: #2ecc71;
+  border: 1px solid rgba(46, 204, 113, 0.35);
+}
+
+.history-pill.neutral {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-main);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.history-observacoes {
+  min-width: 220px;
+  max-width: 320px;
+  line-height: 1.45;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .action-btn {
   background: none;
   border: none;
