@@ -257,6 +257,119 @@ h1, h2, h3, h4 {
   letter-spacing: 1px;
 }
 
+.reports-toolbar {
+  margin-bottom: 1.1rem;
+}
+
+.reports-toolbar-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem 1.4rem;
+  align-items: flex-end;
+  justify-content: space-between;
+}
+
+.reports-filter-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 220px;
+}
+
+.reports-filter-label {
+  color: var(--accent-cyan);
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 700;
+}
+
+.reports-chip-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.reports-chip {
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-main);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  padding: 0.55rem 0.95rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.reports-chip:hover,
+.reports-chip.active {
+  border-color: var(--accent-cyan);
+  color: var(--accent-cyan);
+  box-shadow: 0 0 0 1px rgba(102, 252, 241, 0.15);
+}
+
+.reports-date-inline {
+  display: flex;
+  gap: 0.65rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.reports-date-input {
+  min-width: 220px;
+  margin: 0;
+}
+
+.reports-clear-btn {
+  width: auto;
+  min-width: 96px;
+  padding-inline: 1rem;
+}
+
+.reports-toolbar-caption {
+  margin: 0.95rem 0 0;
+  font-size: 0.88rem;
+  color: var(--text-main);
+  opacity: 0.74;
+}
+
+.report-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.1rem;
+}
+
+.report-summary-card {
+  min-height: 132px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  justify-content: space-between;
+}
+
+.report-summary-label {
+  color: var(--accent-cyan);
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 700;
+}
+
+.report-summary-value {
+  color: var(--text-light);
+  font-size: 1.55rem;
+  line-height: 1.15;
+}
+
+.report-summary-meta {
+  font-size: 0.88rem;
+  color: var(--text-main);
+  opacity: 0.76;
+  line-height: 1.45;
+}
+
 .history-cell-stack {
   display: flex;
   flex-direction: column;
@@ -303,6 +416,24 @@ h1, h2, h3, h4 {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.history-empty-state {
+  padding: 2.8rem 1.2rem;
+  text-align: center;
+  color: var(--text-main);
+}
+
+.history-empty-state strong {
+  display: block;
+  color: var(--text-light);
+  margin-bottom: 0.5rem;
+  font-size: 1rem;
+}
+
+.history-empty-state p {
+  margin: 0;
+  opacity: 0.72;
 }
 
 .action-btn {
