@@ -271,6 +271,10 @@ h1, h2, h3, h4 {
   padding: 0;
 }
 
+.history-sort-btn:hover {
+  color: var(--text-light);
+}
+
 .history-sort-btn.active {
   color: var(--text-light);
 }
@@ -278,6 +282,10 @@ h1, h2, h3, h4 {
 .history-sort-indicator {
   font-size: 0.75rem;
   opacity: 0.72;
+}
+
+.history-sort-btn.active .history-sort-indicator {
+  opacity: 1;
 }
 
 .reports-toolbar {
@@ -426,6 +434,12 @@ h1, h2, h3, h4 {
   color: var(--text-main);
   opacity: 0.76;
   line-height: 1.45;
+}
+
+.btn-secondary:disabled {
+  opacity: 0.6;
+  cursor: wait;
+  filter: none;
 }
 
 .history-cell-stack {

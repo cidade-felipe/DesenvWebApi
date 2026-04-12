@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import * as XLSX from 'xlsx';
 import { Pencil, Trash2, LayoutDashboard, ClipboardList, Download, BarChart3, Activity, RefreshCw, X, TrendingUp } from 'lucide-react';
 
 import { useDashboardData } from '../hooks/useDashboardData';
@@ -24,6 +23,7 @@ export default function Dashboard() {
   const [reportStartDate, setReportStartDate] = useState('');
   const [reportEndDate, setReportEndDate] = useState('');
   const [reportSort, setReportSort] = useState({ key: 'data', direction: 'desc' });
+  const [isExportingExcel, setIsExportingExcel] = useState(false);
   const [formData, setFormData] = useState({
     data: new Date().toISOString().split('T')[0],
     humor: 3, sono: 8, produtividade: 3, energia: 3, exercicio: false, agua: 2.0, observacoes: '', peso: '', altura: ''
@@ -34,6 +34,18 @@ export default function Dashboard() {
     { key: '90d', label: '90 dias' },
     { key: 'all', label: 'Tudo' }
   ];
+  const reportSortLabels = {
+    data: 'data',
+    humor: 'humor',
+    energia: 'energia',
+    produtividade: 'produtividade',
+    agua: 'água',
+    sono: 'sono',
+    treino: 'treino',
+    peso: 'biometria',
+    imc: 'IMC',
+    observacoes: 'observações'
+  };
 
   const getDateKey = (value) => String(value ?? '').split('T')[0];
   const weekdayShortNames = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'];
@@ -224,6 +236,11 @@ export default function Dashboard() {
     if (reportSort.key !== key) return '↕';
     return reportSort.direction === 'asc' ? '↑' : '↓';
   };
+  const getAriaSort = (key) => {
+    if (reportSort.key !== key) return 'none';
+    return reportSort.direction === 'asc' ? 'ascending' : 'descending';
+  };
+  const currentSortSummary = `Ordenado por ${reportSortLabels[reportSort.key] || reportSort.key}, ${reportSort.direction === 'asc' ? 'crescente' : 'decrescente'}.`;
   const humorTrend = getMetricTrend(historicoFiltrado, 'humor', { digits: 1, threshold: 0.2, unit: '/5', label: 'Humor' });
   const sonoTrend = getMetricTrend(historicoFiltrado, 'sono', { digits: 1, threshold: 0.35, unit: ' h', label: 'Sono' });
   const reportSummary = (() => {
@@ -436,29 +453,37 @@ export default function Dashboard() {
     link.click();
   };
 
-  const handleExportXLSX = () => {
+  const handleExportXLSX = async () => {
     if (historicoOrdenado.length === 0) {
       alert('Não há dados filtrados para exportar.');
       return;
     }
 
-    const wb = XLSX.utils.book_new();
-    const wsDiary = XLSX.utils.json_to_sheet(historicoOrdenado.map(r => ({
-      "Data": r.data,
-      "Humor": r.humor,
-      "Energia": r.energia,
-      "Produtividade": r.produtividade,
-      "Água": r.agua,
-      "Sono": r.sono,
-      "Exercício": r.exercicio ? "Sim" : "Não",
-      "Peso (kg)": r.peso ?? "",
-      "Altura (cm)": r.altura ?? "",
-      "IMC": r.imc ?? "",
-      "Classificação IMC": r.imcClassificacao || "",
-      "Observações": r.observacoes || ""
-    })));
-    XLSX.utils.book_append_sheet(wb, wsDiary, "Diário de Hábitos");
-    XLSX.writeFile(wb, `Ritmo_Analitico_${new Date().toISOString().split('T')[0]}.xlsx`);
+    try {
+      setIsExportingExcel(true);
+      const XLSX = await import('xlsx');
+      const wb = XLSX.utils.book_new();
+      const wsDiary = XLSX.utils.json_to_sheet(historicoOrdenado.map(r => ({
+        "Data": r.data,
+        "Humor": r.humor,
+        "Energia": r.energia,
+        "Produtividade": r.produtividade,
+        "Água": r.agua,
+        "Sono": r.sono,
+        "Exercício": r.exercicio ? "Sim" : "Não",
+        "Peso (kg)": r.peso ?? "",
+        "Altura (cm)": r.altura ?? "",
+        "IMC": r.imc ?? "",
+        "Classificação IMC": r.imcClassificacao || "",
+        "Observações": r.observacoes || ""
+      })));
+      XLSX.utils.book_append_sheet(wb, wsDiary, "Diário de Hábitos");
+      XLSX.writeFile(wb, `Ritmo_Analitico_${new Date().toISOString().split('T')[0]}.xlsx`);
+    } catch (err) {
+      alert("Erro ao gerar Excel. Tente novamente.");
+    } finally {
+      setIsExportingExcel(false);
+    }
   };
 
   // --- Cálculos de Estatísticas ---
@@ -685,7 +710,9 @@ export default function Dashboard() {
                   <h3 style={{ color: 'var(--text-light)' }}>Histórico</h3>
                   <div style={{ display: 'flex', gap: '0.8rem' }}>
                     <button className="btn-secondary" onClick={handleExportCSV}><Download size={18} /> CSV</button>
-                    <button className="btn-secondary" onClick={handleExportXLSX} style={{ color: '#2ecc71' }}><Download size={18} /> Excel</button>
+                    <button className="btn-secondary" onClick={handleExportXLSX} style={{ color: '#2ecc71' }} disabled={isExportingExcel}>
+                      <Download size={18} /> {isExportingExcel ? 'Gerando...' : 'Excel'}
+                    </button>
                   </div>
                 </div>
                 <div className="glass-panel reports-toolbar">
@@ -752,7 +779,7 @@ export default function Dashboard() {
                   </div>
                   <p className="reports-toolbar-caption">
                     Exibindo {historicoFiltrado.length} de {historicoCompleto.length} registro{historicoCompleto.length === 1 ? '' : 's'}.
-                    {hasCustomReportRange ? ` Intervalo ativo: ${customRangeLabel}.` : ''}
+                    {hasCustomReportRange ? ` Intervalo ativo: ${customRangeLabel}.` : ''} {currentSortSummary}
                   </p>
                 </div>
                 <div className="report-summary-grid">
@@ -774,16 +801,16 @@ export default function Dashboard() {
                     <table className="history-table">
                       <thead>
                         <tr>
-                          <th>{renderSortableHeader('Data', 'data')}</th>
-                          <th>{renderSortableHeader('Humor', 'humor')}</th>
-                          <th>{renderSortableHeader('Energia', 'energia')}</th>
-                          <th>{renderSortableHeader('Produtiv.', 'produtividade')}</th>
-                          <th>{renderSortableHeader('Água', 'agua')}</th>
-                          <th>{renderSortableHeader('Sono', 'sono')}</th>
-                          <th>{renderSortableHeader('Treino', 'treino')}</th>
-                          <th>{renderSortableHeader('Biometria', 'peso')}</th>
-                          <th>{renderSortableHeader('IMC', 'imc')}</th>
-                          <th>{renderSortableHeader('Observações', 'observacoes')}</th>
+                          <th aria-sort={getAriaSort('data')}>{renderSortableHeader('Data', 'data')}</th>
+                          <th aria-sort={getAriaSort('humor')}>{renderSortableHeader('Humor', 'humor')}</th>
+                          <th aria-sort={getAriaSort('energia')}>{renderSortableHeader('Energia', 'energia')}</th>
+                          <th aria-sort={getAriaSort('produtividade')}>{renderSortableHeader('Produtiv.', 'produtividade')}</th>
+                          <th aria-sort={getAriaSort('agua')}>{renderSortableHeader('Água', 'agua')}</th>
+                          <th aria-sort={getAriaSort('sono')}>{renderSortableHeader('Sono', 'sono')}</th>
+                          <th aria-sort={getAriaSort('treino')}>{renderSortableHeader('Treino', 'treino')}</th>
+                          <th aria-sort={getAriaSort('peso')}>{renderSortableHeader('Biometria', 'peso')}</th>
+                          <th aria-sort={getAriaSort('imc')}>{renderSortableHeader('IMC', 'imc')}</th>
+                          <th aria-sort={getAriaSort('observacoes')}>{renderSortableHeader('Observações', 'observacoes')}</th>
                           <th style={{ textAlign: 'right' }}>Ações</th>
                         </tr>
                       </thead>
