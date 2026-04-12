@@ -21,7 +21,8 @@ export default function Dashboard() {
   const [isMetaModalOpen, setIsMetaModalOpen] = useState(false);
   const [editandoId, setEditandoId] = useState(null);
   const [reportPeriod, setReportPeriod] = useState('all');
-  const [reportDateFilter, setReportDateFilter] = useState('');
+  const [reportStartDate, setReportStartDate] = useState('');
+  const [reportEndDate, setReportEndDate] = useState('');
   const [formData, setFormData] = useState({
     data: new Date().toISOString().split('T')[0],
     humor: 3, sono: 8, produtividade: 3, energia: 3, exercicio: false, agua: 2.0, observacoes: '', peso: '', altura: ''
@@ -34,7 +35,24 @@ export default function Dashboard() {
   ];
 
   const getDateKey = (value) => String(value ?? '').split('T')[0];
+  const toDateInputValue = (date = new Date()) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
   const formatDisplayDate = (value) => new Date(`${getDateKey(value)}T00:00:00`).toLocaleDateString('pt-BR');
+  const toLocalDate = (value) => {
+    const date = new Date(`${getDateKey(value)}T00:00:00`);
+    date.setHours(0, 0, 0, 0);
+    return date;
+  };
+  const formatDateObject = (value) => value.toLocaleDateString('pt-BR');
+  const todayReportDate = toDateInputValue();
+  const normalizeReportDateValue = (value) => {
+    if (!value) return '';
+    return value > todayReportDate ? todayReportDate : value;
+  };
   const formatMetric = (value, digits = 1) => {
     if (value === null || value === undefined || value === '') return '—';
 
@@ -76,18 +94,47 @@ export default function Dashboard() {
     return startDate;
   };
   const reportPeriodStart = getPeriodStartDate(reportPeriod);
-  const historicoFiltrado = historicoCompleto.filter((registro) => {
-    const recordDate = new Date(`${getDateKey(registro.data)}T00:00:00`);
-    const matchesPeriod = !reportPeriodStart || recordDate >= reportPeriodStart;
-    const matchesSpecificDate = !reportDateFilter || getDateKey(registro.data) === reportDateFilter;
+  const safeReportStartDate = normalizeReportDateValue(reportStartDate);
+  const safeReportEndDate = normalizeReportDateValue(reportEndDate);
+  const reportStartMaxDate = safeReportEndDate && safeReportEndDate < todayReportDate ? safeReportEndDate : todayReportDate;
+  const customRangeStart = safeReportStartDate ? toLocalDate(safeReportStartDate) : null;
+  const customRangeEnd = safeReportEndDate ? toLocalDate(safeReportEndDate) : null;
+  const hasCustomReportRange = Boolean(customRangeStart || customRangeEnd);
+  let effectiveReportStart = hasCustomReportRange ? customRangeStart : reportPeriodStart;
+  let effectiveReportEnd = hasCustomReportRange ? customRangeEnd : null;
 
-    return matchesPeriod && matchesSpecificDate;
+  if (hasCustomReportRange && effectiveReportStart && effectiveReportEnd && effectiveReportStart > effectiveReportEnd) {
+    [effectiveReportStart, effectiveReportEnd] = [effectiveReportEnd, effectiveReportStart];
+  }
+
+  const customRangeLabel = (() => {
+    if (!hasCustomReportRange) return '';
+    if (effectiveReportStart && effectiveReportEnd) {
+      return effectiveReportStart.getTime() === effectiveReportEnd.getTime()
+        ? formatDateObject(effectiveReportStart)
+        : `${formatDateObject(effectiveReportStart)} até ${formatDateObject(effectiveReportEnd)}`;
+    }
+
+    if (effectiveReportStart) return `A partir de ${formatDateObject(effectiveReportStart)}`;
+    if (effectiveReportEnd) return `Até ${formatDateObject(effectiveReportEnd)}`;
+
+    return '';
+  })();
+
+  const historicoFiltrado = historicoCompleto.filter((registro) => {
+    const recordDate = toLocalDate(registro.data);
+    const matchesStart = !effectiveReportStart || recordDate >= effectiveReportStart;
+    const matchesEnd = !effectiveReportEnd || recordDate <= effectiveReportEnd;
+
+    return matchesStart && matchesEnd;
   });
   const reportSummary = (() => {
     if (historicoFiltrado.length === 0) {
       return {
         totalDias: 0,
-        periodoLabel: reportDateFilter ? `Nenhum registro em ${formatDisplayDate(reportDateFilter)}` : 'Ajuste os filtros para explorar o histórico.',
+        periodoLabel: hasCustomReportRange
+          ? `Nenhum registro em ${customRangeLabel || 'intervalo customizado'}`
+          : 'Ajuste os filtros para explorar o histórico.',
         avgHumor: '0',
         avgEnergia: '0',
         avgSono: '0',
@@ -523,8 +570,12 @@ export default function Dashboard() {
                           <button
                             key={option.key}
                             type="button"
-                            className={`reports-chip ${reportPeriod === option.key ? 'active' : ''}`}
-                            onClick={() => setReportPeriod(option.key)}
+                            className={`reports-chip ${!hasCustomReportRange && reportPeriod === option.key ? 'active' : ''}`}
+                            onClick={() => {
+                              setReportPeriod(option.key);
+                              setReportStartDate('');
+                              setReportEndDate('');
+                            }}
                           >
                             {option.label}
                           </button>
@@ -532,17 +583,40 @@ export default function Dashboard() {
                       </div>
                     </div>
                     <div className="reports-filter-block">
-                      <label htmlFor="report-date-filter" className="reports-filter-label">Buscar por data</label>
-                      <div className="reports-date-inline">
-                        <input
-                          id="report-date-filter"
-                          type="date"
-                          className="input-field reports-date-input"
-                          value={reportDateFilter}
-                          onChange={(e) => setReportDateFilter(e.target.value)}
-                        />
-                        {reportDateFilter && (
-                          <button type="button" className="btn-secondary reports-clear-btn" onClick={() => setReportDateFilter('')}>
+                      <span className="reports-filter-label">Intervalo customizado</span>
+                      <div className="reports-date-grid">
+                        <label className="reports-date-inline-field">
+                          <span className="reports-inline-label">De</span>
+                          <input
+                            type="date"
+                            className="input-field reports-date-input"
+                            value={safeReportStartDate}
+                            max={reportStartMaxDate}
+                            onChange={(e) => setReportStartDate(normalizeReportDateValue(e.target.value))}
+                            aria-label="Data inicial do relatório"
+                          />
+                        </label>
+                        <label className="reports-date-inline-field">
+                          <span className="reports-inline-label">Até</span>
+                          <input
+                            type="date"
+                            className="input-field reports-date-input"
+                            value={safeReportEndDate}
+                            min={safeReportStartDate || undefined}
+                            max={todayReportDate}
+                            onChange={(e) => setReportEndDate(normalizeReportDateValue(e.target.value))}
+                            aria-label="Data final do relatório"
+                          />
+                        </label>
+                        {(safeReportStartDate || safeReportEndDate) && (
+                          <button
+                            type="button"
+                            className="btn-secondary reports-clear-btn"
+                            onClick={() => {
+                              setReportStartDate('');
+                              setReportEndDate('');
+                            }}
+                          >
                             Limpar
                           </button>
                         )}
@@ -551,6 +625,7 @@ export default function Dashboard() {
                   </div>
                   <p className="reports-toolbar-caption">
                     Exibindo {historicoFiltrado.length} de {historicoCompleto.length} registro{historicoCompleto.length === 1 ? '' : 's'}.
+                    {hasCustomReportRange ? ` Intervalo ativo: ${customRangeLabel}.` : ''}
                   </p>
                 </div>
                 <div className="report-summary-grid">
@@ -566,7 +641,7 @@ export default function Dashboard() {
                   {historicoFiltrado.length === 0 ? (
                     <div className="history-empty-state">
                       <strong>Nenhum registro encontrado</strong>
-                      <p>Experimente ampliar o período ou limpar a busca por data para recuperar mais informações.</p>
+                      <p>Experimente ampliar o período rápido ou limpar o intervalo customizado para recuperar mais informações.</p>
                     </div>
                   ) : (
                     <table className="history-table">
