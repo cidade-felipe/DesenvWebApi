@@ -26,8 +26,36 @@ export default function Dashboard() {
   });
 
   const getDateKey = (value) => String(value ?? '').split('T')[0];
+  const formatDisplayDate = (value) => new Date(`${getDateKey(value)}T00:00:00`).toLocaleDateString('pt-BR');
+  const formatMetric = (value, digits = 1) => {
+    if (value === null || value === undefined || value === '') return '—';
+
+    const numericValue = Number(value);
+    if (Number.isNaN(numericValue)) return String(value);
+
+    return numericValue.toLocaleString('pt-BR', {
+      minimumFractionDigits: Number.isInteger(numericValue) ? 0 : digits,
+      maximumFractionDigits: digits
+    });
+  };
 
   const findBiometriaByDate = (date) => biometria.find((item) => getDateKey(item.data) === getDateKey(date));
+  const biometriaPorData = biometria.reduce((acc, item) => {
+    acc[getDateKey(item.data)] = item;
+    return acc;
+  }, {});
+  const historicoCompleto = registros.map((registro) => {
+    const medida = biometriaPorData[getDateKey(registro.data)];
+
+    return {
+      ...registro,
+      peso: medida?.peso ?? null,
+      altura: medida?.altura ?? null,
+      imc: medida?.imc ?? null,
+      imcClassificacao: medida?.imcClassificacao ?? '',
+      imcCor: medida?.imcCor ?? 'var(--text-main)'
+    };
+  });
 
   // --- Handlers de Ações ---
   const handleSalvar = async (e) => {
@@ -61,11 +89,28 @@ export default function Dashboard() {
 
   const handleEditar = (registro) => {
     const biometriaDoDia = findBiometriaByDate(registro.data);
+    const {
+      id,
+      data,
+      humor,
+      sono,
+      produtividade,
+      energia,
+      exercicio,
+      agua,
+      observacoes
+    } = registro;
 
-    setEditandoId(registro.id);
+    setEditandoId(id);
     setFormData({
-      ...registro,
-      observacoes: registro.observacoes || '',
+      data,
+      humor,
+      sono,
+      produtividade,
+      energia,
+      exercicio,
+      agua,
+      observacoes: observacoes || '',
       peso: biometriaDoDia?.peso?.toString() || '',
       altura: biometriaDoDia?.altura?.toString() || biometria[0]?.altura?.toString() || ''
     });
@@ -86,10 +131,23 @@ export default function Dashboard() {
 
   // --- Exportações ---
   const handleExportCSV = () => {
-    const headers = ["Data", "Humor", "Sono", "Agua", "Produtividade", "Energia", "Exercicio", "Peso", "Observacoes"];
+    const headers = ["Data", "Humor", "Energia", "Produtividade", "Agua", "Sono", "Exercicio", "Peso", "Altura", "IMC", "ClassificacaoIMC", "Observacoes"];
     const csvContent = [
       headers.join(","),
-      ...registros.map(r => [r.data, r.humor, r.sono, r.agua, r.produtividade, r.energia, r.exercicio ? "Sim" : "Nao", r.peso || "", `"${(r.observacoes || "").replace(/"/g, '""')}"`].join(","))
+      ...historicoCompleto.map(r => [
+        r.data,
+        r.humor,
+        r.energia,
+        r.produtividade,
+        r.agua,
+        r.sono,
+        r.exercicio ? "Sim" : "Nao",
+        r.peso ?? "",
+        r.altura ?? "",
+        r.imc ?? "",
+        `"${(r.imcClassificacao || "").replace(/"/g, '""')}"`,
+        `"${(r.observacoes || "").replace(/"/g, '""')}"`
+      ].join(","))
     ].join("\n");
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -101,7 +159,20 @@ export default function Dashboard() {
 
   const handleExportXLSX = () => {
     const wb = XLSX.utils.book_new();
-    const wsDiary = XLSX.utils.json_to_sheet(registros.map(r => ({ "Data": r.data, "Humor": r.humor, "Sono": r.sono, "Água": r.agua, "Exercício": r.exercicio ? "Sim" : "Não" })));
+    const wsDiary = XLSX.utils.json_to_sheet(historicoCompleto.map(r => ({
+      "Data": r.data,
+      "Humor": r.humor,
+      "Energia": r.energia,
+      "Produtividade": r.produtividade,
+      "Água": r.agua,
+      "Sono": r.sono,
+      "Exercício": r.exercicio ? "Sim" : "Não",
+      "Peso (kg)": r.peso ?? "",
+      "Altura (cm)": r.altura ?? "",
+      "IMC": r.imc ?? "",
+      "Classificação IMC": r.imcClassificacao || "",
+      "Observações": r.observacoes || ""
+    })));
     XLSX.utils.book_append_sheet(wb, wsDiary, "Diário de Hábitos");
     XLSX.writeFile(wb, `Ritmo_Analitico_${new Date().toISOString().split('T')[0]}.xlsx`);
   };
@@ -324,12 +395,54 @@ export default function Dashboard() {
                 </div>
                 <div className="glass-panel" style={{ overflowX: 'auto' }}>
                   <table className="history-table">
-                    <thead><tr><th>Data</th><th>Água</th><th>Sono</th><th>Humor</th><th>Físico</th><th style={{ textAlign: 'right' }}>Ações</th></tr></thead>
+                    <thead>
+                      <tr>
+                        <th>Data</th>
+                        <th>Humor</th>
+                        <th>Energia</th>
+                        <th>Produtiv.</th>
+                        <th>Água</th>
+                        <th>Sono</th>
+                        <th>Treino</th>
+                        <th>Biometria</th>
+                        <th>IMC</th>
+                        <th>Observações</th>
+                        <th style={{ textAlign: 'right' }}>Ações</th>
+                      </tr>
+                    </thead>
                     <tbody>
-                      {registros.map(r => (
+                      {historicoCompleto.map(r => (
                         <tr key={r.id}>
-                          <td>{r.data.split('-').reverse().join('/')}</td>
-                          <td>{r.agua}L</td><td>{r.sono}h</td><td>{r.humor}/5</td><td>{r.exercicio ? "✅" : "❌"}</td>
+                          <td>{formatDisplayDate(r.data)}</td>
+                          <td>{r.humor}/5</td>
+                          <td>{r.energia}/5</td>
+                          <td>{r.produtividade}/5</td>
+                          <td>{formatMetric(r.agua)} L</td>
+                          <td>{formatMetric(r.sono)} h</td>
+                          <td>
+                            <span className={`history-pill ${r.exercicio ? 'success' : 'neutral'}`}>
+                              {r.exercicio ? 'Fez treino' : 'Sem treino'}
+                            </span>
+                          </td>
+                          <td>
+                            <div className="history-cell-stack">
+                              <strong>{r.peso ? `${formatMetric(r.peso)} kg` : 'Sem peso'}</strong>
+                              <span>{r.altura ? `${r.altura} cm` : 'Sem altura'}</span>
+                            </div>
+                          </td>
+                          <td>
+                            {r.imc ? (
+                              <div className="history-cell-stack">
+                                <strong>{formatMetric(r.imc)}</strong>
+                                <span style={{ color: r.imcCor }}>{r.imcClassificacao}</span>
+                              </div>
+                            ) : (
+                              <span className="history-muted">Sem IMC</span>
+                            )}
+                          </td>
+                          <td className="history-observacoes" title={r.observacoes || 'Sem observações'}>
+                            {r.observacoes || 'Sem observações'}
+                          </td>
                           <td style={{ textAlign: 'right' }}>
                             <button className="action-btn edit" onClick={() => handleEditar(r)}><Pencil size={18} /></button>
                             <button className="action-btn delete" onClick={() => handleExcluir(r.id)}><Trash2 size={18} /></button>
