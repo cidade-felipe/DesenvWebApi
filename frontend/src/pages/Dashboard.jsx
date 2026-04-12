@@ -176,6 +176,7 @@ export default function Dashboard() {
     const registrosRecentes = registros.filter(r => new Date(r.data) >= seteDiasAtras);
     let total = 0;
     const cat = meta.categoria.toLowerCase();
+    const clampPercent = (value) => Math.max(0, Math.min(Math.round(value), 100));
 
     if (cat === 'peso') {
       const medidasOrdenadas = [...biometria]
@@ -234,7 +235,7 @@ export default function Dashboard() {
           : `${distanciaAtual.toFixed(1)} kg acima da meta`;
         secondaryText = pesoAtual <= pesoMeta
           ? `Objetivo era chegar em ${pesoMeta.toFixed(1)} kg ou menos`
-          : `${Math.max(0, Math.min(Math.round(progresso), 100))}% do caminho até ${pesoMeta.toFixed(1)} kg ou menos`;
+          : `${clampPercent(progresso)}% do caminho até ${pesoMeta.toFixed(1)} kg ou menos`;
       } else {
         const distanciaInicial = pesoMeta - pesoInicial;
         const distanciaAtual = Math.max(0, pesoMeta - pesoAtual);
@@ -246,11 +247,11 @@ export default function Dashboard() {
           : `${distanciaAtual.toFixed(1)} kg abaixo da meta`;
         secondaryText = pesoAtual >= pesoMeta
           ? `Objetivo era chegar em ${pesoMeta.toFixed(1)} kg ou mais`
-          : `${Math.max(0, Math.min(Math.round(progresso), 100))}% do caminho até ${pesoMeta.toFixed(1)} kg ou mais`;
+          : `${clampPercent(progresso)}% do caminho até ${pesoMeta.toFixed(1)} kg ou mais`;
       }
 
       return {
-        percent: Math.max(0, Math.min(Math.round(progresso), 100)),
+        percent: clampPercent(progresso),
         current: pesoAtual.toFixed(1),
         status,
         unit: 'kg',
@@ -273,7 +274,7 @@ export default function Dashboard() {
 
     const progresso = (total / meta.valorAlvo) * 100;
     return {
-      percent: Math.min(Math.round(progresso), 120),
+      percent: clampPercent(progresso),
       current: total.toFixed(1),
       status: progresso >= 100 ? 'concluido' : progresso >= 50 ? 'em_dia' : 'atrasado',
       unit: cat === 'treino' ? 'dias' : '',
