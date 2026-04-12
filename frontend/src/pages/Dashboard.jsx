@@ -23,6 +23,7 @@ export default function Dashboard() {
   const [reportPeriod, setReportPeriod] = useState('all');
   const [reportStartDate, setReportStartDate] = useState('');
   const [reportEndDate, setReportEndDate] = useState('');
+  const [reportSort, setReportSort] = useState({ key: 'data', direction: 'desc' });
   const [formData, setFormData] = useState({
     data: new Date().toISOString().split('T')[0],
     humor: 3, sono: 8, produtividade: 3, energia: 3, exercicio: false, agua: 2.0, observacoes: '', peso: '', altura: ''
@@ -35,6 +36,7 @@ export default function Dashboard() {
   ];
 
   const getDateKey = (value) => String(value ?? '').split('T')[0];
+  const weekdayShortNames = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'];
   const toDateInputValue = (date = new Date()) => {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -63,6 +65,48 @@ export default function Dashboard() {
       minimumFractionDigits: Number.isInteger(numericValue) ? 0 : digits,
       maximumFractionDigits: digits
     });
+  };
+  const getWeekdayShortLabel = (value) => weekdayShortNames[toLocalDate(value).getDay()];
+  const isWeekendDate = (value) => {
+    const weekDay = toLocalDate(value).getDay();
+    return weekDay === 0 || weekDay === 6;
+  };
+  const getAverageForMetric = (items, key) => items.reduce((acc, item) => acc + Number(item[key] || 0), 0) / items.length;
+  const getMetricTrend = (items, key, options = {}) => {
+    const { digits = 1, threshold = 0.2, unit = '', label = key } = options;
+
+    if (items.length < 2) {
+      return {
+        tone: 'neutral',
+        value: 'Estável',
+        meta: `Ainda não há histórico suficiente para medir a tendência de ${label}.`
+      };
+    }
+
+    const orderedItems = [...items].sort((a, b) => toLocalDate(a.data) - toLocalDate(b.data));
+    const windowSize = Math.max(1, Math.floor(orderedItems.length / 2));
+    const firstWindow = orderedItems.slice(0, windowSize);
+    const lastWindow = orderedItems.slice(-windowSize);
+    const firstAverage = getAverageForMetric(firstWindow, key);
+    const lastAverage = getAverageForMetric(lastWindow, key);
+    const delta = lastAverage - firstAverage;
+    const absDelta = Math.abs(delta);
+
+    if (absDelta < threshold) {
+      return {
+        tone: 'neutral',
+        value: 'Estável',
+        meta: `${label} ficou praticamente estável, de ${formatMetric(firstAverage, digits)}${unit} para ${formatMetric(lastAverage, digits)}${unit}.`
+      };
+    }
+
+    const isUp = delta > 0;
+
+    return {
+      tone: isUp ? 'positive' : 'warning',
+      value: isUp ? 'Em alta' : 'Em queda',
+      meta: `${label} ${isUp ? 'subiu' : 'caiu'} ${formatMetric(absDelta, digits)}${unit}, de ${formatMetric(firstAverage, digits)}${unit} para ${formatMetric(lastAverage, digits)}${unit}.`
+    };
   };
 
   const findBiometriaByDate = (date) => biometria.find((item) => getDateKey(item.data) === getDateKey(date));
@@ -128,6 +172,60 @@ export default function Dashboard() {
 
     return matchesStart && matchesEnd;
   });
+  const getReportSortValue = (registro, key) => {
+    switch (key) {
+      case 'data':
+        return toLocalDate(registro.data).getTime();
+      case 'humor':
+      case 'energia':
+      case 'produtividade':
+      case 'agua':
+      case 'sono':
+      case 'peso':
+      case 'imc':
+        return registro[key] ?? null;
+      case 'treino':
+        return registro.exercicio ? 1 : 0;
+      case 'observacoes':
+        return (registro.observacoes || '').toLowerCase();
+      default:
+        return registro[key];
+    }
+  };
+  const historicoOrdenado = [...historicoFiltrado].sort((a, b) => {
+    const aValue = getReportSortValue(a, reportSort.key);
+    const bValue = getReportSortValue(b, reportSort.key);
+    const directionFactor = reportSort.direction === 'asc' ? 1 : -1;
+    const aIsEmpty = aValue === null || aValue === undefined || aValue === '';
+    const bIsEmpty = bValue === null || bValue === undefined || bValue === '';
+
+    if (aIsEmpty && bIsEmpty) return 0;
+    if (aIsEmpty) return 1;
+    if (bIsEmpty) return -1;
+
+    if (typeof aValue === 'string' && typeof bValue === 'string') {
+      return aValue.localeCompare(bValue, 'pt-BR') * directionFactor;
+    }
+
+    if (aValue === bValue) return 0;
+
+    return (aValue > bValue ? 1 : -1) * directionFactor;
+  });
+  const toggleReportSort = (key) => {
+    setReportSort((current) => {
+      if (current.key === key) {
+        return { key, direction: current.direction === 'asc' ? 'desc' : 'asc' };
+      }
+
+      return { key, direction: key === 'data' ? 'desc' : 'asc' };
+    });
+  };
+  const getSortIndicator = (key) => {
+    if (reportSort.key !== key) return '↕';
+    return reportSort.direction === 'asc' ? '↑' : '↓';
+  };
+  const humorTrend = getMetricTrend(historicoFiltrado, 'humor', { digits: 1, threshold: 0.2, unit: '/5', label: 'Humor' });
+  const sonoTrend = getMetricTrend(historicoFiltrado, 'sono', { digits: 1, threshold: 0.35, unit: ' h', label: 'Sono' });
   const reportSummary = (() => {
     if (historicoFiltrado.length === 0) {
       return {
@@ -166,10 +264,11 @@ export default function Dashboard() {
 
     if (primeiraBiometria && ultimaBiometria && biometriaComPeso.length > 1) {
       const deltaPeso = Number(ultimaBiometria.peso) - Number(primeiraBiometria.peso);
+      const deltaLabel = deltaPeso === 0
+        ? 'Peso estável no período filtrado.'
+        : `Variação no período: ${deltaPeso > 0 ? '+' : ''}${formatMetric(deltaPeso)} kg.`;
 
-      pesoLabel = deltaPeso === 0
-        ? 'Peso estável'
-        : `${deltaPeso > 0 ? '+' : ''}${formatMetric(deltaPeso)} kg`;
+      corpoLabel = `${corpoLabel} ${deltaLabel}`.trim();
     }
 
     return {
@@ -191,27 +290,44 @@ export default function Dashboard() {
     {
       label: 'Cobertura',
       value: `${reportSummary.totalDias} dia${reportSummary.totalDias === 1 ? '' : 's'}`,
-      meta: reportSummary.periodoLabel
+      meta: reportSummary.periodoLabel,
+      tone: 'default'
     },
     {
       label: 'Bem-estar',
       value: `${reportSummary.avgHumor}/5`,
-      meta: `Energia média ${reportSummary.avgEnergia}/5`
+      meta: `Energia média ${reportSummary.avgEnergia}/5`,
+      tone: 'default'
     },
     {
       label: 'Recuperação',
       value: `${reportSummary.avgSono} h`,
-      meta: `Água média ${reportSummary.avgAgua} L`
+      meta: `Água média ${reportSummary.avgAgua} L`,
+      tone: 'default'
     },
     {
       label: 'Treino',
       value: `${reportSummary.treinoPercent}% dos dias`,
-      meta: `${reportSummary.treinoDias} de ${reportSummary.totalDias} registro${reportSummary.totalDias === 1 ? '' : 's'} com treino`
+      meta: `${reportSummary.treinoDias} de ${reportSummary.totalDias} registro${reportSummary.totalDias === 1 ? '' : 's'} com treino`,
+      tone: 'default'
     },
     {
       label: 'Corpo',
       value: reportSummary.pesoLabel,
-      meta: reportSummary.corpoLabel
+      meta: reportSummary.corpoLabel,
+      tone: 'default'
+    },
+    {
+      label: 'Tendência do humor',
+      value: humorTrend.value,
+      meta: humorTrend.meta,
+      tone: humorTrend.tone
+    },
+    {
+      label: 'Tendência do sono',
+      value: sonoTrend.value,
+      meta: sonoTrend.meta,
+      tone: sonoTrend.tone
     }
   ];
 
@@ -289,7 +405,7 @@ export default function Dashboard() {
 
   // --- Exportações ---
   const handleExportCSV = () => {
-    if (historicoFiltrado.length === 0) {
+    if (historicoOrdenado.length === 0) {
       alert('Não há dados filtrados para exportar.');
       return;
     }
@@ -297,7 +413,7 @@ export default function Dashboard() {
     const headers = ["Data", "Humor", "Energia", "Produtividade", "Agua", "Sono", "Exercicio", "Peso", "Altura", "IMC", "ClassificacaoIMC", "Observacoes"];
     const csvContent = [
       headers.join(","),
-      ...historicoFiltrado.map(r => [
+      ...historicoOrdenado.map(r => [
         r.data,
         r.humor,
         r.energia,
@@ -321,13 +437,13 @@ export default function Dashboard() {
   };
 
   const handleExportXLSX = () => {
-    if (historicoFiltrado.length === 0) {
+    if (historicoOrdenado.length === 0) {
       alert('Não há dados filtrados para exportar.');
       return;
     }
 
     const wb = XLSX.utils.book_new();
-    const wsDiary = XLSX.utils.json_to_sheet(historicoFiltrado.map(r => ({
+    const wsDiary = XLSX.utils.json_to_sheet(historicoOrdenado.map(r => ({
       "Data": r.data,
       "Humor": r.humor,
       "Energia": r.energia,
@@ -521,6 +637,17 @@ export default function Dashboard() {
     };
   };
 
+  const renderSortableHeader = (label, key) => (
+    <button
+      type="button"
+      className={`history-sort-btn ${reportSort.key === key ? 'active' : ''}`}
+      onClick={() => toggleReportSort(key)}
+    >
+      <span>{label}</span>
+      <span className="history-sort-indicator" aria-hidden="true">{getSortIndicator(key)}</span>
+    </button>
+  );
+
   if (loading) return <div className="center-wrapper"><RefreshCw className="animate-spin" size={32} color="var(--accent-cyan)" /></div>;
 
   return (
@@ -630,9 +757,9 @@ export default function Dashboard() {
                 </div>
                 <div className="report-summary-grid">
                   {reportSummaryCards.map(card => (
-                    <div key={card.label} className="glass-panel report-summary-card">
+                    <div key={card.label} className={`glass-panel report-summary-card ${card.tone || 'default'}`}>
                       <span className="report-summary-label">{card.label}</span>
-                      <strong className="report-summary-value">{card.value}</strong>
+                      <strong className={`report-summary-value ${card.tone || 'default'}`}>{card.value}</strong>
                       <span className="report-summary-meta">{card.meta}</span>
                     </div>
                   ))}
@@ -647,23 +774,30 @@ export default function Dashboard() {
                     <table className="history-table">
                       <thead>
                         <tr>
-                          <th>Data</th>
-                          <th>Humor</th>
-                          <th>Energia</th>
-                          <th>Produtiv.</th>
-                          <th>Água</th>
-                          <th>Sono</th>
-                          <th>Treino</th>
-                          <th>Biometria</th>
-                          <th>IMC</th>
-                          <th>Observações</th>
+                          <th>{renderSortableHeader('Data', 'data')}</th>
+                          <th>{renderSortableHeader('Humor', 'humor')}</th>
+                          <th>{renderSortableHeader('Energia', 'energia')}</th>
+                          <th>{renderSortableHeader('Produtiv.', 'produtividade')}</th>
+                          <th>{renderSortableHeader('Água', 'agua')}</th>
+                          <th>{renderSortableHeader('Sono', 'sono')}</th>
+                          <th>{renderSortableHeader('Treino', 'treino')}</th>
+                          <th>{renderSortableHeader('Biometria', 'peso')}</th>
+                          <th>{renderSortableHeader('IMC', 'imc')}</th>
+                          <th>{renderSortableHeader('Observações', 'observacoes')}</th>
                           <th style={{ textAlign: 'right' }}>Ações</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {historicoFiltrado.map(r => (
-                          <tr key={r.id}>
-                            <td>{formatDisplayDate(r.data)}</td>
+                        {historicoOrdenado.map(r => (
+                          <tr key={r.id} className={`history-row ${isWeekendDate(r.data) ? 'weekend' : ''}`}>
+                            <td>
+                              <div className="history-cell-stack">
+                                <strong>{formatDisplayDate(r.data)}</strong>
+                                <span className={`history-day-badge ${isWeekendDate(r.data) ? 'weekend' : ''}`}>
+                                  {getWeekdayShortLabel(r.data)}
+                                </span>
+                              </div>
+                            </td>
                             <td>{r.humor}/5</td>
                             <td>{r.energia}/5</td>
                             <td>{r.produtividade}/5</td>
