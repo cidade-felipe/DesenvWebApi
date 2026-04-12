@@ -24,6 +24,11 @@ export default function Dashboard() {
   const [reportPeriod, setReportPeriod] = useState('all');
   const [reportStartDate, setReportStartDate] = useState('');
   const [reportEndDate, setReportEndDate] = useState('');
+  const [reportFocus, setReportFocus] = useState('all');
+  const [analysisPeriod, setAnalysisPeriod] = useState('all');
+  const [analysisStartDate, setAnalysisStartDate] = useState('');
+  const [analysisEndDate, setAnalysisEndDate] = useState('');
+  const [analysisGrouping, setAnalysisGrouping] = useState('daily');
   const [reportSort, setReportSort] = useState({ key: 'data', direction: 'desc' });
   const [isExportingExcel, setIsExportingExcel] = useState(false);
   const [notice, setNotice] = useState(null);
@@ -38,6 +43,18 @@ export default function Dashboard() {
     { key: '30d', label: '30 dias' },
     { key: '90d', label: '90 dias' },
     { key: 'all', label: 'Tudo' }
+  ];
+  const analysisGroupingOptions = [
+    { key: 'daily', label: 'Diário' },
+    { key: 'weekly', label: 'Semanal' },
+    { key: 'biweekly', label: 'Quinzenal' },
+    { key: 'monthly', label: 'Mensal' }
+  ];
+  const reportFocusOptions = [
+    { key: 'all', label: 'Todos' },
+    { key: 'training', label: 'Treino' },
+    { key: 'biometric', label: 'Biometria' },
+    { key: 'notes', label: 'Anotações' }
   ];
   const reportSortLabels = {
     data: 'data',
@@ -79,10 +96,12 @@ export default function Dashboard() {
   };
   const formatDateObject = (value) => value.toLocaleDateString('pt-BR');
   const todayReportDate = toDateInputValue();
-  const normalizeReportDateValue = (value) => {
+  const normalizeDateFilterValue = (value) => {
     if (!value) return '';
     return value > todayReportDate ? todayReportDate : value;
   };
+  const normalizeReportDateValue = (value) => normalizeDateFilterValue(value);
+  const normalizeAnalysisDateValue = (value) => normalizeDateFilterValue(value);
   const formatMetric = (value, digits = 1) => {
     if (value === null || value === undefined || value === '') return '—';
 
@@ -182,40 +201,217 @@ export default function Dashboard() {
     startDate.setDate(startDate.getDate() - (days - 1));
     return startDate;
   };
-  const reportPeriodStart = getPeriodStartDate(reportPeriod);
-  const safeReportStartDate = normalizeReportDateValue(reportStartDate);
-  const safeReportEndDate = normalizeReportDateValue(reportEndDate);
-  const reportStartMaxDate = safeReportEndDate && safeReportEndDate < todayReportDate ? safeReportEndDate : todayReportDate;
-  const customRangeStart = safeReportStartDate ? toLocalDate(safeReportStartDate) : null;
-  const customRangeEnd = safeReportEndDate ? toLocalDate(safeReportEndDate) : null;
-  const hasCustomReportRange = Boolean(customRangeStart || customRangeEnd);
-  let effectiveReportStart = hasCustomReportRange ? customRangeStart : reportPeriodStart;
-  let effectiveReportEnd = hasCustomReportRange ? customRangeEnd : null;
+  const resolveDateRange = (period, startValue, endValue) => {
+    const periodStart = getPeriodStartDate(period);
+    const safeStartDate = normalizeDateFilterValue(startValue);
+    const safeEndDate = normalizeDateFilterValue(endValue);
+    const startMaxDate = safeEndDate && safeEndDate < todayReportDate ? safeEndDate : todayReportDate;
+    const customStart = safeStartDate ? toLocalDate(safeStartDate) : null;
+    const customEnd = safeEndDate ? toLocalDate(safeEndDate) : null;
+    const hasCustomRange = Boolean(customStart || customEnd);
+    let effectiveStart = hasCustomRange ? customStart : periodStart;
+    let effectiveEnd = hasCustomRange ? customEnd : null;
 
-  if (hasCustomReportRange && effectiveReportStart && effectiveReportEnd && effectiveReportStart > effectiveReportEnd) {
-    [effectiveReportStart, effectiveReportEnd] = [effectiveReportEnd, effectiveReportStart];
-  }
-
-  const customRangeLabel = (() => {
-    if (!hasCustomReportRange) return '';
-    if (effectiveReportStart && effectiveReportEnd) {
-      return effectiveReportStart.getTime() === effectiveReportEnd.getTime()
-        ? formatDateObject(effectiveReportStart)
-        : `${formatDateObject(effectiveReportStart)} até ${formatDateObject(effectiveReportEnd)}`;
+    if (hasCustomRange && effectiveStart && effectiveEnd && effectiveStart > effectiveEnd) {
+      [effectiveStart, effectiveEnd] = [effectiveEnd, effectiveStart];
     }
 
-    if (effectiveReportStart) return `A partir de ${formatDateObject(effectiveReportStart)}`;
-    if (effectiveReportEnd) return `Até ${formatDateObject(effectiveReportEnd)}`;
+    const customRangeLabel = (() => {
+      if (!hasCustomRange) return '';
+      if (effectiveStart && effectiveEnd) {
+        return effectiveStart.getTime() === effectiveEnd.getTime()
+          ? formatDateObject(effectiveStart)
+          : `${formatDateObject(effectiveStart)} até ${formatDateObject(effectiveEnd)}`;
+      }
 
-    return '';
-  })();
+      if (effectiveStart) return `A partir de ${formatDateObject(effectiveStart)}`;
+      if (effectiveEnd) return `Até ${formatDateObject(effectiveEnd)}`;
 
-  const historicoFiltrado = historicoCompleto.filter((registro) => {
-    const recordDate = toLocalDate(registro.data);
-    const matchesStart = !effectiveReportStart || recordDate >= effectiveReportStart;
-    const matchesEnd = !effectiveReportEnd || recordDate <= effectiveReportEnd;
+      return '';
+    })();
+
+    return {
+      safeStartDate,
+      safeEndDate,
+      startMaxDate,
+      hasCustomRange,
+      effectiveStart,
+      effectiveEnd,
+      customRangeLabel
+    };
+  };
+  const filterItemsByDateRange = (items, dateRange, resolveDate) => items.filter((item) => {
+    const itemDate = resolveDate(item);
+    const matchesStart = !dateRange.effectiveStart || itemDate >= dateRange.effectiveStart;
+    const matchesEnd = !dateRange.effectiveEnd || itemDate <= dateRange.effectiveEnd;
 
     return matchesStart && matchesEnd;
+  });
+  const stripTrailingDot = (value) => value.replace('.', '');
+  const formatMonthShort = (date) => stripTrailingDot(date.toLocaleDateString('pt-BR', { month: 'short' }));
+  const addDays = (date, days) => {
+    const nextDate = new Date(date);
+    nextDate.setDate(nextDate.getDate() + days);
+    nextDate.setHours(0, 0, 0, 0);
+    return nextDate;
+  };
+  const getWeekStart = (date) => {
+    const nextDate = new Date(date);
+    const weekDay = nextDate.getDay();
+    const shift = weekDay === 0 ? -6 : 1 - weekDay;
+    nextDate.setDate(nextDate.getDate() + shift);
+    nextDate.setHours(0, 0, 0, 0);
+    return nextDate;
+  };
+  const getMonthStart = (date) => new Date(date.getFullYear(), date.getMonth(), 1);
+  const getMonthEnd = (date) => new Date(date.getFullYear(), date.getMonth() + 1, 0);
+  const getBiweeklyRange = (date) => {
+    const isFirstHalf = date.getDate() <= 15;
+    const start = new Date(date.getFullYear(), date.getMonth(), isFirstHalf ? 1 : 16);
+    const end = isFirstHalf
+      ? new Date(date.getFullYear(), date.getMonth(), 15)
+      : getMonthEnd(date);
+
+    return { start, end, isFirstHalf };
+  };
+  const getAnalysisBucketMeta = (value, grouping) => {
+    const date = value instanceof Date ? new Date(value) : toLocalDate(value);
+    date.setHours(0, 0, 0, 0);
+
+    if (grouping === 'weekly') {
+      const start = getWeekStart(date);
+      const end = addDays(start, 6);
+      return {
+        key: `${toDateInputValue(start)}_weekly`,
+        label: `${formatDateObject(start).slice(0, 5)} a ${formatDateObject(end).slice(0, 5)}`,
+        fullLabel: `${formatDateObject(start)} até ${formatDateObject(end)}`,
+        sortTime: start.getTime()
+      };
+    }
+
+    if (grouping === 'biweekly') {
+      const { start, end, isFirstHalf } = getBiweeklyRange(date);
+      return {
+        key: `${toDateInputValue(start)}_biweekly`,
+        label: `${isFirstHalf ? '1-15' : '16-fim'} ${formatMonthShort(start)}/${String(start.getFullYear()).slice(-2)}`,
+        fullLabel: `${formatDateObject(start)} até ${formatDateObject(end)}`,
+        sortTime: start.getTime()
+      };
+    }
+
+    if (grouping === 'monthly') {
+      const start = getMonthStart(date);
+      const end = getMonthEnd(date);
+      return {
+        key: `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, '0')}_monthly`,
+        label: `${formatMonthShort(start)}/${String(start.getFullYear()).slice(-2)}`,
+        fullLabel: `${formatDateObject(start)} até ${formatDateObject(end)}`,
+        sortTime: start.getTime()
+      };
+    }
+
+    return {
+      key: `${toDateInputValue(date)}_daily`,
+      label: formatDateObject(date),
+      fullLabel: formatDateObject(date),
+      sortTime: date.getTime()
+    };
+  };
+  const aggregateAnalysisRecords = (items, grouping) => {
+    const buckets = new Map();
+
+    [...items]
+      .sort((a, b) => toLocalDate(a.data) - toLocalDate(b.data))
+      .forEach((item) => {
+        const meta = getAnalysisBucketMeta(item.data, grouping);
+        const currentBucket = buckets.get(meta.key) ?? {
+          data: meta.label,
+          fullDate: meta.fullLabel,
+          sortTime: meta.sortTime,
+          count: 0,
+          humor: 0,
+          energia: 0,
+          sono: 0,
+          produtividade: 0
+        };
+
+        currentBucket.count += 1;
+        currentBucket.humor += Number(item.humor || 0);
+        currentBucket.energia += Number(item.energia || 0);
+        currentBucket.sono += Number(item.sono || 0);
+        currentBucket.produtividade += Number(item.produtividade || 0);
+        buckets.set(meta.key, currentBucket);
+      });
+
+    return [...buckets.values()]
+      .sort((a, b) => a.sortTime - b.sortTime)
+      .map((bucket) => ({
+        data: bucket.data,
+        fullDate: bucket.fullDate,
+        humor: Number((bucket.humor / bucket.count).toFixed(1)),
+        energia: Number((bucket.energia / bucket.count).toFixed(1)),
+        sono: Number((bucket.sono / bucket.count).toFixed(1)),
+        produtividade: Number((bucket.produtividade / bucket.count).toFixed(1)),
+        totalRegistros: bucket.count
+      }));
+  };
+  const aggregateAnalysisWeight = (items, grouping) => {
+    const buckets = new Map();
+
+    [...items]
+      .filter((item) => item.peso !== null && item.peso !== undefined && item.peso !== '')
+      .sort((a, b) => toLocalDate(a.data) - toLocalDate(b.data))
+      .forEach((item) => {
+        const itemDate = toLocalDate(item.data);
+        const meta = getAnalysisBucketMeta(itemDate, grouping);
+        const currentBucket = buckets.get(meta.key) ?? {
+          data: meta.label,
+          fullDate: meta.fullLabel,
+          sortTime: meta.sortTime,
+          peso: Number(item.peso),
+          lastMeasurementTime: itemDate.getTime(),
+          totalMedicoes: 0
+        };
+
+        currentBucket.totalMedicoes += 1;
+
+        if (itemDate.getTime() >= currentBucket.lastMeasurementTime) {
+          currentBucket.peso = Number(item.peso);
+          currentBucket.lastMeasurementTime = itemDate.getTime();
+        }
+
+        buckets.set(meta.key, currentBucket);
+      });
+
+    return [...buckets.values()]
+      .sort((a, b) => a.sortTime - b.sortTime)
+      .map((bucket) => ({
+        data: bucket.data,
+        fullDate: bucket.fullDate,
+        peso: bucket.peso,
+        totalMedicoes: bucket.totalMedicoes
+      }));
+  };
+  const reportDateRange = resolveDateRange(reportPeriod, reportStartDate, reportEndDate);
+  const analysisDateRange = resolveDateRange(analysisPeriod, analysisStartDate, analysisEndDate);
+  const safeReportStartDate = reportDateRange.safeStartDate;
+  const safeReportEndDate = reportDateRange.safeEndDate;
+  const reportStartMaxDate = reportDateRange.startMaxDate;
+  const hasCustomReportRange = reportDateRange.hasCustomRange;
+  const customRangeLabel = reportDateRange.customRangeLabel;
+  const reportFocusLabel = reportFocusOptions.find(option => option.key === reportFocus)?.label || 'Todos';
+  const safeAnalysisStartDate = analysisDateRange.safeStartDate;
+  const safeAnalysisEndDate = analysisDateRange.safeEndDate;
+  const analysisStartMaxDate = analysisDateRange.startMaxDate;
+  const hasCustomAnalysisRange = analysisDateRange.hasCustomRange;
+  const customAnalysisRangeLabel = analysisDateRange.customRangeLabel;
+
+  const historicoFiltradoPorData = filterItemsByDateRange(historicoCompleto, reportDateRange, (registro) => toLocalDate(registro.data));
+  const historicoFiltrado = historicoFiltradoPorData.filter((registro) => {
+    if (reportFocus === 'training') return Boolean(registro.exercicio);
+    if (reportFocus === 'biometric') return registro.peso !== null && registro.peso !== undefined;
+    if (reportFocus === 'notes') return Boolean(String(registro.observacoes || '').trim());
+    return true;
   });
   const getReportSortValue = (registro, key) => {
     switch (key) {
@@ -554,20 +750,48 @@ export default function Dashboard() {
     { metric: 'Produtividade', value: Number((registros.reduce((acc, r) => acc + r.produtividade, 0) / registros.length).toFixed(1)) },
     { metric: 'Ação Física', value: Number(((registros.filter(r => r.exercicio).length / registros.length) * 5).toFixed(1)) }
   ] : [];
-
-  const weightDataForChart = [];
-  const datasVistas = new Set();
-  
-  for (const p of biometria) {
-    const fullDate = p.data.split('T')[0];
-    const [year, month, day] = fullDate.split('-');
-    const dataFormatada = `${day}/${month}/${year.slice(-2)}`;
-    if (!datasVistas.has(dataFormatada)) {
-      datasVistas.add(dataFormatada);
-      weightDataForChart.push({ data: dataFormatada, fullDate, peso: p.peso });
+  const analysisRecords = filterItemsByDateRange(registros, analysisDateRange, (registro) => toLocalDate(registro.data));
+  const analysisBiometria = filterItemsByDateRange(biometria, analysisDateRange, (registro) => toLocalDate(registro.data));
+  const analysisChartData = aggregateAnalysisRecords(analysisRecords, analysisGrouping);
+  const analysisWeightData = aggregateAnalysisWeight(analysisBiometria, analysisGrouping);
+  const analysisGroupingCopy = {
+    daily: {
+      subtitle: 'Leitura diária com cada registro lançado no período filtrado.',
+      weightSubtitle: 'Último peso registrado em cada dia do intervalo.'
+    },
+    weekly: {
+      subtitle: 'Médias semanais para reduzir ruído e destacar tendência.',
+      weightSubtitle: 'Último peso registrado em cada semana do intervalo.'
+    },
+    biweekly: {
+      subtitle: 'Médias quinzenais para leitura mais estável ao longo do mês.',
+      weightSubtitle: 'Último peso registrado em cada quinzena do intervalo.'
+    },
+    monthly: {
+      subtitle: 'Médias mensais para acompanhar comportamento de longo prazo.',
+      weightSubtitle: 'Último peso registrado em cada mês do intervalo.'
     }
-  }
-  weightDataForChart.reverse(); // Inverte para ordem cronológica no gráfico
+  };
+  const analysisGroupingLabelMap = {
+    daily: 'diária',
+    weekly: 'semanal',
+    biweekly: 'quinzenal',
+    monthly: 'mensal'
+  };
+  const analysisSummaryCaption = [
+    `Base da análise: ${analysisRecords.length} registro${analysisRecords.length === 1 ? '' : 's'}.`,
+    `Leitura ${analysisGroupingLabelMap[analysisGrouping]} em ${analysisChartData.length} período${analysisChartData.length === 1 ? '' : 's'}.`,
+    analysisWeightData.length > 0
+      ? `Peso disponível em ${analysisWeightData.length} ponto${analysisWeightData.length === 1 ? '' : 's'} do gráfico.`
+      : 'Sem biometria disponível no intervalo selecionado.',
+    hasCustomAnalysisRange ? `Intervalo ativo: ${customAnalysisRangeLabel}.` : ''
+  ].filter(Boolean).join(' ');
+  const reportSummaryCaption = [
+    `Exibindo ${historicoFiltrado.length} de ${historicoCompleto.length} registro${historicoCompleto.length === 1 ? '' : 's'}.`,
+    reportFocus !== 'all' ? `Foco atual: ${reportFocusLabel.toLowerCase()}.` : '',
+    hasCustomReportRange ? `Intervalo ativo: ${customRangeLabel}.` : '',
+    currentSortSummary
+  ].filter(Boolean).join(' ');
 
   // --- Lógica de Metas ---
   const handleExcluirMeta = (id) => {
@@ -755,7 +979,94 @@ export default function Dashboard() {
               </>
             )}
 
-            {activeTab === 'analise' && <ChartsContainer type="analise" data={registros} weightDataForChart={weightDataForChart} />}
+            {activeTab === 'analise' && (
+              <div className="animate-fade-up">
+                <div className="glass-panel reports-toolbar analysis-toolbar">
+                  <div className="reports-toolbar-row toolbar-uniform-row">
+                    <div className="reports-filter-block toolbar-equal-block">
+                      <span className="reports-filter-label">Período</span>
+                      <select
+                        className="input-field toolbar-select"
+                        value={analysisPeriod}
+                        onChange={(e) => {
+                          setAnalysisPeriod(e.target.value);
+                          setAnalysisStartDate('');
+                          setAnalysisEndDate('');
+                        }}
+                        aria-label="Período da análise"
+                      >
+                        {reportPeriodOptions.map(option => (
+                          <option key={`analysis-period-${option.key}`} value={option.key}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="reports-filter-block toolbar-equal-block">
+                      <span className="reports-filter-label">Agrupamento</span>
+                      <select
+                        className="input-field toolbar-select"
+                        value={analysisGrouping}
+                        onChange={(e) => setAnalysisGrouping(e.target.value)}
+                        aria-label="Agrupamento da análise"
+                      >
+                        {analysisGroupingOptions.map(option => (
+                          <option key={option.key} value={option.key}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="reports-filter-block toolbar-equal-block">
+                      <span className="reports-filter-label">De</span>
+                      <input
+                        type="date"
+                        className="input-field reports-date-input"
+                        value={safeAnalysisStartDate}
+                        max={analysisStartMaxDate}
+                        onChange={(e) => setAnalysisStartDate(normalizeAnalysisDateValue(e.target.value))}
+                        aria-label="Data inicial da análise"
+                      />
+                    </div>
+                    <div className="reports-filter-block toolbar-equal-block">
+                      <span className="reports-filter-label">Até</span>
+                      <input
+                        type="date"
+                        className="input-field reports-date-input"
+                        value={safeAnalysisEndDate}
+                        min={safeAnalysisStartDate || undefined}
+                        max={todayReportDate}
+                        onChange={(e) => setAnalysisEndDate(normalizeAnalysisDateValue(e.target.value))}
+                        aria-label="Data final da análise"
+                      />
+                    </div>
+                  </div>
+                  <div className="toolbar-footer">
+                    <p className="reports-toolbar-caption">{analysisSummaryCaption}</p>
+                    {(safeAnalysisStartDate || safeAnalysisEndDate) && (
+                      <button
+                        type="button"
+                        className="btn-secondary toolbar-clear-btn"
+                        onClick={() => {
+                          setAnalysisStartDate('');
+                          setAnalysisEndDate('');
+                        }}
+                      >
+                        Limpar intervalo
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                <ChartsContainer
+                  type="analise"
+                  data={analysisChartData}
+                  weightDataForChart={analysisWeightData}
+                  analysisHabitsSubtitle={analysisGroupingCopy[analysisGrouping].subtitle}
+                  analysisWeightSubtitle={analysisGroupingCopy[analysisGrouping].weightSubtitle}
+                />
+              </div>
+            )}
 
             {activeTab === 'relatorios' && (
               <div className="animate-fade-up">
@@ -769,71 +1080,80 @@ export default function Dashboard() {
                   </div>
                 </div>
                 <div className="glass-panel reports-toolbar">
-                  <div className="reports-toolbar-row">
-                    <div className="reports-filter-block">
+                  <div className="reports-toolbar-row toolbar-uniform-row">
+                    <div className="reports-filter-block toolbar-equal-block">
                       <span className="reports-filter-label">Período</span>
-                      <div className="reports-chip-group">
+                      <select
+                        className="input-field toolbar-select"
+                        value={reportPeriod}
+                        onChange={(e) => {
+                          setReportPeriod(e.target.value);
+                          setReportStartDate('');
+                          setReportEndDate('');
+                        }}
+                        aria-label="Período do relatório"
+                      >
                         {reportPeriodOptions.map(option => (
-                          <button
-                            key={option.key}
-                            type="button"
-                            className={`reports-chip ${!hasCustomReportRange && reportPeriod === option.key ? 'active' : ''}`}
-                            onClick={() => {
-                              setReportPeriod(option.key);
-                              setReportStartDate('');
-                              setReportEndDate('');
-                            }}
-                          >
+                          <option key={option.key} value={option.key}>
                             {option.label}
-                          </button>
+                          </option>
                         ))}
-                      </div>
+                      </select>
                     </div>
-                    <div className="reports-filter-block">
-                      <span className="reports-filter-label">Intervalo customizado</span>
-                      <div className="reports-date-grid">
-                        <label className="reports-date-inline-field">
-                          <span className="reports-inline-label">De</span>
-                          <input
-                            type="date"
-                            className="input-field reports-date-input"
-                            value={safeReportStartDate}
-                            max={reportStartMaxDate}
-                            onChange={(e) => setReportStartDate(normalizeReportDateValue(e.target.value))}
-                            aria-label="Data inicial do relatório"
-                          />
-                        </label>
-                        <label className="reports-date-inline-field">
-                          <span className="reports-inline-label">Até</span>
-                          <input
-                            type="date"
-                            className="input-field reports-date-input"
-                            value={safeReportEndDate}
-                            min={safeReportStartDate || undefined}
-                            max={todayReportDate}
-                            onChange={(e) => setReportEndDate(normalizeReportDateValue(e.target.value))}
-                            aria-label="Data final do relatório"
-                          />
-                        </label>
-                        {(safeReportStartDate || safeReportEndDate) && (
-                          <button
-                            type="button"
-                            className="btn-secondary reports-clear-btn"
-                            onClick={() => {
-                              setReportStartDate('');
-                              setReportEndDate('');
-                            }}
-                          >
-                            Limpar
-                          </button>
-                        )}
-                      </div>
+                    <div className="reports-filter-block toolbar-equal-block">
+                      <span className="reports-filter-label">Mostrar</span>
+                      <select
+                        className="input-field toolbar-select"
+                        value={reportFocus}
+                        onChange={(e) => setReportFocus(e.target.value)}
+                        aria-label="Filtro de foco do histórico"
+                      >
+                        {reportFocusOptions.map(option => (
+                          <option key={option.key} value={option.key}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="reports-filter-block toolbar-equal-block">
+                      <span className="reports-filter-label">De</span>
+                      <input
+                        type="date"
+                        className="input-field reports-date-input"
+                        value={safeReportStartDate}
+                        max={reportStartMaxDate}
+                        onChange={(e) => setReportStartDate(normalizeReportDateValue(e.target.value))}
+                        aria-label="Data inicial do relatório"
+                      />
+                    </div>
+                    <div className="reports-filter-block toolbar-equal-block">
+                      <span className="reports-filter-label">Até</span>
+                      <input
+                        type="date"
+                        className="input-field reports-date-input"
+                        value={safeReportEndDate}
+                        min={safeReportStartDate || undefined}
+                        max={todayReportDate}
+                        onChange={(e) => setReportEndDate(normalizeReportDateValue(e.target.value))}
+                        aria-label="Data final do relatório"
+                      />
                     </div>
                   </div>
-                  <p className="reports-toolbar-caption">
-                    Exibindo {historicoFiltrado.length} de {historicoCompleto.length} registro{historicoCompleto.length === 1 ? '' : 's'}.
-                    {hasCustomReportRange ? ` Intervalo ativo: ${customRangeLabel}.` : ''} {currentSortSummary}
-                  </p>
+                  <div className="toolbar-footer">
+                    <p className="reports-toolbar-caption">{reportSummaryCaption}</p>
+                    {(safeReportStartDate || safeReportEndDate) && (
+                      <button
+                        type="button"
+                        className="btn-secondary toolbar-clear-btn"
+                        onClick={() => {
+                          setReportStartDate('');
+                          setReportEndDate('');
+                        }}
+                      >
+                        Limpar intervalo
+                      </button>
+                    )}
+                  </div>
                 </div>
                 <div className="report-summary-grid">
                   {reportSummaryCards.map(card => (
