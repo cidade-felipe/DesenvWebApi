@@ -88,11 +88,12 @@ O progresso das metas funciona assim:
 
 ### Dashboard
 
-- cards de resumo
+- cabeçalho com saudação contextual usando o primeiro nome do usuário
+- cards de resumo com leitura agregada de bem-estar, treino, recuperação e corpo
 - gráficos de panorama
-- gráficos de análise
-- histórico tabular
-- exportação CSV e Excel
+- aba de análise com filtros por período, intervalo customizado e agrupamento diário, semanal, quinzenal e mensal
+- aba de relatórios com filtros por período, intervalo customizado e foco do histórico, como treino, biometria e anotações
+- exportação CSV e Excel respeitando os filtros ativos
 
 ## Segurança e robustez já adicionadas
 
@@ -259,10 +260,10 @@ Ele está acima de um protótipo vazio, mas ainda abaixo de um sistema pronto pa
 
 - refresh token
 - rate limiting no login
-- tratamento de erro mais amigável no frontend
 - testes automatizados
 - pipeline CI/CD
-- observabilidade
+- observabilidade e métricas operacionais
+- tratamento de erro mais amigável no frontend
 
 ## Observação sobre insights
 
