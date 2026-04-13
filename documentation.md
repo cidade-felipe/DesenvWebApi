@@ -28,8 +28,8 @@ O foco atual do produto está em:
 - CRUD de metas
 - CRUD de biometria
 - leitura de insights
-- dashboard com gráficos e cards
-- exportação de dados
+- dashboard com gráficos, cards, filtros e exportação
+- avisos inline e confirmações visuais no frontend
 
 ### 2.2. O que ainda não está completo
 
@@ -108,6 +108,12 @@ Depois do login, o frontend carrega em paralelo:
 - biometria
 
 Esse carregamento é feito em [useDashboardData.js](/c:/Users/felip/OneDrive/git_work/RitmoApi/frontend/src/hooks/useDashboardData.js).
+
+No estado atual da interface:
+
+- o cabeçalho saúda o usuário pelo primeiro nome, conforme o horário do dia
+- a dashboard usa avisos inline no lugar de interrupções bruscas do navegador
+- as abas de análise e relatórios compartilham uma linguagem visual mais consistente para filtros
 
 ### 4.3. Registro diário
 
@@ -352,15 +358,44 @@ O panorama mostra cards e gráficos de visão geral.
 
 ## 9.2. Análise
 
-A aba de análise mostra gráficos mais detalhados, incluindo evolução de peso.
+A aba de análise mostra gráficos mais detalhados, incluindo evolução de peso e correlação entre humor, sono e energia.
 
 Melhorias recentes:
 
 - datas do eixo com ano
 - tooltip com data completa
 - correções para evitar falha visual ao passar o mouse
+- filtros por período rápido e intervalo customizado
+- agrupamento por `Diário`, `Semanal`, `Quinzenal` e `Mensal`
+- agregação por período para reduzir ruído de leitura em uso real
+
+### Observação técnica
+
+**Fato**
+
+Os gráficos da aba de análise não trabalham mais apenas com registros diários crus.
+
+**Impacto**
+
+- hábitos usam médias por período
+- peso usa o último valor registrado em cada período
+- isso melhora leitura histórica quando o volume de dados cresce
 
 ## 9.3. Relatórios
+
+A aba de relatórios agora combina visualização tabular, resumo agregado e filtros mais ricos.
+
+Filtros implementados:
+
+- período rápido
+- intervalo customizado
+- foco do histórico em `Todos`, `Treino`, `Biometria` e `Anotações`
+
+Além disso:
+
+- a exportação respeita os filtros ativos
+- a ordenação da tabela também influencia o que é exportado
+- os cards de resumo usam o mesmo recorte temporal aplicado ao histórico
 
 O dashboard permite exportar:
 
@@ -408,7 +443,6 @@ dotnet ef database update --project Ritmo.Api
 - não há suíte de testes automatizados
 - não há CI/CD
 - ainda faltam logs e métricas operacionais
-- o frontend ainda usa `alert` em alguns fluxos
 
 ### Produto
 
@@ -419,7 +453,6 @@ dotnet ef database update --project Ritmo.Api
 
 ### Curto prazo
 
-- melhorar mensagens de erro no frontend
 - adicionar testes para services
 - reduzir acoplamento do `Dashboard.jsx`
 
