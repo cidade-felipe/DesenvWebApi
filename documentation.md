@@ -158,6 +158,71 @@ erDiagram
     USUARIOS ||--o{ INSIGHTS : possui
     USUARIOS ||--|| CONFIGURACOES_PERFIL : possui
     USUARIOS ||--o{ MEDIDAS_BIOMETRICAS : possui
+
+    USUARIOS {
+        int Id
+        string Nome
+        string Email
+        string Senha
+        datetime DataCriacao
+        date DataNascimento
+        string Sexo
+    }
+
+    REGISTROS_DIARIOS {
+        int Id
+        int UsuarioId
+        date Data
+        int Humor
+        decimal Sono
+        int Produtividade
+        int Energia
+        bool Exercicio
+        decimal Agua
+        string Observacoes
+        datetime DataCriacao
+    }
+
+    METAS {
+        int Id
+        int UsuarioId
+        string Categoria
+        decimal ValorAlvo
+        string Descricao
+        date DataInicio
+        date DataFim
+        bool Ativa
+        datetime DataCriacao
+    }
+
+    INSIGHTS {
+        int Id
+        int UsuarioId
+        string Mensagem
+        string Categoria
+        string Nivel
+        datetime DataGeracao
+        bool Lido
+    }
+
+    CONFIGURACOES_PERFIL {
+        int Id
+        int UsuarioId
+        bool TemaEscuro
+        string Idioma
+        string FusoHorario
+        bool ReceberNotificacoes
+        bool ReceberRelatorioSemanal
+        bool ExibirMetaNoDashboard
+    }
+
+    MEDIDAS_BIOMETRICAS {
+        int Id
+        int UsuarioId
+        decimal Peso
+        decimal Altura
+        date Data
+    }
 ```
 
 ## 5.1. Usuario
