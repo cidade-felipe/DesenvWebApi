@@ -9,6 +9,7 @@ import { ChartsContainer } from '../components/ChartsContainer';
 import { MetaFormModal } from '../components/MetaFormModal'; // Novo Import
 import { NoticeBanner } from '../components/NoticeBanner';
 import { ConfirmDialog } from '../components/ConfirmDialog';
+import { DateField } from '../components/DateField';
 import apiClient from '../api/apiClient';
 
 export default function Dashboard() {
@@ -60,6 +61,12 @@ export default function Dashboard() {
     { key: 'biweekly', label: 'Quinzenal' },
     { key: 'monthly', label: 'Mensal' }
   ];
+  const analysisGroupingMinimumDays = {
+    daily: 1,
+    weekly: 8,
+    biweekly: 16,
+    monthly: 32
+  };
   const reportFocusOptions = [
     { key: 'all', label: 'Todos' },
     { key: 'training', label: 'Treino' },
@@ -265,6 +272,51 @@ export default function Dashboard() {
       customRangeLabel
     };
   };
+  const getDaySpan = (startDate, endDate) => {
+    if (!startDate || !endDate) return null;
+
+    const oneDayInMs = 24 * 60 * 60 * 1000;
+    return Math.floor((endDate.getTime() - startDate.getTime()) / oneDayInMs) + 1;
+  };
+  const getDateBounds = (items, resolveDate) => {
+    if (!items.length) return null;
+
+    return items.reduce((bounds, item) => {
+      const itemDate = resolveDate(item);
+
+      if (!bounds) {
+        return { start: itemDate, end: itemDate };
+      }
+
+      return {
+        start: itemDate < bounds.start ? itemDate : bounds.start,
+        end: itemDate > bounds.end ? itemDate : bounds.end
+      };
+    }, null);
+  };
+  const getAnalysisRangeSpanDays = (period, dateRange, filteredItems) => {
+    const explicitStart = dateRange.effectiveStart;
+    const explicitEnd = dateRange.effectiveEnd;
+    const bounds = getDateBounds(filteredItems, (item) => toLocalDate(item.data));
+
+    if (explicitStart && explicitEnd) {
+      return getDaySpan(explicitStart, explicitEnd) ?? 1;
+    }
+
+    if (explicitStart) {
+      return getDaySpan(explicitStart, toLocalDate(todayReportDate)) ?? 1;
+    }
+
+    if (explicitEnd) {
+      return getDaySpan(bounds?.start ?? explicitEnd, explicitEnd) ?? 1;
+    }
+
+    if (period === '7d') return 7;
+    if (period === '30d') return 30;
+    if (period === '90d') return 90;
+
+    return getDaySpan(bounds?.start, bounds?.end) ?? Number.POSITIVE_INFINITY;
+  };
   const filterItemsByDateRange = (items, dateRange, resolveDate) => items.filter((item) => {
     const itemDate = resolveDate(item);
     const matchesStart = !dateRange.effectiveStart || itemDate >= dateRange.effectiveStart;
@@ -424,7 +476,6 @@ export default function Dashboard() {
   const reportStartMaxDate = reportDateRange.startMaxDate;
   const hasCustomReportRange = reportDateRange.hasCustomRange;
   const customRangeLabel = reportDateRange.customRangeLabel;
-  const reportFocusLabel = reportFocusOptions.find(option => option.key === reportFocus)?.label || 'Todos';
   const safeAnalysisStartDate = analysisDateRange.safeStartDate;
   const safeAnalysisEndDate = analysisDateRange.safeEndDate;
   const analysisStartMaxDate = analysisDateRange.startMaxDate;
@@ -432,12 +483,30 @@ export default function Dashboard() {
   const customAnalysisRangeLabel = analysisDateRange.customRangeLabel;
 
   const historicoFiltradoPorData = filterItemsByDateRange(historicoCompleto, reportDateRange, (registro) => toLocalDate(registro.data));
-  const historicoFiltrado = historicoFiltradoPorData.filter((registro) => {
-    if (reportFocus === 'training') return Boolean(registro.exercicio);
-    if (reportFocus === 'biometric') return registro.peso !== null && registro.peso !== undefined;
-    if (reportFocus === 'notes') return Boolean(String(registro.observacoes || '').trim());
+  const availableReportFocusOptions = reportFocusOptions.filter((option) => {
+    if (option.key === 'all') return true;
+    if (option.key === 'training') return historicoFiltradoPorData.some((registro) => Boolean(registro.exercicio));
+    if (option.key === 'biometric') return historicoFiltradoPorData.some((registro) => registro.peso !== null && registro.peso !== undefined);
+    if (option.key === 'notes') return historicoFiltradoPorData.some((registro) => Boolean(String(registro.observacoes || '').trim()));
+
     return true;
   });
+  const effectiveReportFocus = availableReportFocusOptions.some((option) => option.key === reportFocus)
+    ? reportFocus
+    : 'all';
+  const reportFocusLabel = reportFocusOptions.find(option => option.key === effectiveReportFocus)?.label || 'Todos';
+  const historicoFiltrado = historicoFiltradoPorData.filter((registro) => {
+    if (effectiveReportFocus === 'training') return Boolean(registro.exercicio);
+    if (effectiveReportFocus === 'biometric') return registro.peso !== null && registro.peso !== undefined;
+    if (effectiveReportFocus === 'notes') return Boolean(String(registro.observacoes || '').trim());
+    
+    return true;
+  });
+  useEffect(() => {
+    if (reportFocus !== effectiveReportFocus) {
+      setReportFocus(effectiveReportFocus);
+    }
+  }, [reportFocus, effectiveReportFocus]);
   const getReportSortValue = (registro, key) => {
     switch (key) {
       case 'data':
@@ -803,8 +872,15 @@ export default function Dashboard() {
   ] : [];
   const analysisRecords = filterItemsByDateRange(registros, analysisDateRange, (registro) => toLocalDate(registro.data));
   const analysisBiometria = filterItemsByDateRange(biometria, analysisDateRange, (registro) => toLocalDate(registro.data));
-  const analysisChartData = aggregateAnalysisRecords(analysisRecords, analysisGrouping);
-  const analysisWeightData = aggregateAnalysisWeight(analysisBiometria, analysisGrouping);
+  const analysisRangeSpanDays = getAnalysisRangeSpanDays(analysisPeriod, analysisDateRange, analysisRecords);
+  const availableAnalysisGroupingOptions = analysisGroupingOptions.filter(
+    (option) => analysisRangeSpanDays >= analysisGroupingMinimumDays[option.key]
+  );
+  const effectiveAnalysisGrouping = availableAnalysisGroupingOptions.some((option) => option.key === analysisGrouping)
+    ? analysisGrouping
+    : availableAnalysisGroupingOptions[0]?.key ?? 'daily';
+  const analysisChartData = aggregateAnalysisRecords(analysisRecords, effectiveAnalysisGrouping);
+  const analysisWeightData = aggregateAnalysisWeight(analysisBiometria, effectiveAnalysisGrouping);
   const analysisGroupingCopy = {
     daily: {
       subtitle: 'Leitura diária com cada registro lançado no período filtrado.',
@@ -831,7 +907,7 @@ export default function Dashboard() {
   };
   const analysisSummaryCaption = [
     `Base da análise: ${analysisRecords.length} registro${analysisRecords.length === 1 ? '' : 's'}.`,
-    `Leitura ${analysisGroupingLabelMap[analysisGrouping]} em ${analysisChartData.length} período${analysisChartData.length === 1 ? '' : 's'}.`,
+    `Leitura ${analysisGroupingLabelMap[effectiveAnalysisGrouping]} em ${analysisChartData.length} período${analysisChartData.length === 1 ? '' : 's'}.`,
     analysisWeightData.length > 0
       ? `Peso disponível em ${analysisWeightData.length} ponto${analysisWeightData.length === 1 ? '' : 's'} do gráfico.`
       : 'Sem biometria disponível no intervalo selecionado.',
@@ -839,10 +915,16 @@ export default function Dashboard() {
   ].filter(Boolean).join(' ');
   const reportSummaryCaption = [
     `Exibindo ${historicoFiltrado.length} de ${historicoCompleto.length} registro${historicoCompleto.length === 1 ? '' : 's'}.`,
-    reportFocus !== 'all' ? `Foco atual: ${reportFocusLabel.toLowerCase()}.` : '',
+    effectiveReportFocus !== 'all' ? `Foco atual: ${reportFocusLabel.toLowerCase()}.` : '',
     hasCustomReportRange ? `Intervalo ativo: ${customRangeLabel}.` : '',
     currentSortSummary
   ].filter(Boolean).join(' ');
+
+  useEffect(() => {
+    if (analysisGrouping !== effectiveAnalysisGrouping) {
+      setAnalysisGrouping(effectiveAnalysisGrouping);
+    }
+  }, [analysisGrouping, effectiveAnalysisGrouping]);
 
   // --- Lógica de Metas ---
   const handleExcluirMeta = (id) => {
@@ -1057,40 +1139,42 @@ export default function Dashboard() {
                       <span className="reports-filter-label">Agrupamento</span>
                       <select
                         className="input-field toolbar-select"
-                        value={analysisGrouping}
+                        value={effectiveAnalysisGrouping}
                         onChange={(e) => setAnalysisGrouping(e.target.value)}
                         aria-label="Agrupamento da análise"
                       >
-                        {analysisGroupingOptions.map(option => (
+                        {availableAnalysisGroupingOptions.map(option => (
                           <option key={option.key} value={option.key}>
                             {option.label}
                           </option>
                         ))}
                       </select>
                     </div>
-                    <div className="reports-filter-block toolbar-equal-block">
-                      <span className="reports-filter-label">De</span>
-                      <input
-                        type="date"
-                        className="input-field reports-date-input"
-                        value={safeAnalysisStartDate}
-                        max={analysisStartMaxDate}
-                        onChange={(e) => setAnalysisStartDate(normalizeAnalysisDateValue(e.target.value))}
-                        aria-label="Data inicial da análise"
-                      />
-                    </div>
-                    <div className="reports-filter-block toolbar-equal-block">
-                      <span className="reports-filter-label">Até</span>
-                      <input
-                        type="date"
-                        className="input-field reports-date-input"
-                        value={safeAnalysisEndDate}
-                        min={safeAnalysisStartDate || undefined}
-                        max={todayReportDate}
-                        onChange={(e) => setAnalysisEndDate(normalizeAnalysisDateValue(e.target.value))}
-                        aria-label="Data final da análise"
-                      />
-                    </div>
+                    <DateField
+                      label="De"
+                      value={safeAnalysisStartDate}
+                      onChange={(e) => setAnalysisStartDate(normalizeAnalysisDateValue(e.target.value))}
+                      max={analysisStartMaxDate}
+                      containerClassName="reports-filter-block toolbar-equal-block"
+                      labelClassName="reports-filter-label"
+                      inputClassName="reports-date-input reports-date-input-compact"
+                      buttonClassName="reports-date-picker-btn"
+                      buttonMode="icon"
+                      buttonAriaLabel="Abrir calendário da data inicial da análise"
+                    />
+                    <DateField
+                      label="Até"
+                      value={safeAnalysisEndDate}
+                      onChange={(e) => setAnalysisEndDate(normalizeAnalysisDateValue(e.target.value))}
+                      min={safeAnalysisStartDate || undefined}
+                      max={todayReportDate}
+                      containerClassName="reports-filter-block toolbar-equal-block"
+                      labelClassName="reports-filter-label"
+                      inputClassName="reports-date-input reports-date-input-compact"
+                      buttonClassName="reports-date-picker-btn"
+                      buttonMode="icon"
+                      buttonAriaLabel="Abrir calendário da data final da análise"
+                    />
                   </div>
                   <div className="toolbar-footer">
                     <p className="reports-toolbar-caption">{analysisSummaryCaption}</p>
@@ -1113,8 +1197,8 @@ export default function Dashboard() {
                   type="analise"
                   data={analysisChartData}
                   weightDataForChart={analysisWeightData}
-                  analysisHabitsSubtitle={analysisGroupingCopy[analysisGrouping].subtitle}
-                  analysisWeightSubtitle={analysisGroupingCopy[analysisGrouping].weightSubtitle}
+                  analysisHabitsSubtitle={analysisGroupingCopy[effectiveAnalysisGrouping].subtitle}
+                  analysisWeightSubtitle={analysisGroupingCopy[effectiveAnalysisGrouping].weightSubtitle}
                 />
               </div>
             )}
@@ -1155,40 +1239,42 @@ export default function Dashboard() {
                       <span className="reports-filter-label">Mostrar</span>
                       <select
                         className="input-field toolbar-select"
-                        value={reportFocus}
+                        value={effectiveReportFocus}
                         onChange={(e) => setReportFocus(e.target.value)}
                         aria-label="Filtro de foco do histórico"
                       >
-                        {reportFocusOptions.map(option => (
+                        {availableReportFocusOptions.map(option => (
                           <option key={option.key} value={option.key}>
                             {option.label}
                           </option>
                         ))}
                       </select>
                     </div>
-                    <div className="reports-filter-block toolbar-equal-block">
-                      <span className="reports-filter-label">De</span>
-                      <input
-                        type="date"
-                        className="input-field reports-date-input"
-                        value={safeReportStartDate}
-                        max={reportStartMaxDate}
-                        onChange={(e) => setReportStartDate(normalizeReportDateValue(e.target.value))}
-                        aria-label="Data inicial do relatório"
-                      />
-                    </div>
-                    <div className="reports-filter-block toolbar-equal-block">
-                      <span className="reports-filter-label">Até</span>
-                      <input
-                        type="date"
-                        className="input-field reports-date-input"
-                        value={safeReportEndDate}
-                        min={safeReportStartDate || undefined}
-                        max={todayReportDate}
-                        onChange={(e) => setReportEndDate(normalizeReportDateValue(e.target.value))}
-                        aria-label="Data final do relatório"
-                      />
-                    </div>
+                    <DateField
+                      label="De"
+                      value={safeReportStartDate}
+                      onChange={(e) => setReportStartDate(normalizeReportDateValue(e.target.value))}
+                      max={reportStartMaxDate}
+                      containerClassName="reports-filter-block toolbar-equal-block"
+                      labelClassName="reports-filter-label"
+                      inputClassName="reports-date-input reports-date-input-compact"
+                      buttonClassName="reports-date-picker-btn"
+                      buttonMode="icon"
+                      buttonAriaLabel="Abrir calendário da data inicial do relatório"
+                    />
+                    <DateField
+                      label="Até"
+                      value={safeReportEndDate}
+                      onChange={(e) => setReportEndDate(normalizeReportDateValue(e.target.value))}
+                      min={safeReportStartDate || undefined}
+                      max={todayReportDate}
+                      containerClassName="reports-filter-block toolbar-equal-block"
+                      labelClassName="reports-filter-label"
+                      inputClassName="reports-date-input reports-date-input-compact"
+                      buttonClassName="reports-date-picker-btn"
+                      buttonMode="icon"
+                      buttonAriaLabel="Abrir calendário da data final do relatório"
+                    />
                   </div>
                   <div className="toolbar-footer">
                     <p className="reports-toolbar-caption">{reportSummaryCaption}</p>
