@@ -807,6 +807,22 @@ h1, h2, h3, h4 {
     width: 100%;
   }
 
+  .modal-two-columns {
+    grid-template-columns: 1fr;
+  }
+
+  .biometria-panel-header,
+  .biometria-height-card {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .biometria-toggle,
+  .biometria-height-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
   .confirm-dialog-actions {
     flex-direction: column-reverse;
   }
@@ -1045,6 +1061,125 @@ h1, h2, h3, h4 {
   margin-bottom: 2rem;
   border-bottom: 1px solid var(--glass-border);
   padding-bottom: 1rem;
+}
+
+.modal-two-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.biometria-panel {
+  border: 1px solid rgba(102, 252, 241, 0.16);
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.18);
+  padding: 1rem 1rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.95rem;
+}
+
+.biometria-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.biometria-panel-label {
+  margin-bottom: 0.3rem;
+}
+
+.biometria-panel-copy {
+  margin: 0;
+  color: var(--text-main);
+  opacity: 0.78;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  max-width: 28rem;
+}
+
+.biometria-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.7rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid rgba(102, 252, 241, 0.24);
+  background: rgba(102, 252, 241, 0.08);
+  color: var(--text-light);
+  cursor: pointer;
+  font-weight: 600;
+  white-space: nowrap;
+  align-self: center;
+}
+
+.biometria-toggle input {
+  accent-color: var(--accent-cyan);
+}
+
+.biometria-grid {
+  align-items: start;
+}
+
+.biometria-height-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.9rem;
+  min-height: 54px;
+  padding: 0.9rem 1rem;
+  border-radius: 10px;
+  border: 1px solid rgba(102, 252, 241, 0.16);
+  background: rgba(11, 12, 16, 0.35);
+}
+
+.biometria-height-card strong {
+  display: block;
+  color: var(--text-light);
+  font-size: 1rem;
+}
+
+.biometria-height-card span {
+  display: block;
+  margin-top: 0.18rem;
+  color: var(--text-main);
+  opacity: 0.7;
+  font-size: 0.82rem;
+}
+
+.biometria-height-btn {
+  width: auto;
+  min-width: 112px;
+  padding-inline: 0.9rem;
+}
+
+.biometria-helper {
+  margin-top: 0.45rem;
+  color: var(--text-main);
+  opacity: 0.74;
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.biometria-helper-relaxed {
+  margin-top: 0;
+}
+
+.biometria-link-btn {
+  margin-top: 0.45rem;
+  border: none;
+  background: transparent;
+  color: var(--accent-cyan);
+  cursor: pointer;
+  padding: 0;
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-align: left;
+}
+
+.biometria-link-btn:hover {
+  filter: brightness(1.1);
 }
 
 /* Tab Navigation System */

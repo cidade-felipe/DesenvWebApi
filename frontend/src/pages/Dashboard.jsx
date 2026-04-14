@@ -36,7 +36,17 @@ export default function Dashboard() {
   const [isConfirming, setIsConfirming] = useState(false);
   const [formData, setFormData] = useState({
     data: new Date().toISOString().split('T')[0],
-    humor: 3, sono: 8, produtividade: 3, energia: 3, exercicio: false, agua: 2.0, observacoes: '', peso: '', altura: ''
+    humor: 3,
+    sono: 8,
+    produtividade: 3,
+    energia: 3,
+    exercicio: false,
+    agua: 2.0,
+    observacoes: '',
+    peso: '',
+    altura: '',
+    registrouPesoHoje: false,
+    atualizarAltura: false
   });
   const reportPeriodOptions = [
     { key: '7d', label: '7 dias' },
@@ -96,6 +106,21 @@ export default function Dashboard() {
   };
   const formatDateObject = (value) => value.toLocaleDateString('pt-BR');
   const todayReportDate = toDateInputValue();
+  const getLatestHeightValue = () => biometria[0]?.altura?.toString() || '';
+  const getInitialFormData = () => ({
+    data: toDateInputValue(),
+    humor: 3,
+    sono: 8,
+    produtividade: 3,
+    energia: 3,
+    exercicio: false,
+    agua: 2.0,
+    observacoes: '',
+    peso: '',
+    altura: getLatestHeightValue(),
+    registrouPesoHoje: false,
+    atualizarAltura: false
+  });
   const normalizeDateFilterValue = (value) => {
     if (!value) return '';
     return value > todayReportDate ? todayReportDate : value;
@@ -564,7 +589,17 @@ export default function Dashboard() {
     e.preventDefault();
     try {
       const isEditing = Boolean(editandoId);
-      const payload = { ...formData, usuarioId: user.id };
+      const payload = {
+        usuarioId: user.id,
+        data: formData.data,
+        humor: formData.humor,
+        sono: formData.sono,
+        produtividade: formData.produtividade,
+        energia: formData.energia,
+        exercicio: formData.exercicio,
+        agua: formData.agua,
+        observacoes: formData.observacoes
+      };
       if (editandoId) {
         await apiClient.put(`/registrosdiarios/${editandoId}`, payload);
       } else {
@@ -572,19 +607,25 @@ export default function Dashboard() {
       }
 
       const biometriaDoDia = findBiometriaByDate(formData.data);
-      const alturaParaBiometria = formData.altura || biometriaDoDia?.altura || biometria[0]?.altura;
+      const alturaBase = formData.atualizarAltura
+        ? formData.altura
+        : formData.altura || biometriaDoDia?.altura?.toString() || biometria[0]?.altura?.toString() || '';
+      const alturaParaBiometria = String(alturaBase || '').trim();
 
-      if (formData.peso && alturaParaBiometria) {
+      if (formData.registrouPesoHoje && formData.peso && alturaParaBiometria) {
         await apiClient.post('/biometria', { 
           usuarioId: user.id, 
           peso: parseFloat(formData.peso), 
           altura: parseInt(alturaParaBiometria, 10),
           data: formData.data 
         });
+      } else if (isEditing && biometriaDoDia && !formData.registrouPesoHoje) {
+        await apiClient.delete(`/biometria/${biometriaDoDia.id}`);
       }
 
       setIsModalOpen(false);
       setEditandoId(null);
+      setFormData(getInitialFormData());
       await loadDashboard();
       showNotice(
         'success',
@@ -611,6 +652,8 @@ export default function Dashboard() {
       agua,
       observacoes
     } = registro;
+    const alturaDoDia = biometriaDoDia?.altura?.toString() || biometria[0]?.altura?.toString() || '';
+    const existePesoNoDia = Boolean(biometriaDoDia?.peso);
 
     setEditandoId(id);
     setFormData({
@@ -623,8 +666,16 @@ export default function Dashboard() {
       agua,
       observacoes: observacoes || '',
       peso: biometriaDoDia?.peso?.toString() || '',
-      altura: biometriaDoDia?.altura?.toString() || biometria[0]?.altura?.toString() || ''
+      altura: alturaDoDia,
+      registrouPesoHoje: existePesoNoDia,
+      atualizarAltura: !alturaDoDia
     });
+    setIsModalOpen(true);
+  };
+
+  const handleNovoRegistro = () => {
+    setEditandoId(null);
+    setFormData(getInitialFormData());
     setIsModalOpen(true);
   };
 
@@ -1323,7 +1374,7 @@ export default function Dashboard() {
         </main>
       </div>
 
-      <button className="fab-btn animate-fade-up" onClick={() => { setEditandoId(null); setIsModalOpen(true); }}><Activity size={32} /></button>
+      <button className="fab-btn animate-fade-up" onClick={handleNovoRegistro}><Activity size={32} /></button>
 
       {/* Novo Modal de Gestão de Metas */}
       <MetaFormModal 
