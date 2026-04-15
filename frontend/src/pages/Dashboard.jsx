@@ -64,8 +64,8 @@ export default function Dashboard() {
   const analysisGroupingMinimumDays = {
     daily: 1,
     weekly: 8,
-    biweekly: 16,
-    monthly: 32
+    biweekly: 15,
+    monthly: 30
   };
   const reportFocusOptions = [
     { key: 'all', label: 'Todos' },
@@ -278,26 +278,9 @@ export default function Dashboard() {
     const oneDayInMs = 24 * 60 * 60 * 1000;
     return Math.floor((endDate.getTime() - startDate.getTime()) / oneDayInMs) + 1;
   };
-  const getDateBounds = (items, resolveDate) => {
-    if (!items.length) return null;
-
-    return items.reduce((bounds, item) => {
-      const itemDate = resolveDate(item);
-
-      if (!bounds) {
-        return { start: itemDate, end: itemDate };
-      }
-
-      return {
-        start: itemDate < bounds.start ? itemDate : bounds.start,
-        end: itemDate > bounds.end ? itemDate : bounds.end
-      };
-    }, null);
-  };
-  const getAnalysisRangeSpanDays = (period, dateRange, filteredItems) => {
+  const getAnalysisRangeSpanDays = (period, dateRange) => {
     const explicitStart = dateRange.effectiveStart;
     const explicitEnd = dateRange.effectiveEnd;
-    const bounds = getDateBounds(filteredItems, (item) => toLocalDate(item.data));
 
     if (explicitStart && explicitEnd) {
       return getDaySpan(explicitStart, explicitEnd) ?? 1;
@@ -308,14 +291,15 @@ export default function Dashboard() {
     }
 
     if (explicitEnd) {
-      return getDaySpan(bounds?.start ?? explicitEnd, explicitEnd) ?? 1;
+      return 1;
     }
 
     if (period === '7d') return 7;
     if (period === '30d') return 30;
     if (period === '90d') return 90;
+    if (period === 'all') return Number.POSITIVE_INFINITY;
 
-    return getDaySpan(bounds?.start, bounds?.end) ?? Number.POSITIVE_INFINITY;
+    return Number.POSITIVE_INFINITY;
   };
   const filterItemsByDateRange = (items, dateRange, resolveDate) => items.filter((item) => {
     const itemDate = resolveDate(item);
@@ -872,7 +856,7 @@ export default function Dashboard() {
   ] : [];
   const analysisRecords = filterItemsByDateRange(registros, analysisDateRange, (registro) => toLocalDate(registro.data));
   const analysisBiometria = filterItemsByDateRange(biometria, analysisDateRange, (registro) => toLocalDate(registro.data));
-  const analysisRangeSpanDays = getAnalysisRangeSpanDays(analysisPeriod, analysisDateRange, analysisRecords);
+  const analysisRangeSpanDays = getAnalysisRangeSpanDays(analysisPeriod, analysisDateRange);
   const availableAnalysisGroupingOptions = analysisGroupingOptions.filter(
     (option) => analysisRangeSpanDays >= analysisGroupingMinimumDays[option.key]
   );
