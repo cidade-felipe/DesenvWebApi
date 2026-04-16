@@ -346,7 +346,8 @@ export default function Dashboard() {
         key: `${toDateInputValue(start)}_weekly`,
         label: `${formatDateObject(start).slice(0, 5)} a ${formatDateObject(end).slice(0, 5)}`,
         fullLabel: `${formatDateObject(start)} até ${formatDateObject(end)}`,
-        sortTime: start.getTime()
+        sortTime: start.getTime(),
+        endTime: end.getTime()
       };
     }
 
@@ -356,7 +357,8 @@ export default function Dashboard() {
         key: `${toDateInputValue(start)}_biweekly`,
         label: `${isFirstHalf ? '1-15' : '16-fim'} ${formatMonthShort(start)}/${String(start.getFullYear()).slice(-2)}`,
         fullLabel: `${formatDateObject(start)} até ${formatDateObject(end)}`,
-        sortTime: start.getTime()
+        sortTime: start.getTime(),
+        endTime: end.getTime()
       };
     }
 
@@ -367,7 +369,8 @@ export default function Dashboard() {
         key: `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, '0')}_monthly`,
         label: `${formatMonthShort(start)}/${String(start.getFullYear()).slice(-2)}`,
         fullLabel: `${formatDateObject(start)} até ${formatDateObject(end)}`,
-        sortTime: start.getTime()
+        sortTime: start.getTime(),
+        endTime: end.getTime()
       };
     }
 
@@ -375,7 +378,8 @@ export default function Dashboard() {
       key: `${toDateInputValue(date)}_daily`,
       label: formatDateObject(date),
       fullLabel: formatDateObject(date),
-      sortTime: date.getTime()
+      sortTime: date.getTime(),
+      endTime: date.getTime()
     };
   };
   const aggregateAnalysisRecords = (items, grouping) => {
@@ -416,42 +420,58 @@ export default function Dashboard() {
         totalRegistros: bucket.count
       }));
   };
-  const aggregateAnalysisWeight = (items, grouping) => {
+  const aggregateAnalysisWeight = (timelineItems, filteredMeasurements, allMeasurements, grouping) => {
     const buckets = new Map();
+    const addBucket = (value) => {
+      const meta = getAnalysisBucketMeta(value, grouping);
+      const currentBucket = buckets.get(meta.key);
 
-    [...items]
+      if (currentBucket) return;
+
+      buckets.set(meta.key, {
+        data: meta.label,
+        fullDate: meta.fullLabel,
+        sortTime: meta.sortTime,
+        endTime: meta.endTime
+      });
+    };
+
+    timelineItems.forEach((item) => addBucket(item.data));
+    filteredMeasurements.forEach((item) => addBucket(item.data));
+
+    const sortedMeasurements = [...allMeasurements]
       .filter((item) => item.peso !== null && item.peso !== undefined && item.peso !== '')
       .sort((a, b) => toLocalDate(a.data) - toLocalDate(b.data))
-      .forEach((item) => {
-        const itemDate = toLocalDate(item.data);
-        const meta = getAnalysisBucketMeta(itemDate, grouping);
-        const currentBucket = buckets.get(meta.key) ?? {
-          data: meta.label,
-          fullDate: meta.fullLabel,
-          sortTime: meta.sortTime,
-          peso: Number(item.peso),
-          lastMeasurementTime: itemDate.getTime(),
-          totalMedicoes: 0
-        };
+      .map((item) => ({
+        peso: Number(item.peso),
+        measurementTime: toLocalDate(item.data).getTime()
+      }));
 
-        currentBucket.totalMedicoes += 1;
-
-        if (itemDate.getTime() >= currentBucket.lastMeasurementTime) {
-          currentBucket.peso = Number(item.peso);
-          currentBucket.lastMeasurementTime = itemDate.getTime();
-        }
-
-        buckets.set(meta.key, currentBucket);
-      });
+    let measurementIndex = 0;
+    let lastKnownWeight = null;
 
     return [...buckets.values()]
       .sort((a, b) => a.sortTime - b.sortTime)
-      .map((bucket) => ({
-        data: bucket.data,
-        fullDate: bucket.fullDate,
-        peso: bucket.peso,
-        totalMedicoes: bucket.totalMedicoes
-      }));
+      .map((bucket) => {
+        while (
+          measurementIndex < sortedMeasurements.length &&
+          sortedMeasurements[measurementIndex].measurementTime <= bucket.endTime
+        ) {
+          lastKnownWeight = sortedMeasurements[measurementIndex].peso;
+          measurementIndex += 1;
+        }
+
+        if (lastKnownWeight === null) {
+          return null;
+        }
+
+        return {
+          data: bucket.data,
+          fullDate: bucket.fullDate,
+          peso: lastKnownWeight
+        };
+      })
+      .filter(Boolean);
   };
   const reportDateRange = resolveDateRange(reportPeriod, reportStartDate, reportEndDate);
   const analysisDateRange = resolveDateRange(analysisPeriod, analysisStartDate, analysisEndDate);
@@ -864,23 +884,28 @@ export default function Dashboard() {
     ? analysisGrouping
     : availableAnalysisGroupingOptions[0]?.key ?? 'daily';
   const analysisChartData = aggregateAnalysisRecords(analysisRecords, effectiveAnalysisGrouping);
-  const analysisWeightData = aggregateAnalysisWeight(analysisBiometria, effectiveAnalysisGrouping);
+  const analysisWeightData = aggregateAnalysisWeight(
+    analysisRecords,
+    analysisBiometria,
+    biometria,
+    effectiveAnalysisGrouping
+  );
   const analysisGroupingCopy = {
     daily: {
       subtitle: 'Leitura diária com cada registro lançado no período filtrado.',
-      weightSubtitle: 'Último peso registrado em cada dia do intervalo.'
+      weightSubtitle: 'Último peso conhecido em cada dia do intervalo.'
     },
     weekly: {
       subtitle: 'Médias semanais para reduzir ruído e destacar tendência.',
-      weightSubtitle: 'Último peso registrado em cada semana do intervalo.'
+      weightSubtitle: 'Último peso conhecido em cada semana do intervalo.'
     },
     biweekly: {
       subtitle: 'Médias quinzenais para leitura mais estável ao longo do mês.',
-      weightSubtitle: 'Último peso registrado em cada quinzena do intervalo.'
+      weightSubtitle: 'Último peso conhecido em cada quinzena do intervalo.'
     },
     monthly: {
       subtitle: 'Médias mensais para acompanhar comportamento de longo prazo.',
-      weightSubtitle: 'Último peso registrado em cada mês do intervalo.'
+      weightSubtitle: 'Último peso conhecido em cada mês do intervalo.'
     }
   };
   const analysisGroupingLabelMap = {
