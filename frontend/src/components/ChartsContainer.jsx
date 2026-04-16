@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, AreaChart, Area,
   Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ComposedChart
@@ -6,6 +6,22 @@ import {
 
 const formatAxisDate = (value) => {
   if (!value || typeof value !== 'string') return '';
+
+  if (value.includes(' até ') || value.includes(' a ')) {
+    return value;
+  }
+
+  if (/^\d{4}-\d{2}-\d{2}(T.*)?$/.test(value)) {
+    const [year, month, day] = value.split('T')[0].split('-');
+    if (!year || !month || !day) return value;
+    return `${day}/${month}/${year.slice(-2)}`;
+  }
+
+  if (/^\d{2}\/\d{2}\/\d{2,4}$/.test(value)) {
+    const [day, month, year] = value.split('/');
+    if (!day || !month || !year) return value;
+    return `${day}/${month}/${year.slice(-2)}`;
+  }
 
   const [year, month, day] = value.split('-');
   if (!year || !month || !day) return String(value);
@@ -41,6 +57,42 @@ const formatTooltipDate = (value) => {
   return normalizedValue;
 };
 
+function useElementWidth() {
+  const elementRef = useRef(null);
+  const [width, setWidth] = useState(0);
+
+  useEffect(() => {
+    const element = elementRef.current;
+    if (!element) return undefined;
+
+    const updateWidth = () => {
+      setWidth(Math.round(element.getBoundingClientRect().width));
+    };
+
+    updateWidth();
+
+    if (typeof ResizeObserver === 'undefined') {
+      window.addEventListener('resize', updateWidth);
+      return () => window.removeEventListener('resize', updateWidth);
+    }
+
+    const observer = new ResizeObserver((entries) => {
+      const nextWidth = entries[0]?.contentRect?.width;
+      if (nextWidth) {
+        setWidth(Math.round(nextWidth));
+      } else {
+        updateWidth();
+      }
+    });
+
+    observer.observe(element);
+
+    return () => observer.disconnect();
+  }, []);
+
+  return [elementRef, width];
+}
+
 export function ChartsContainer({
   type,
   data,
@@ -50,13 +102,31 @@ export function ChartsContainer({
   analysisWeightSubtitle
 }) {
   const [isChartReady, setIsChartReady] = useState(false);
+  const [weightChartRef, weightChartWidth] = useElementWidth();
+  const [habitsChartRef, habitsChartWidth] = useElementWidth();
   const analysisChartMargin = { top: 12, right: 18, left: 0, bottom: 28 };
-  const analysisXAxisProps = {
+  const analysisXAxisBaseProps = {
     stroke: 'var(--text-main)',
     tickFormatter: formatAxisDate,
     tickMargin: 10,
-    minTickGap: 18,
     padding: { left: 12, right: 12 }
+  };
+  const getAnalysisXAxisProps = (items, chartWidth) => {
+    const safeWidth = chartWidth || 720;
+    const estimatedTickWidth = 64;
+    const maxVisibleTicks = Math.max(2, Math.floor((safeWidth - 36) / estimatedTickWidth));
+    const shouldShowAllTicks = items.length > 0 && items.length <= maxVisibleTicks;
+    const interval = shouldShowAllTicks
+      ? 0
+      : Math.max(1, Math.ceil(items.length / maxVisibleTicks) - 1);
+
+    return {
+      ...analysisXAxisBaseProps,
+      height: 42,
+      interval,
+      minTickGap: shouldShowAllTicks ? 0 : 12,
+      tick: { fill: 'var(--text-main)', fontSize: shouldShowAllTicks ? 10 : 10 }
+    };
   };
 
   useEffect(() => {
@@ -114,7 +184,7 @@ export function ChartsContainer({
   if (type === 'analise') {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', minWidth: 0 }}>
-        <div className="glass-panel" style={{ height: '500px', minWidth: 0 }}>
+        <div ref={weightChartRef} className="glass-panel" style={{ height: '500px', minWidth: 0 }}>
           <div className="chart-panel-header">
             <div>
               <h4 style={{ color: 'var(--text-main)' }}>Evolução de Peso por Período</h4>
@@ -136,7 +206,7 @@ export function ChartsContainer({
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                <XAxis dataKey="data" {...analysisXAxisProps} />
+                <XAxis dataKey="data" {...getAnalysisXAxisProps(weightDataForChart, weightChartWidth)} />
                 <YAxis domain={['dataMin - 3', 'dataMax + 3']} stroke="var(--text-main)" />
                 <RechartsTooltip
                   labelFormatter={(label, payload) => formatTooltipDate(payload?.[0]?.payload?.fullDate ?? label)}
@@ -148,7 +218,7 @@ export function ChartsContainer({
           )}
         </div>
 
-        <div className="glass-panel" style={{ height: '500px', minWidth: 0 }}>
+        <div ref={habitsChartRef} className="glass-panel" style={{ height: '500px', minWidth: 0 }}>
           <div className="chart-panel-header">
             <div>
               <h4 style={{ color: 'var(--text-main)' }}>Humor, Sono e Energia por Período</h4>
@@ -164,7 +234,7 @@ export function ChartsContainer({
             <ResponsiveContainer width="100%" height={420} minWidth={0}>
               <ComposedChart data={data} margin={analysisChartMargin}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                <XAxis dataKey="data" {...analysisXAxisProps} />
+                <XAxis dataKey="data" {...getAnalysisXAxisProps(data, habitsChartWidth)} />
                 <YAxis stroke="var(--text-main)" />
                 <RechartsTooltip
                   labelFormatter={(label, payload) => formatTooltipDate(payload?.[0]?.payload?.fullDate ?? label)}
