@@ -161,6 +161,18 @@ export function DataFormModal({ isOpen, onClose, onSubmit, formData, setFormData
             Engajei Físicamente Hoje
           </label>
 
+          <div>
+            <label className="input-label">Observações</label>
+            <textarea
+              className="input-field textarea-field"
+              rows="3"
+              maxLength="400"
+              value={formData.observacoes}
+              onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
+              placeholder="Se quiser, anote algo importante sobre o seu dia."
+            />
+          </div>
+
           <button type="submit" className="btn-primary" style={{ marginTop: '1rem' }}>
             {editandoId ? 'Atualizar Histórico' : 'Computar Dados'}
           </button>
