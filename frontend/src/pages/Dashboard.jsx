@@ -782,7 +782,7 @@ export default function Dashboard() {
     const csvContent = [
       headers.join(","),
       ...historicoOrdenado.map(r => [
-        r.data,
+        formatDisplayDate(r.data),
         r.humor,
         r.energia,
         r.produtividade,
@@ -816,7 +816,7 @@ export default function Dashboard() {
       const XLSX = await import('xlsx');
       const wb = XLSX.utils.book_new();
       const wsDiary = XLSX.utils.json_to_sheet(historicoOrdenado.map(r => ({
-        "Data": r.data,
+        "Data": formatDisplayDate(r.data),
         "Humor": r.humor,
         "Energia": r.energia,
         "Produtividade": r.produtividade,
