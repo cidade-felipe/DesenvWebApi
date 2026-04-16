@@ -50,6 +50,14 @@ export function ChartsContainer({
   analysisWeightSubtitle
 }) {
   const [isChartReady, setIsChartReady] = useState(false);
+  const analysisChartMargin = { top: 12, right: 18, left: 0, bottom: 28 };
+  const analysisXAxisProps = {
+    stroke: 'var(--text-main)',
+    tickFormatter: formatAxisDate,
+    tickMargin: 10,
+    minTickGap: 18,
+    padding: { left: 12, right: 12 }
+  };
 
   useEffect(() => {
     setIsChartReady(false);
@@ -120,7 +128,7 @@ export function ChartsContainer({
             </div>
           ) : (
             <ResponsiveContainer width="100%" height={420} minWidth={0}>
-              <AreaChart data={weightDataForChart}>
+              <AreaChart data={weightDataForChart} margin={analysisChartMargin}>
                 <defs>
                   <linearGradient id="colorPeso" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="var(--accent-cyan)" stopOpacity={0.4}/>
@@ -128,7 +136,7 @@ export function ChartsContainer({
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                <XAxis dataKey="data" stroke="var(--text-main)" />
+                <XAxis dataKey="data" {...analysisXAxisProps} />
                 <YAxis domain={['dataMin - 3', 'dataMax + 3']} stroke="var(--text-main)" />
                 <RechartsTooltip
                   labelFormatter={(label, payload) => formatTooltipDate(payload?.[0]?.payload?.fullDate ?? label)}
@@ -154,9 +162,9 @@ export function ChartsContainer({
             </div>
           ) : (
             <ResponsiveContainer width="100%" height={420} minWidth={0}>
-              <ComposedChart data={data}>
+              <ComposedChart data={data} margin={analysisChartMargin}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                <XAxis dataKey="data" stroke="var(--text-main)" tickFormatter={formatAxisDate} />
+                <XAxis dataKey="data" {...analysisXAxisProps} />
                 <YAxis stroke="var(--text-main)" />
                 <RechartsTooltip
                   labelFormatter={(label, payload) => formatTooltipDate(payload?.[0]?.payload?.fullDate ?? label)}
