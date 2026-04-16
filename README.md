@@ -92,8 +92,11 @@ O progresso das metas funciona assim:
 - cards de resumo com leitura agregada de bem-estar, treino, recuperação e corpo
 - gráficos de panorama
 - aba de análise com filtros por período, intervalo customizado e agrupamento diário, semanal, quinzenal e mensal
+- gráfico de peso por período com reaproveitamento do último peso conhecido
+- gráfico de bem-estar com humor, energia, produtividade e linha composta de bem-estar
+- gráfico separado para sono
 - aba de relatórios com filtros por período, intervalo customizado e foco do histórico, como treino, biometria e anotações
-- exportação CSV e Excel respeitando os filtros ativos
+- exportação CSV e Excel respeitando os filtros ativos e usando o mesmo formato de data da interface
 
 ## Segurança e robustez já adicionadas
 
