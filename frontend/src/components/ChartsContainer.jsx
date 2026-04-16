@@ -243,9 +243,9 @@ export function ChartsContainer({
                   contentStyle={{ backgroundColor: 'var(--bg-color-alt)', border: '1px solid var(--glass-border)', borderRadius: '12px' }}
                 />
                 <Line type="monotone" dataKey="humor" stroke="var(--accent-purple)" strokeWidth={3} dot={{ r: 4 }} />
-                <Line type="monotone" dataKey="energia" stroke="#f1c40f" strokeWidth={2.5} strokeDasharray="5 5" />
+                <Line type="monotone" dataKey="energia" stroke="var(--accent-cyan)" strokeWidth={2.5} />
                 <Line type="monotone" dataKey="produtividade" stroke="#2ecc71" strokeWidth={2.5} dot={{ r: 3 }} />
-                <Line type="monotone" dataKey="bemEstar" stroke="var(--accent-cyan)" strokeWidth={3.5} dot={false} />
+                <Line type="monotone" dataKey="bemEstar" stroke="#f1c40f" strokeWidth={3.5} strokeDasharray="6 6" dot={false} />
               </ComposedChart>
             </ResponsiveContainer>
           )}
