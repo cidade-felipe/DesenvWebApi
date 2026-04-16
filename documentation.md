@@ -119,6 +119,11 @@ No estado atual da interface:
 
 O registro diário representa hábitos do dia. O backend aplica lógica de atualização por data, evitando duplicidade quando o mesmo usuário salva novamente o mesmo dia.
 
+No frontend, esse fluxo também pode incluir:
+
+- observações livres sobre o dia
+- biometria opcional, quando o usuário realmente se pesou
+
 ### 4.4. Biometria
 
 A biometria é tratada separadamente do registro diário.
@@ -152,78 +157,93 @@ Categorias suportadas:
 ## 5. Modelo de dados
 
 ```mermaid
-erDiagram
-    USUARIOS ||--o{ REGISTROS_DIARIOS : possui
-    USUARIOS ||--o{ METAS : possui
-    USUARIOS ||--o{ INSIGHTS : possui
-    USUARIOS ||--|| CONFIGURACOES_PERFIL : possui
-    USUARIOS ||--o{ MEDIDAS_BIOMETRICAS : possui
-
-    USUARIOS {
-        int Id
-        string Nome
-        string Email
-        string Senha
-        datetime DataCriacao
-        date DataNascimento
-        string Sexo
+classDiagram
+    class USUARIOS {
+        +int Id
+        +string Nome
+        +string Email
+        +string Senha
+        +datetime DataCriacao
+        +date DataNascimento
+        +string Sexo
     }
 
-    REGISTROS_DIARIOS {
-        int Id
-        int UsuarioId
-        date Data
-        int Humor
-        decimal Sono
-        int Produtividade
-        int Energia
-        bool Exercicio
-        decimal Agua
-        string Observacoes
-        datetime DataCriacao
+    class REGISTROS_DIARIOS {
+        +int Id
+        +int UsuarioId
+        +date Data
+        +int Humor
+        +decimal Sono
+        +int Produtividade
+        +int Energia
+        +bool Exercicio
+        +decimal Agua
+        +string Observacoes
+        +datetime DataCriacao
     }
 
-    METAS {
-        int Id
-        int UsuarioId
-        string Categoria
-        decimal ValorAlvo
-        string Descricao
-        date DataInicio
-        date DataFim
-        bool Ativa
-        datetime DataCriacao
+    class METAS {
+        +int Id
+        +int UsuarioId
+        +string Categoria
+        +decimal ValorAlvo
+        +string Descricao
+        +date DataInicio
+        +date DataFim
+        +bool Ativa
+        +datetime DataCriacao
     }
 
-    INSIGHTS {
-        int Id
-        int UsuarioId
-        string Mensagem
-        string Categoria
-        string Nivel
-        datetime DataGeracao
-        bool Lido
+    class INSIGHTS {
+        +int Id
+        +int UsuarioId
+        +string Mensagem
+        +string Categoria
+        +string Nivel
+        +datetime DataGeracao
+        +bool Lido
     }
 
-    CONFIGURACOES_PERFIL {
-        int Id
-        int UsuarioId
-        bool TemaEscuro
-        string Idioma
-        string FusoHorario
-        bool ReceberNotificacoes
-        bool ReceberRelatorioSemanal
-        bool ExibirMetaNoDashboard
+    class CONFIGURACOES_PERFIL {
+        +int Id
+        +int UsuarioId
+        +bool TemaEscuro
+        +string Idioma
+        +string FusoHorario
+        +bool ReceberNotificacoes
+        +bool ReceberRelatorioSemanal
+        +bool ExibirMetaNoDashboard
     }
 
-    MEDIDAS_BIOMETRICAS {
-        int Id
-        int UsuarioId
-        decimal Peso
-        decimal Altura
-        date Data
+    class MEDIDAS_BIOMETRICAS {
+        +int Id
+        +int UsuarioId
+        +decimal Peso
+        +decimal Altura
+        +date Data
     }
+
+    USUARIOS "1" --> "0..*" REGISTROS_DIARIOS : possui
+    USUARIOS "1" --> "0..*" METAS : possui
+    USUARIOS "1" --> "0..*" INSIGHTS : possui
+    USUARIOS "1" --> "1" CONFIGURACOES_PERFIL : possui
+    USUARIOS "1" --> "0..*" MEDIDAS_BIOMETRICAS : possui
 ```
+
+### Observação sobre o diagrama
+
+**Fato**
+
+O bloco acima agora usa `classDiagram`, que costuma ser mais compatível com alguns editores Mermaid do que `erDiagram`.
+
+**Importante**
+
+Se você colar esse trecho em editores Mermaid que esperam apenas a sintaxe pura do diagrama, como alguns plugins ou playgrounds, precisa remover as linhas de cerca de código:
+
+- a linha inicial com ` ```mermaid `
+- a linha final com ` ``` `
+
+Ou seja, nesses casos o conteúdo deve começar direto em `classDiagram`.
 
 ## 5.1. Usuario
 
@@ -423,7 +443,7 @@ O panorama mostra cards e gráficos de visão geral.
 
 ## 9.2. Análise
 
-A aba de análise mostra gráficos mais detalhados, incluindo evolução de peso e correlação entre humor, sono e energia.
+A aba de análise mostra gráficos mais detalhados, com foco em leitura temporal e menos ruído visual.
 
 Melhorias recentes:
 
@@ -433,6 +453,10 @@ Melhorias recentes:
 - filtros por período rápido e intervalo customizado
 - agrupamento por `Diário`, `Semanal`, `Quinzenal` e `Mensal`
 - agregação por período para reduzir ruído de leitura em uso real
+- eixo X com densidade adaptativa conforme largura e zoom
+- gráfico próprio para sono
+- gráfico próprio para humor, energia, produtividade e bem-estar
+- reaproveitamento do último peso conhecido quando existe registro no período sem nova pesagem
 
 ### Observação técnica
 
@@ -443,7 +467,7 @@ Os gráficos da aba de análise não trabalham mais apenas com registros diário
 **Impacto**
 
 - hábitos usam médias por período
-- peso usa o último valor registrado em cada período
+- peso usa o último valor conhecido em cada período
 - isso melhora leitura histórica quando o volume de dados cresce
 
 ## 9.3. Relatórios
@@ -461,6 +485,7 @@ Além disso:
 - a exportação respeita os filtros ativos
 - a ordenação da tabela também influencia o que é exportado
 - os cards de resumo usam o mesmo recorte temporal aplicado ao histórico
+- a data exportada segue o mesmo formato visual da interface
 
 O dashboard permite exportar:
 
