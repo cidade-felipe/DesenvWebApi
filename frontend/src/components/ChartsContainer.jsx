@@ -99,11 +99,13 @@ export function ChartsContainer({
   radarData,
   weightDataForChart,
   analysisHabitsSubtitle,
+  analysisSleepSubtitle,
   analysisWeightSubtitle
 }) {
   const [isChartReady, setIsChartReady] = useState(false);
   const [weightChartRef, weightChartWidth] = useElementWidth();
-  const [habitsChartRef, habitsChartWidth] = useElementWidth();
+  const [wellbeingChartRef, wellbeingChartWidth] = useElementWidth();
+  const [sleepChartRef, sleepChartWidth] = useElementWidth();
   const analysisChartMargin = { top: 12, right: 18, left: 0, bottom: 28 };
   const analysisXAxisBaseProps = {
     stroke: 'var(--text-main)',
@@ -218,32 +220,67 @@ export function ChartsContainer({
           )}
         </div>
 
-        <div ref={habitsChartRef} className="glass-panel" style={{ height: '500px', minWidth: 0 }}>
+        <div ref={wellbeingChartRef} className="glass-panel" style={{ height: '500px', minWidth: 0 }}>
           <div className="chart-panel-header">
             <div>
-              <h4 style={{ color: 'var(--text-main)' }}>Humor, Sono e Energia por Período</h4>
+              <h4 style={{ color: 'var(--text-main)' }}>Humor, Energia, Produtividade e Bem-estar</h4>
               <p className="chart-panel-subtitle">{analysisHabitsSubtitle}</p>
             </div>
           </div>
           {data.length === 0 ? (
             <div className="chart-empty-state">
               <strong>Sem registros suficientes nesse recorte</strong>
-              <p>Ajuste o período ou registre novos dias para ver a correlação entre os indicadores.</p>
+              <p>Ajuste o período ou registre novos dias para ver a evolução do bem-estar.</p>
             </div>
           ) : (
             <ResponsiveContainer width="100%" height={420} minWidth={0}>
               <ComposedChart data={data} margin={analysisChartMargin}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                <XAxis dataKey="data" {...getAnalysisXAxisProps(data, habitsChartWidth)} />
+                <XAxis dataKey="data" {...getAnalysisXAxisProps(data, wellbeingChartWidth)} />
+                <YAxis stroke="var(--text-main)" domain={[0, 5]} />
+                <RechartsTooltip
+                  labelFormatter={(label, payload) => formatTooltipDate(payload?.[0]?.payload?.fullDate ?? label)}
+                  contentStyle={{ backgroundColor: 'var(--bg-color-alt)', border: '1px solid var(--glass-border)', borderRadius: '12px' }}
+                />
+                <Line type="monotone" dataKey="humor" stroke="var(--accent-purple)" strokeWidth={3} dot={{ r: 4 }} />
+                <Line type="monotone" dataKey="energia" stroke="#f1c40f" strokeWidth={2.5} strokeDasharray="5 5" />
+                <Line type="monotone" dataKey="produtividade" stroke="#2ecc71" strokeWidth={2.5} dot={{ r: 3 }} />
+                <Line type="monotone" dataKey="bemEstar" stroke="var(--accent-cyan)" strokeWidth={3.5} dot={false} />
+              </ComposedChart>
+            </ResponsiveContainer>
+          )}
+        </div>
+
+        <div ref={sleepChartRef} className="glass-panel" style={{ height: '500px', minWidth: 0 }}>
+          <div className="chart-panel-header">
+            <div>
+              <h4 style={{ color: 'var(--text-main)' }}>Sono por Período</h4>
+              <p className="chart-panel-subtitle">{analysisSleepSubtitle}</p>
+            </div>
+          </div>
+          {data.length === 0 ? (
+            <div className="chart-empty-state">
+              <strong>Sem registros suficientes nesse recorte</strong>
+              <p>Ajuste o período ou registre novos dias para acompanhar o sono ao longo do tempo.</p>
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height={420} minWidth={0}>
+              <AreaChart data={data} margin={analysisChartMargin}>
+                <defs>
+                  <linearGradient id="colorSonoAnalise" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="var(--accent-cyan-dim)" stopOpacity={0.35}/>
+                    <stop offset="95%" stopColor="var(--accent-cyan-dim)" stopOpacity={0.02}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                <XAxis dataKey="data" {...getAnalysisXAxisProps(data, sleepChartWidth)} />
                 <YAxis stroke="var(--text-main)" />
                 <RechartsTooltip
                   labelFormatter={(label, payload) => formatTooltipDate(payload?.[0]?.payload?.fullDate ?? label)}
                   contentStyle={{ backgroundColor: 'var(--bg-color-alt)', border: '1px solid var(--glass-border)', borderRadius: '12px' }}
                 />
-                <Area type="monotone" dataKey="sono" fill="var(--accent-cyan-dim)" fillOpacity={0.1} stroke="var(--accent-cyan-dim)" strokeWidth={2} />
-                <Line type="monotone" dataKey="humor" stroke="var(--accent-purple)" strokeWidth={3} dot={{ r: 4 }} />
-                <Line type="monotone" dataKey="energia" stroke="#f1c40f" strokeWidth={2} strokeDasharray="5 5" />
-              </ComposedChart>
+                <Area type="monotone" dataKey="sono" stroke="var(--accent-cyan-dim)" strokeWidth={3} fillOpacity={1} fill="url(#colorSonoAnalise)" />
+              </AreaChart>
             </ResponsiveContainer>
           )}
         </div>

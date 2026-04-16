@@ -417,6 +417,7 @@ export default function Dashboard() {
         energia: Number((bucket.energia / bucket.count).toFixed(1)),
         sono: Number((bucket.sono / bucket.count).toFixed(1)),
         produtividade: Number((bucket.produtividade / bucket.count).toFixed(1)),
+        bemEstar: Number((((bucket.humor + bucket.energia + bucket.produtividade) / 3) / bucket.count).toFixed(1)),
         totalRegistros: bucket.count
       }));
   };
@@ -892,19 +893,23 @@ export default function Dashboard() {
   );
   const analysisGroupingCopy = {
     daily: {
-      subtitle: 'Leitura diária com cada registro lançado no período filtrado.',
+      wellbeingSubtitle: 'Leitura diária de humor, energia, produtividade e bem-estar combinado.',
+      sleepSubtitle: 'Horas de sono lançadas em cada dia do período filtrado.',
       weightSubtitle: 'Último peso conhecido em cada dia do intervalo.'
     },
     weekly: {
-      subtitle: 'Médias semanais para reduzir ruído e destacar tendência.',
+      wellbeingSubtitle: 'Médias semanais para reduzir ruído e destacar o bem-estar combinado.',
+      sleepSubtitle: 'Média semanal de sono para acompanhar recuperação com menos ruído.',
       weightSubtitle: 'Último peso conhecido em cada semana do intervalo.'
     },
     biweekly: {
-      subtitle: 'Médias quinzenais para leitura mais estável ao longo do mês.',
+      wellbeingSubtitle: 'Médias quinzenais para leitura mais estável do bem-estar ao longo do mês.',
+      sleepSubtitle: 'Média quinzenal de sono para comparação mais estável dentro do mês.',
       weightSubtitle: 'Último peso conhecido em cada quinzena do intervalo.'
     },
     monthly: {
-      subtitle: 'Médias mensais para acompanhar comportamento de longo prazo.',
+      wellbeingSubtitle: 'Médias mensais para acompanhar o bem-estar em horizonte mais longo.',
+      sleepSubtitle: 'Média mensal de sono para leitura de recuperação no longo prazo.',
       weightSubtitle: 'Último peso conhecido em cada mês do intervalo.'
     }
   };
@@ -1206,7 +1211,8 @@ export default function Dashboard() {
                   type="analise"
                   data={analysisChartData}
                   weightDataForChart={analysisWeightData}
-                  analysisHabitsSubtitle={analysisGroupingCopy[effectiveAnalysisGrouping].subtitle}
+                  analysisHabitsSubtitle={analysisGroupingCopy[effectiveAnalysisGrouping].wellbeingSubtitle}
+                  analysisSleepSubtitle={analysisGroupingCopy[effectiveAnalysisGrouping].sleepSubtitle}
                   analysisWeightSubtitle={analysisGroupingCopy[effectiveAnalysisGrouping].weightSubtitle}
                 />
               </div>
