@@ -57,6 +57,56 @@ const formatTooltipDate = (value) => {
   return normalizedValue;
 };
 
+const tooltipSeriesConfig = {
+  peso: { label: 'Peso', unit: ' kg' },
+  sono: { label: 'Sono', unit: ' h' },
+  humor: { label: 'Humor', suffix: '/5' },
+  energia: { label: 'Energia', suffix: '/5' },
+  produtividade: { label: 'Produtividade', suffix: '/5' },
+  bemEstar: { label: 'Bem-estar', suffix: '/5' },
+  value: { label: 'Valor' }
+};
+
+const formatTooltipNumber = (value) => {
+  const numericValue = Number(value);
+
+  if (Number.isNaN(numericValue)) {
+    return String(value ?? '');
+  }
+
+  return numericValue.toLocaleString('pt-BR', {
+    minimumFractionDigits: Number.isInteger(numericValue) ? 0 : 1,
+    maximumFractionDigits: 1
+  });
+};
+
+const formatTooltipSeriesLabel = (name) => {
+  if (tooltipSeriesConfig[name]?.label) {
+    return tooltipSeriesConfig[name].label;
+  }
+
+  const normalizedName = String(name ?? '')
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .replace(/_/g, ' ')
+    .trim();
+
+  if (!normalizedName) return 'Valor';
+
+  return normalizedName.charAt(0).toUpperCase() + normalizedName.slice(1);
+};
+
+const formatTooltipSeriesValue = (name, value) => {
+  const config = tooltipSeriesConfig[name] || {};
+  const formattedNumber = formatTooltipNumber(value);
+
+  return `${formattedNumber}${config.unit || ''}${config.suffix || ''}`;
+};
+
+const formatTooltipEntry = (value, name) => [
+  formatTooltipSeriesValue(name, value),
+  formatTooltipSeriesLabel(name)
+];
+
 function useElementWidth() {
   const elementRef = useRef(null);
   const [width, setWidth] = useState(0);
@@ -172,6 +222,7 @@ export function ChartsContainer({
               <YAxis stroke="var(--text-main)" fontSize={11} />
               <RechartsTooltip
                 labelFormatter={formatTooltipDate}
+                formatter={formatTooltipEntry}
                 contentStyle={{ backgroundColor: 'var(--bg-color-alt)', border: '1px solid var(--glass-border)', borderRadius: '8px' }}
               />
               <Line type="step" dataKey="humor" stroke="var(--accent-purple)" strokeWidth={2} dot={false} />
@@ -212,6 +263,7 @@ export function ChartsContainer({
                 <YAxis domain={['dataMin - 3', 'dataMax + 3']} stroke="var(--text-main)" />
                 <RechartsTooltip
                   labelFormatter={(label, payload) => formatTooltipDate(payload?.[0]?.payload?.fullDate ?? label)}
+                  formatter={formatTooltipEntry}
                   contentStyle={{ backgroundColor: 'var(--bg-color-alt)', border: '1px solid var(--accent-cyan)', borderRadius: '12px' }}
                 />
                 <Area type="monotone" dataKey="peso" stroke="var(--accent-cyan)" strokeWidth={4} fillOpacity={1} fill="url(#colorPeso)" />
@@ -240,6 +292,7 @@ export function ChartsContainer({
                 <YAxis stroke="var(--text-main)" domain={[0, 5]} />
                 <RechartsTooltip
                   labelFormatter={(label, payload) => formatTooltipDate(payload?.[0]?.payload?.fullDate ?? label)}
+                  formatter={formatTooltipEntry}
                   contentStyle={{ backgroundColor: 'var(--bg-color-alt)', border: '1px solid var(--glass-border)', borderRadius: '12px' }}
                 />
                 <Line type="monotone" dataKey="humor" stroke="var(--accent-purple)" strokeWidth={3} dot={{ r: 4 }} />
@@ -277,6 +330,7 @@ export function ChartsContainer({
                 <YAxis stroke="var(--text-main)" />
                 <RechartsTooltip
                   labelFormatter={(label, payload) => formatTooltipDate(payload?.[0]?.payload?.fullDate ?? label)}
+                  formatter={formatTooltipEntry}
                   contentStyle={{ backgroundColor: 'var(--bg-color-alt)', border: '1px solid var(--glass-border)', borderRadius: '12px' }}
                 />
                 <Area type="monotone" dataKey="sono" stroke="var(--accent-cyan-dim)" strokeWidth={3} fillOpacity={1} fill="url(#colorSonoAnalise)" />
