@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Pencil, Trash2, LayoutDashboard, ClipboardList, Download, BarChart3, Activity, RefreshCw, X, TrendingUp } from 'lucide-react';
 
 import { useDashboardData } from '../hooks/useDashboardData';
@@ -35,6 +35,8 @@ export default function Dashboard() {
   const [notice, setNotice] = useState(null);
   const [confirmState, setConfirmState] = useState(null);
   const [isConfirming, setIsConfirming] = useState(false);
+  const [isTabsDocked, setIsTabsDocked] = useState(false);
+  const topTabsRef = useRef(null);
   const [formData, setFormData] = useState({
     data: new Date().toISOString().split('T')[0],
     humor: 3,
@@ -96,6 +98,55 @@ export default function Dashboard() {
 
     return () => clearTimeout(timeoutId);
   }, [notice]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+
+    let frameId = null;
+    let dockThreshold = Number.POSITIVE_INFINITY;
+
+    const recalculateThreshold = () => {
+      if (window.innerWidth < 900 || !topTabsRef.current) {
+        dockThreshold = Number.POSITIVE_INFINITY;
+        setIsTabsDocked(false);
+        return;
+      }
+
+      const rect = topTabsRef.current.getBoundingClientRect();
+      dockThreshold = Math.max(0, window.scrollY + rect.top - 96);
+    };
+
+    const updateDockState = () => {
+      frameId = null;
+      setIsTabsDocked(window.innerWidth >= 900 && window.scrollY > dockThreshold);
+    };
+
+    const requestUpdate = () => {
+      if (frameId !== null) return;
+      frameId = window.requestAnimationFrame(updateDockState);
+    };
+
+    const handleResize = () => {
+      recalculateThreshold();
+      requestUpdate();
+    };
+
+    recalculateThreshold();
+    updateDockState();
+
+    window.addEventListener('scroll', requestUpdate, { passive: true });
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('scroll', requestUpdate);
+      window.removeEventListener('resize', handleResize);
+
+      if (frameId !== null) {
+        window.cancelAnimationFrame(frameId);
+      }
+    };
+  }, []);
+
 
   const getDateKey = (value) => String(value ?? '').split('T')[0];
   const weekdayShortNames = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'];
@@ -1095,6 +1146,39 @@ export default function Dashboard() {
     }
   };
 
+  const tabItems = [
+    { key: 'panorama', label: 'Panorama', Icon: LayoutDashboard },
+    { key: 'analise', label: 'Análise', Icon: BarChart3 },
+    { key: 'metas', label: 'Metas', Icon: TrendingUp },
+    { key: 'relatorios', label: 'Relatórios', Icon: ClipboardList }
+  ];
+
+  const renderTabs = (variant) => (
+    <div
+      ref={variant === 'top' ? topTabsRef : undefined}
+      className={[
+        'tabs-wrapper',
+        'animate-fade-up',
+        variant === 'top' ? 'tabs-top-bar' : 'tabs-side-rail',
+        variant === 'top' && isTabsDocked ? 'tabs-top-bar-hidden' : '',
+        variant === 'side' && isTabsDocked ? 'tabs-side-rail-visible' : ''
+      ].filter(Boolean).join(' ')}
+    >
+      {tabItems.map(({ key, label, Icon }) => (
+        <button
+          key={`${variant}-${key}`}
+          className={`tab-btn ${activeTab === key ? 'active' : ''}`}
+          onClick={() => setActiveTab(key)}
+          aria-label={label}
+          title={label}
+        >
+          <Icon size={18} />
+          <span className="tab-btn-label">{label}</span>
+        </button>
+      ))}
+    </div>
+  );
+
   if (loading) return <div className="center-wrapper"><RefreshCw className="animate-spin" size={32} color="var(--accent-cyan)" /></div>;
 
   return (
@@ -1108,17 +1192,14 @@ export default function Dashboard() {
           ultimaAltura={biometria[0]?.altura}
         />
 
-        <main className="main-content" style={{ width: '100%' }}>
-          <div className="tabs-wrapper animate-fade-up">
-            <button className={`tab-btn ${activeTab === 'panorama' ? 'active' : ''}`} onClick={() => setActiveTab('panorama')}><LayoutDashboard size={18} /> Panorama</button>
-            <button className={`tab-btn ${activeTab === 'analise' ? 'active' : ''}`} onClick={() => setActiveTab('analise')}><BarChart3 size={18} /> Análise</button>
-            <button className={`tab-btn ${activeTab === 'metas' ? 'active' : ''}`} onClick={() => setActiveTab('metas')}><TrendingUp size={18} /> Metas</button>
-            <button className={`tab-btn ${activeTab === 'relatorios' ? 'active' : ''}`} onClick={() => setActiveTab('relatorios')}><ClipboardList size={18} /> Relatórios</button>
-          </div>
+        <main className={`main-content dashboard-main-layout ${isTabsDocked ? 'dashboard-tabs-docked' : ''}`} style={{ width: '100%' }}>
+          {renderTabs('top')}
+          <div className={`dashboard-main-shell ${isTabsDocked ? 'dashboard-main-shell-docked' : ''}`}>
+            {renderTabs('side')}
+            <div className="dashboard-main-pane">
+            <NoticeBanner notice={notice} onClose={() => setNotice(null)} />
 
-          <NoticeBanner notice={notice} onClose={() => setNotice(null)} />
-
-          <div className="tab-content">
+            <div className="tab-content">
             {activeTab === 'panorama' && (
               <>
                 <StatsCards imc={imcAtual} imcMeta={imcMeta} pesoAtual={biometria[0]?.peso} pesoAnterior={biometria[1]?.peso} pesoIdeal={pesoIdeal} avgHumor={avgHumor} avgSono={avgSono} avgAgua={avgAgua} />
@@ -1471,6 +1552,8 @@ export default function Dashboard() {
                 )}
               </div>
             )}
+            </div>
+            </div>
           </div>
         </main>
       </div>

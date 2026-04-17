@@ -1219,16 +1219,32 @@ h1, h2, h3, h4 {
 }
 
 /* Tab Navigation System */
+.dashboard-main-layout {
+  display: block;
+}
+
+.dashboard-main-shell {
+  display: block;
+}
+
+.dashboard-main-pane {
+  min-width: 0;
+}
+
 .tabs-wrapper {
   display: flex;
   gap: 0.5rem;
   margin-bottom: 2.5rem;
   border-bottom: 1px solid var(--glass-border);
   padding-bottom: 2px;
-  position: sticky;
-  top: 80px;
+  position: relative;
   background: var(--bg-color);
   z-index: 100;
+  transition: width 0.25s ease, padding 0.25s ease, gap 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease, background 0.25s ease;
+}
+
+.tabs-wrapper.tabs-top-bar {
+  top: auto;
 }
 
 .tab-btn {
@@ -1245,6 +1261,10 @@ h1, h2, h3, h4 {
   align-items: center;
   gap: 8px;
   border-radius: 8px 8px 0 0;
+}
+
+.tab-btn-label {
+  white-space: nowrap;
 }
 
 .tab-btn:hover {
@@ -1290,6 +1310,79 @@ h1, h2, h3, h4 {
 
 .tab-content {
   animation: fadeIn 0.4s forwards;
+}
+
+@keyframes tabsRotateIntoRail {
+  0% {
+    opacity: 0;
+    transform: translateX(24px) rotate(-90deg);
+    transform-origin: top left;
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateX(0) rotate(0deg);
+    transform-origin: top left;
+  }
+}
+
+@media (min-width: 900px) {
+  .dashboard-main-layout.dashboard-tabs-docked .dashboard-main-pane {
+    padding-left: 92px;
+  }
+
+  .tabs-wrapper.tabs-side-rail {
+    display: none;
+  }
+
+  .tabs-wrapper.tabs-top-bar.tabs-top-bar-hidden {
+    display: none;
+  }
+
+  .tabs-wrapper.tabs-side-rail.tabs-side-rail-visible {
+    display: flex;
+    position: fixed;
+    top: 132px;
+    left: 10px;
+    flex-direction: column;
+    gap: 0.45rem;
+    width: 64px;
+    margin-bottom: 0;
+    padding: 0.65rem 0.5rem;
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    background: rgba(11, 12, 16, 0.88);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    box-shadow: 0 14px 36px rgba(0, 0, 0, 0.35);
+    animation: tabsRotateIntoRail 0.38s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+    z-index: 260;
+  }
+
+  .tabs-wrapper.tabs-side-rail .tab-btn {
+    width: 100%;
+    min-height: 52px;
+    padding: 0;
+    justify-content: center;
+    border-radius: 14px;
+  }
+
+  .tabs-wrapper.tabs-side-rail .tab-btn-label {
+    display: none;
+  }
+
+  .tabs-wrapper.tabs-side-rail .tab-btn.active {
+    background: rgba(102, 252, 241, 0.12);
+  }
+
+  .tabs-wrapper.tabs-side-rail .tab-btn.active::after {
+    bottom: auto;
+    left: 6px;
+    top: 50%;
+    width: 3px;
+    height: 24px;
+    transform: translateY(-50%);
+  }
 }
 
 .chart-header {
