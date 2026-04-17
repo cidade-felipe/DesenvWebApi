@@ -1,7 +1,7 @@
 import { X } from 'lucide-react';
 import { DateField } from './DateField';
 
-export function DataFormModal({ isOpen, onClose, onSubmit, formData, setFormData, editandoId, ultimaAltura }) {
+export function DataFormModal({ isOpen, onClose, onSubmit, formData, setFormData, editandoId, ultimaAltura, todayDate }) {
   if (!isOpen) return null;
 
   const alturaBase = formData.altura || ultimaAltura?.toString() || '';
@@ -9,6 +9,18 @@ export function DataFormModal({ isOpen, onClose, onSubmit, formData, setFormData
   const helperText = editandoId
     ? 'A data do registro já existente fica travada para preservar o histórico.'
     : undefined;
+  const safeTodayDate = todayDate || (() => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  })();
+  const handleDateChange = (event) => {
+    const nextValue = event.target.value;
+    const safeValue = nextValue && nextValue > safeTodayDate ? safeTodayDate : nextValue;
+    setFormData({ ...formData, data: safeValue });
+  };
 
   return (
     <div className="modal-overlay" onClick={(e) => e.target.className === 'modal-overlay' && onClose()}>
@@ -26,9 +38,9 @@ export function DataFormModal({ isOpen, onClose, onSubmit, formData, setFormData
           <DateField
             label="Data"
             value={formData.data}
-            onChange={(e) => setFormData({ ...formData, data: e.target.value })}
+            onChange={handleDateChange}
             disabled={!!editandoId}
-            max={new Date().toISOString().split('T')[0]}
+            max={safeTodayDate}
             required
             helperText={helperText}
           />

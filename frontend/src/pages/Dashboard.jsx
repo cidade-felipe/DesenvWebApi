@@ -12,6 +12,13 @@ import { ConfirmDialog } from '../components/ConfirmDialog';
 import { DateField } from '../components/DateField';
 import apiClient from '../api/apiClient';
 
+const getLocalDateInputValue = (date = new Date()) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 export default function Dashboard() {
   const {
     loading, registros, config, insights, user, biometria, metas,
@@ -38,7 +45,7 @@ export default function Dashboard() {
   const [isTabsDocked, setIsTabsDocked] = useState(false);
   const topTabsRef = useRef(null);
   const [formData, setFormData] = useState({
-    data: new Date().toISOString().split('T')[0],
+    data: getLocalDateInputValue(),
     humor: 3,
     sono: 8,
     produtividade: 3,
@@ -150,12 +157,7 @@ export default function Dashboard() {
 
   const getDateKey = (value) => String(value ?? '').split('T')[0];
   const weekdayShortNames = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'];
-  const toDateInputValue = (date = new Date()) => {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  };
+  const toDateInputValue = getLocalDateInputValue;
   const formatDisplayDate = (value) => new Date(`${getDateKey(value)}T00:00:00`).toLocaleDateString('pt-BR');
   const toLocalDate = (value) => {
     const date = new Date(`${getDateKey(value)}T00:00:00`);
@@ -713,6 +715,11 @@ export default function Dashboard() {
   const handleSalvar = async (e) => {
     e.preventDefault();
     try {
+      if (formData.data > todayReportDate) {
+        showNotice('error', 'Data inválida', 'Você só pode registrar informações até o dia de hoje.');
+        return;
+      }
+
       const isEditing = Boolean(editandoId);
       const payload = {
         usuarioId: user.id,
@@ -1190,6 +1197,7 @@ export default function Dashboard() {
           isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSubmit={handleSalvar} 
           formData={formData} setFormData={setFormData} editandoId={editandoId} 
           ultimaAltura={biometria[0]?.altura}
+          todayDate={todayReportDate}
         />
 
         <main className={`main-content dashboard-main-layout ${isTabsDocked ? 'dashboard-tabs-docked' : ''}`} style={{ width: '100%' }}>
