@@ -225,7 +225,7 @@ export function ChartsContainer({
                 formatter={formatTooltipEntry}
                 contentStyle={{ backgroundColor: 'var(--bg-color-alt)', border: '1px solid var(--glass-border)', borderRadius: '8px' }}
               />
-              <Line type="step" dataKey="humor" stroke="var(--accent-purple)" strokeWidth={2} dot={false} />
+              <Line type="monotone" dataKey="humor" stroke="var(--accent-purple)" strokeWidth={2} dot={false} />
               <Line type="monotone" dataKey="energia" stroke="var(--accent-cyan)" strokeWidth={2} dot={false} />
               <Line type="monotone" dataKey="produtividade" stroke="#2ecc71" strokeWidth={2} dot={false} />
             </LineChart>
