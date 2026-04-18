@@ -227,6 +227,7 @@ export function ChartsContainer({
               />
               <Line type="step" dataKey="humor" stroke="var(--accent-purple)" strokeWidth={2} dot={false} />
               <Line type="monotone" dataKey="energia" stroke="var(--accent-cyan)" strokeWidth={2} dot={false} />
+              <Line type="monotone" dataKey="produtividade" stroke="#2ecc71" strokeWidth={2} dot={false} />
             </LineChart>
           </ResponsiveContainer>
         </div>
