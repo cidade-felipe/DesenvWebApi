@@ -180,7 +180,7 @@ export default function Login() {
 
   return (
     <div className="center-wrapper">
-      <div className="glass-panel" style={{ width: '400px', maxWidth: '90%' }}>
+      <div className={`glass-panel auth-panel ${isRegistering ? 'auth-panel-register' : ''}`.trim()}>
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
           <Activity size={48} color="var(--accent-cyan)" style={{ marginBottom: '1rem' }} />
           <h2 className="logo" style={{ marginBottom: '0.5rem' }}>Ritmo</h2>
@@ -212,23 +212,26 @@ export default function Login() {
                 />
                 {fieldErrors.nome ? <div className="field-error-text">{fieldErrors.nome}</div> : null}
               </div>
-              <div className="input-group" style={{ display: 'flex', gap: '1rem' }}>
-                <div style={{ flex: 1 }}>
+              <div className="input-group auth-register-row">
+                <div className="auth-register-date">
                   <DateField
                     label="Data de Nascimento"
                     value={formData.dataNascimento}
                     onChange={(e) => updateField('dataNascimento', e.target.value)}
                     required={isRegistering}
                     max={todayDate}
-                    containerStyle={{ flex: 1 }}
+                    allowManualInput
                     inputClassName={fieldErrors.dataNascimento ? 'input-field-error' : ''}
+                    buttonMode="icon"
+                    buttonClassName="auth-register-date-picker-btn"
+                    buttonAriaLabel="Abrir calendário da data de nascimento"
                   />
                   {fieldErrors.dataNascimento ? <div className="field-error-text">{fieldErrors.dataNascimento}</div> : null}
                 </div>
-                <div style={{ flex: 1 }}>
+                <div className="auth-register-sex">
                   <label className="input-label">Sexo Biológico</label>
                   <select 
-                    className={`input-field ${fieldErrors.sexo ? 'input-field-error' : ''}`.trim()}
+                    className={`input-field auth-select ${fieldErrors.sexo ? 'input-field-error' : ''}`.trim()}
                     value={formData.sexo}
                     onChange={(e) => updateField('sexo', e.target.value)}
                     aria-invalid={Boolean(fieldErrors.sexo)}
