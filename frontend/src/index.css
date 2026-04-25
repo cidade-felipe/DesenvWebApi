@@ -126,6 +126,36 @@ h1, h2, h3, h4 {
   background: rgba(0,0,0,0.5);
 }
 
+.input-field-error {
+  border-color: rgba(255, 107, 107, 0.65);
+  box-shadow: 0 0 0 1px rgba(255, 107, 107, 0.12);
+}
+
+.input-field-error:focus {
+  border-color: #ff6b6b;
+  box-shadow: 0 0 12px rgba(255, 107, 107, 0.22);
+}
+
+.field-error-text {
+  margin-top: 0.45rem;
+  font-size: 0.8rem;
+  color: #ff8f8f;
+  line-height: 1.4;
+}
+
+.auth-form-feedback {
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+}
+
+.auth-form-feedback.error {
+  background: rgba(255, 100, 100, 0.1);
+  border: 1px solid rgba(255, 100, 100, 0.3);
+  color: #ff6b6b;
+}
+
 .date-input-shell {
   position: relative;
 }

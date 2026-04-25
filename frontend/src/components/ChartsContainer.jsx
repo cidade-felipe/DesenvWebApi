@@ -152,10 +152,11 @@ export function ChartsContainer({
   analysisSleepSubtitle,
   analysisWeightSubtitle
 }) {
-  const [isChartReady, setIsChartReady] = useState(false);
+  const [chartRenderState, setChartRenderState] = useState({ type: null, ready: false });
   const [weightChartRef, weightChartWidth] = useElementWidth();
   const [wellbeingChartRef, wellbeingChartWidth] = useElementWidth();
   const [sleepChartRef, sleepChartWidth] = useElementWidth();
+  const isChartReady = chartRenderState.ready && chartRenderState.type === type;
   const analysisChartMargin = { top: 12, right: 18, left: 0, bottom: 28 };
   const analysisXAxisBaseProps = {
     stroke: 'var(--text-main)',
@@ -182,10 +183,8 @@ export function ChartsContainer({
   };
 
   useEffect(() => {
-    setIsChartReady(false);
-
     const frame = requestAnimationFrame(() => {
-      setIsChartReady(true);
+      setChartRenderState({ type, ready: true });
     });
 
     return () => cancelAnimationFrame(frame);
