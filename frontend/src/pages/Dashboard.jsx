@@ -891,7 +891,7 @@ export default function Dashboard() {
       XLSX.utils.book_append_sheet(wb, wsDiary, "Diário de Hábitos");
       XLSX.writeFile(wb, `Ritmo_Analitico_${new Date().toISOString().split('T')[0]}.xlsx`);
       showNotice('info', 'Excel preparado', 'O download da planilha foi iniciado.');
-    } catch (err) {
+    } catch {
       showNotice('error', 'Erro ao gerar Excel', 'Tente novamente em instantes.');
     } finally {
       setIsExportingExcel(false);
@@ -1171,16 +1171,16 @@ export default function Dashboard() {
         variant === 'side' && isTabsDocked ? 'tabs-side-rail-visible' : ''
       ].filter(Boolean).join(' ')}
     >
-      {tabItems.map(({ key, label, Icon }) => (
+      {tabItems.map((item) => (
         <button
-          key={`${variant}-${key}`}
-          className={`tab-btn ${activeTab === key ? 'active' : ''}`}
-          onClick={() => setActiveTab(key)}
-          aria-label={label}
-          title={label}
+          key={`${variant}-${item.key}`}
+          className={`tab-btn ${activeTab === item.key ? 'active' : ''}`}
+          onClick={() => setActiveTab(item.key)}
+          aria-label={item.label}
+          title={item.label}
         >
-          <Icon size={18} />
-          <span className="tab-btn-label">{label}</span>
+          <item.Icon size={18} />
+          <span className="tab-btn-label">{item.label}</span>
         </button>
       ))}
     </div>
