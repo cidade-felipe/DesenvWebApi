@@ -1368,14 +1368,20 @@ export default function Dashboard() {
 
             <div className="tab-content">
             {activeTab === 'panorama' && (
-              <>
+              <div className="animate-fade-up">
+                <div className="chart-header">
+                  <h3 style={{ color: 'var(--text-light)' }}>Panorama</h3>
+                </div>
                 <StatsCards imc={imcAtual} imcMeta={imcMeta} pesoAtual={biometria[0]?.peso} pesoAnterior={biometria[1]?.peso} pesoIdeal={pesoIdeal} avgHumor={avgHumor} avgSono={avgSono} avgAgua={avgAgua} />
                 <ChartsContainer type="panorama" data={registros} radarData={radarData} />
-              </>
+              </div>
             )}
 
             {activeTab === 'analise' && (
               <div className="animate-fade-up">
+                <div className="chart-header">
+                  <h3 style={{ color: 'var(--text-light)' }}>Análise</h3>
+                </div>
                 <div className="glass-panel reports-toolbar analysis-toolbar">
                   <div className="reports-toolbar-row toolbar-uniform-row">
                     <div className="reports-filter-block toolbar-equal-block">
