@@ -1321,13 +1321,32 @@ h1, h2, h3, h4 {
 
 .dashboard-main-shell {
   display: block;
+  position: relative;
+  perspective: 1200px;
 }
 
 .dashboard-main-pane {
   min-width: 0;
+  padding-left: 0;
+  transition: padding-left 0.48s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .tabs-wrapper {
+  --tabs-rail-start-x: -26px;
+  --tabs-rail-start-y: 12px;
+  --tabs-rail-rotate-start: -84deg;
+  --tabs-rail-scale-start: 0.9;
+  --tabs-rail-overshoot-x: 4px;
+  --tabs-rail-overshoot-y: -2px;
+  --tabs-rail-overshoot-rotate: 7deg;
+  --tabs-rail-overshoot-scale: 1.02;
+  --tabs-rail-blur-start: 6px;
+  --tabs-rail-animation-duration: 720ms;
+  --tabs-rail-settle-duration: 540ms;
+  --tabs-top-bar-exit-y: -16px;
+  --tabs-top-bar-tilt: 10deg;
+  --tabs-top-bar-exit-scale: 0.985;
+  --tabs-top-bar-saturate: 0.88;
   display: flex;
   gap: 0.5rem;
   margin-bottom: 2.5rem;
@@ -1336,11 +1355,28 @@ h1, h2, h3, h4 {
   position: relative;
   background: var(--bg-color);
   z-index: 100;
-  transition: width 0.25s ease, padding 0.25s ease, gap 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease, background 0.25s ease;
+  transition:
+    width 0.38s cubic-bezier(0.22, 1, 0.36, 1),
+    padding 0.38s cubic-bezier(0.22, 1, 0.36, 1),
+    gap 0.38s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.32s ease,
+    border-color 0.32s ease,
+    background 0.32s ease,
+    opacity 0.3s ease,
+    transform 0.42s cubic-bezier(0.22, 1, 0.36, 1),
+    max-height 0.42s cubic-bezier(0.22, 1, 0.36, 1),
+    margin-bottom 0.42s cubic-bezier(0.22, 1, 0.36, 1),
+    padding-bottom 0.42s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: opacity, transform, max-height;
 }
 
 .tabs-wrapper.tabs-top-bar {
   top: auto;
+  overflow: hidden;
+  max-height: 96px;
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  transform-origin: top center;
 }
 
 .tab-btn {
@@ -1411,35 +1447,51 @@ h1, h2, h3, h4 {
 @keyframes tabsRotateIntoRail {
   0% {
     opacity: 0;
-    transform: translateX(24px) rotate(-90deg);
+    filter: blur(var(--tabs-rail-blur-start));
+    transform: translate3d(var(--tabs-rail-start-x), var(--tabs-rail-start-y), 0) rotate(var(--tabs-rail-rotate-start)) scale(var(--tabs-rail-scale-start));
+    transform-origin: top left;
+  }
+
+  58% {
+    opacity: 1;
+    filter: blur(0);
+    transform: translate3d(var(--tabs-rail-overshoot-x), var(--tabs-rail-overshoot-y), 0) rotate(var(--tabs-rail-overshoot-rotate)) scale(var(--tabs-rail-overshoot-scale));
     transform-origin: top left;
   }
 
   100% {
     opacity: 1;
-    transform: translateX(0) rotate(0deg);
+    filter: blur(0);
+    transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
     transform-origin: top left;
   }
 }
 
 @media (min-width: 900px) {
+  .dashboard-main-shell {
+    display: grid;
+    grid-template-columns: 0 minmax(0, 1fr);
+    column-gap: 0;
+    align-items: start;
+    transition:
+      grid-template-columns 0.48s cubic-bezier(0.22, 1, 0.36, 1),
+      column-gap 0.48s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .dashboard-main-shell.dashboard-main-shell-docked {
+    grid-template-columns: 84px minmax(0, 1fr);
+    column-gap: 8px;
+  }
+
   .dashboard-main-layout.dashboard-tabs-docked .dashboard-main-pane {
-    padding-left: 92px;
+    padding-left: 0;
   }
 
   .tabs-wrapper.tabs-side-rail {
-    display: none;
-  }
-
-  .tabs-wrapper.tabs-top-bar.tabs-top-bar-hidden {
-    display: none;
-  }
-
-  .tabs-wrapper.tabs-side-rail.tabs-side-rail-visible {
     display: flex;
-    position: fixed;
-    top: 132px;
-    left: 10px;
+    position: sticky;
+    top: 0;
+    left: auto;
     flex-direction: column;
     gap: 0.45rem;
     width: 64px;
@@ -1451,8 +1503,50 @@ h1, h2, h3, h4 {
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
     box-shadow: 0 14px 36px rgba(0, 0, 0, 0.35);
-    animation: tabsRotateIntoRail 0.38s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    filter: blur(var(--tabs-rail-blur-start));
+    transform: translate3d(var(--tabs-rail-start-x), var(--tabs-rail-start-y), 0) rotate(var(--tabs-rail-rotate-start)) scale(var(--tabs-rail-scale-start));
+    transform-origin: top left;
+    transition:
+      opacity 0.34s ease,
+      transform var(--tabs-rail-settle-duration) cubic-bezier(0.16, 1, 0.3, 1),
+      filter 0.42s ease,
+      visibility 0s linear 0.34s,
+      box-shadow 0.3s ease;
+    will-change: opacity, transform, filter;
+    align-self: start;
+    justify-self: start;
+    height: fit-content;
     z-index: 260;
+  }
+
+  .tabs-wrapper.tabs-top-bar.tabs-top-bar-hidden {
+    max-height: 0;
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-color: transparent;
+    opacity: 0;
+    pointer-events: none;
+    filter: saturate(var(--tabs-top-bar-saturate));
+    transform: translateY(var(--tabs-top-bar-exit-y)) scale(var(--tabs-top-bar-exit-scale)) rotateX(var(--tabs-top-bar-tilt));
+    transform-origin: top center;
+  }
+
+  .tabs-wrapper.tabs-side-rail.tabs-side-rail-visible {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    filter: blur(0);
+    transform: translate3d(0, 0, 0) scale(1);
+    animation: tabsRotateIntoRail var(--tabs-rail-animation-duration) cubic-bezier(0.16, 1, 0.3, 1) both;
+    transition:
+      opacity 0.4s ease,
+      transform var(--tabs-rail-settle-duration) cubic-bezier(0.22, 1, 0.36, 1),
+      filter 0.36s ease,
+      visibility 0s linear 0s,
+      box-shadow 0.3s ease;
   }
 
   .tabs-wrapper.tabs-side-rail .tab-btn {
