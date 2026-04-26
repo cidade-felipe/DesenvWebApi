@@ -19,6 +19,30 @@ const getLocalDateInputValue = (date = new Date()) => {
   return `${year}-${month}-${day}`;
 };
 
+const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
+
+const getTabsDockMotionProfile = (scrollVelocity = 0) => {
+  const intensity = clamp(scrollVelocity / 2.2, 0, 1);
+
+  return {
+    railStartX: -18 - intensity * 16,
+    railStartY: 8 + intensity * 8,
+    railRotateStart: -72 - intensity * 18,
+    railScaleStart: 0.94 - intensity * 0.08,
+    railOvershootX: 2 + intensity * 4,
+    railOvershootY: -1 - intensity * 3,
+    railOvershootRotate: 4 + intensity * 6,
+    railOvershootScale: 1.01 + intensity * 0.03,
+    railBlurStart: 3 + intensity * 5,
+    railAnimationDuration: 780 - intensity * 140,
+    railSettleDuration: 620 - intensity * 120,
+    topBarExitY: -10 - intensity * 10,
+    topBarTilt: 6 + intensity * 10,
+    topBarExitScale: 0.992 - intensity * 0.02,
+    topBarSaturate: 0.94 - intensity * 0.12
+  };
+};
+
 export default function Dashboard() {
   const {
     loading, registros, config, insights, user, biometria, metas,
@@ -43,7 +67,10 @@ export default function Dashboard() {
   const [confirmState, setConfirmState] = useState(null);
   const [isConfirming, setIsConfirming] = useState(false);
   const [isTabsDocked, setIsTabsDocked] = useState(false);
+  const [tabsDockMotion, setTabsDockMotion] = useState(() => getTabsDockMotionProfile(0));
   const topTabsRef = useRef(null);
+  const isTabsDockedRef = useRef(false);
+  const lastScrollMetricsRef = useRef({ y: 0, time: 0 });
   const [formData, setFormData] = useState({
     data: getLocalDateInputValue(),
     humor: 3,
@@ -96,6 +123,23 @@ export default function Dashboard() {
     observacoes: 'observações'
   };
   const showNotice = (tone, title, message = '') => setNotice({ tone, title, message, id: Date.now() });
+  const tabsDockMotionStyle = {
+    '--tabs-rail-start-x': `${tabsDockMotion.railStartX}px`,
+    '--tabs-rail-start-y': `${tabsDockMotion.railStartY}px`,
+    '--tabs-rail-rotate-start': `${tabsDockMotion.railRotateStart}deg`,
+    '--tabs-rail-scale-start': `${tabsDockMotion.railScaleStart}`,
+    '--tabs-rail-overshoot-x': `${tabsDockMotion.railOvershootX}px`,
+    '--tabs-rail-overshoot-y': `${tabsDockMotion.railOvershootY}px`,
+    '--tabs-rail-overshoot-rotate': `${tabsDockMotion.railOvershootRotate}deg`,
+    '--tabs-rail-overshoot-scale': `${tabsDockMotion.railOvershootScale}`,
+    '--tabs-rail-blur-start': `${tabsDockMotion.railBlurStart}px`,
+    '--tabs-rail-animation-duration': `${tabsDockMotion.railAnimationDuration}ms`,
+    '--tabs-rail-settle-duration': `${tabsDockMotion.railSettleDuration}ms`,
+    '--tabs-top-bar-exit-y': `${tabsDockMotion.topBarExitY}px`,
+    '--tabs-top-bar-tilt': `${tabsDockMotion.topBarTilt}deg`,
+    '--tabs-top-bar-exit-scale': `${tabsDockMotion.topBarExitScale}`,
+    '--tabs-top-bar-saturate': `${tabsDockMotion.topBarSaturate}`
+  };
 
   useEffect(() => {
     if (!notice) return undefined;
@@ -108,15 +152,28 @@ export default function Dashboard() {
   }, [notice]);
 
   useEffect(() => {
+    isTabsDockedRef.current = isTabsDocked;
+  }, [isTabsDocked]);
+
+  useEffect(() => {
     if (typeof window === 'undefined') return undefined;
+    if (loading) return undefined;
 
     let frameId = null;
     let dockThreshold = Number.POSITIVE_INFINITY;
+    const dockEnterOffset = 18;
+    const dockExitOffset = 54;
+    const getNow = () => (window.performance && typeof window.performance.now === 'function'
+      ? window.performance.now()
+      : Date.now());
 
     const recalculateThreshold = () => {
       if (window.innerWidth < 900 || !topTabsRef.current) {
         dockThreshold = Number.POSITIVE_INFINITY;
-        setIsTabsDocked(false);
+        if (isTabsDockedRef.current) {
+          isTabsDockedRef.current = false;
+          setIsTabsDocked(false);
+        }
         return;
       }
 
@@ -126,7 +183,33 @@ export default function Dashboard() {
 
     const updateDockState = () => {
       frameId = null;
-      setIsTabsDocked(window.innerWidth >= 900 && window.scrollY > dockThreshold);
+      const currentY = window.scrollY;
+      const now = getNow();
+      const deltaTime = Math.max(16, now - lastScrollMetricsRef.current.time);
+      const scrollVelocity = Math.abs(currentY - lastScrollMetricsRef.current.y) / deltaTime;
+
+      lastScrollMetricsRef.current = { y: currentY, time: now };
+
+      if (window.innerWidth < 900 || !Number.isFinite(dockThreshold)) {
+        if (isTabsDockedRef.current) {
+          isTabsDockedRef.current = false;
+          setIsTabsDocked(false);
+        }
+        return;
+      }
+
+      const currentDockState = isTabsDockedRef.current;
+      const nextDockState = currentDockState
+        ? currentY > Math.max(0, dockThreshold - dockExitOffset)
+        : currentY > dockThreshold + dockEnterOffset;
+
+      if (nextDockState === currentDockState) {
+        return;
+      }
+
+      setTabsDockMotion(getTabsDockMotionProfile(scrollVelocity));
+      isTabsDockedRef.current = nextDockState;
+      setIsTabsDocked(nextDockState);
     };
 
     const requestUpdate = () => {
@@ -140,6 +223,7 @@ export default function Dashboard() {
     };
 
     recalculateThreshold();
+    lastScrollMetricsRef.current = { y: window.scrollY, time: getNow() };
     updateDockState();
 
     window.addEventListener('scroll', requestUpdate, { passive: true });
@@ -153,7 +237,7 @@ export default function Dashboard() {
         window.cancelAnimationFrame(frameId);
       }
     };
-  }, []);
+  }, [loading]);
 
 
   const getDateKey = (value) => String(value ?? '').split('T')[0];
@@ -1238,9 +1322,9 @@ export default function Dashboard() {
   const renderTabs = (variant) => (
     <div
       ref={variant === 'top' ? topTabsRef : undefined}
+      style={tabsDockMotionStyle}
       className={[
         'tabs-wrapper',
-        'animate-fade-up',
         variant === 'top' ? 'tabs-top-bar' : 'tabs-side-rail',
         variant === 'top' && isTabsDocked ? 'tabs-top-bar-hidden' : '',
         variant === 'side' && isTabsDocked ? 'tabs-side-rail-visible' : ''
