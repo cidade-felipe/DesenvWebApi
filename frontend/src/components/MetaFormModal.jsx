@@ -51,8 +51,8 @@ export function MetaFormModal({ isOpen, onClose, onSave, onStatusChange, user })
         usuarioId: user.id,
         valorAlvo: val
       };
-      await apiClient.post('/metas', payload);
-      await onSave();
+      const novaMeta = await apiClient.post('/metas', payload);
+      await onSave?.(novaMeta);
       onStatusChange?.({
         tone: 'success',
         title: 'Meta criada',

@@ -22,7 +22,7 @@ const getLocalDateInputValue = (date = new Date()) => {
 export default function Dashboard() {
   const {
     loading, registros, config, insights, user, biometria, metas,
-    loadDashboard, handleMarcarInsightLido
+    handleMarcarInsightLido, setRegistros, setBiometria, setMetas
   } = useDashboardData();
 
   const [activeTab, setActiveTab] = useState('panorama'); // 'panorama', 'analise', 'relatorios'
@@ -62,7 +62,8 @@ export default function Dashboard() {
     { key: '7d', label: '7 dias' },
     { key: '30d', label: '30 dias' },
     { key: '90d', label: '90 dias' },
-    { key: 'all', label: 'Tudo' }
+    { key: 'all', label: 'Tudo' },
+    { key: 'custom', label: 'Personalizado' }
   ];
   const analysisGroupingOptions = [
     { key: 'daily', label: 'Diário' },
@@ -181,6 +182,56 @@ export default function Dashboard() {
     registrouPesoHoje: false,
     atualizarAltura: false
   });
+  const sortItemsByMostRecentDate = (items) => [...items].sort((left, right) => {
+    const dateDiff = toLocalDate(right.data) - toLocalDate(left.data);
+    if (dateDiff !== 0) return dateDiff;
+
+    return (Number(right.id) || 0) - (Number(left.id) || 0);
+  });
+  const normalizeRegistroState = (registro, fallbackId = null) => ({
+    id: registro.id ?? fallbackId ?? 0,
+    usuarioId: registro.usuarioId ?? user.id,
+    data: getDateKey(registro.data),
+    humor: Number(registro.humor),
+    sono: Number(registro.sono),
+    produtividade: Number(registro.produtividade),
+    energia: Number(registro.energia),
+    exercicio: Boolean(registro.exercicio),
+    agua: Number(registro.agua),
+    observacoes: registro.observacoes || ''
+  });
+  const normalizeBiometriaState = (medida) => ({
+    ...medida,
+    data: medida.data,
+    peso: Number(medida.peso),
+    altura: Number(medida.altura),
+    imc: Number(medida.imc)
+  });
+  const upsertRegistroState = (nextRegistro) => {
+    const normalizedRegistro = normalizeRegistroState(nextRegistro);
+
+    setRegistros((currentRegistros) => sortItemsByMostRecentDate([
+      ...currentRegistros.filter((item) => item.id !== normalizedRegistro.id),
+      normalizedRegistro
+    ]));
+  };
+  const upsertBiometriaState = (nextBiometria) => {
+    const normalizedBiometria = normalizeBiometriaState(nextBiometria);
+
+    setBiometria((currentBiometria) => sortItemsByMostRecentDate([
+      ...currentBiometria.filter((item) => getDateKey(item.data) !== getDateKey(normalizedBiometria.data)),
+      normalizedBiometria
+    ]));
+  };
+  const removeRegistroState = (registroId) => {
+    setRegistros((currentRegistros) => currentRegistros.filter((item) => item.id !== registroId));
+  };
+  const removeBiometriaState = (biometriaId) => {
+    setBiometria((currentBiometria) => currentBiometria.filter((item) => item.id !== biometriaId));
+  };
+  const removeMetaState = (metaId) => {
+    setMetas((currentMetas) => currentMetas.filter((item) => item.id !== metaId));
+  };
   const normalizeDateFilterValue = (value) => {
     if (!value) return '';
     return value > todayReportDate ? todayReportDate : value;
@@ -435,6 +486,16 @@ export default function Dashboard() {
       endTime: date.getTime()
     };
   };
+  const getDistinctAnalysisPeriodCount = (timelineEntries, grouping) => {
+    const bucketKeys = new Set();
+
+    timelineEntries.forEach((item) => {
+      if (!item?.data) return;
+      bucketKeys.add(getAnalysisBucketMeta(item.data, grouping).key);
+    });
+
+    return bucketKeys.size;
+  };
   const aggregateAnalysisRecords = (items, grouping) => {
     const buckets = new Map();
 
@@ -539,6 +600,8 @@ export default function Dashboard() {
   const analysisStartMaxDate = analysisDateRange.startMaxDate;
   const hasCustomAnalysisRange = analysisDateRange.hasCustomRange;
   const customAnalysisRangeLabel = analysisDateRange.customRangeLabel;
+  const isAnalysisCustomPeriod = analysisPeriod === 'custom';
+  const isReportCustomPeriod = reportPeriod === 'custom';
 
   const historicoFiltradoPorData = filterItemsByDateRange(historicoCompleto, reportDateRange, (registro) => toLocalDate(registro.data));
   const availableReportFocusOptions = reportFocusOptions.filter((option) => {
@@ -732,11 +795,16 @@ export default function Dashboard() {
         agua: formData.agua,
         observacoes: formData.observacoes
       };
+      let savedRegistro = null;
+
       if (editandoId) {
         await apiClient.put(`/registrosdiarios/${editandoId}`, payload);
+        savedRegistro = normalizeRegistroState(payload, editandoId);
       } else {
-        await apiClient.post('/registrosdiarios', payload);
+        savedRegistro = normalizeRegistroState(await apiClient.post('/registrosdiarios', payload));
       }
+
+      upsertRegistroState(savedRegistro);
 
       const biometriaDoDia = findBiometriaByDate(formData.data);
       const alturaBase = formData.atualizarAltura
@@ -745,20 +813,21 @@ export default function Dashboard() {
       const alturaParaBiometria = String(alturaBase || '').trim();
 
       if (formData.registrouPesoHoje && formData.peso && alturaParaBiometria) {
-        await apiClient.post('/biometria', { 
+        const savedBiometria = await apiClient.post('/biometria', { 
           usuarioId: user.id, 
           peso: parseFloat(formData.peso), 
           altura: parseInt(alturaParaBiometria, 10),
           data: formData.data 
         });
+        upsertBiometriaState(savedBiometria);
       } else if (isEditing && biometriaDoDia && !formData.registrouPesoHoje) {
         await apiClient.delete(`/biometria/${biometriaDoDia.id}`);
+        removeBiometriaState(biometriaDoDia.id);
       }
 
       setIsModalOpen(false);
       setEditandoId(null);
       setFormData(getInitialFormData());
-      await loadDashboard();
       showNotice(
         'success',
         isEditing ? 'Registro atualizado' : 'Registro salvo',
@@ -820,7 +889,7 @@ export default function Dashboard() {
       action: async () => {
         try {
           await apiClient.delete(`/registrosdiarios/${id}`);
-          await loadDashboard();
+          removeRegistroState(id);
           showNotice('success', 'Registro excluído', 'O dia removido não aparecerá mais no histórico.');
         } catch (err) {
           showNotice('error', 'Não foi possível excluir', err.response?.data?.mensagem || 'Tente novamente em instantes.');
@@ -935,9 +1004,15 @@ export default function Dashboard() {
   ] : [];
   const analysisRecords = filterItemsByDateRange(registros, analysisDateRange, (registro) => toLocalDate(registro.data));
   const analysisBiometria = filterItemsByDateRange(biometria, analysisDateRange, (registro) => toLocalDate(registro.data));
+  const analysisTimelineEntries = [...analysisRecords, ...analysisBiometria];
   const analysisRangeSpanDays = getAnalysisRangeSpanDays(analysisPeriod, analysisDateRange);
+  const analysisGroupingPeriodCounts = analysisGroupingOptions.reduce((acc, option) => {
+    acc[option.key] = getDistinctAnalysisPeriodCount(analysisTimelineEntries, option.key);
+    return acc;
+  }, {});
   const availableAnalysisGroupingOptions = analysisGroupingOptions.filter(
     (option) => analysisRangeSpanDays >= analysisGroupingMinimumDays[option.key]
+      && (option.key === 'daily' || analysisGroupingPeriodCounts[option.key] >= 2)
   );
   const effectiveAnalysisGrouping = availableAnalysisGroupingOptions.some((option) => option.key === analysisGrouping)
     ? analysisGrouping
@@ -1008,7 +1083,7 @@ export default function Dashboard() {
       action: async () => {
         try {
           await apiClient.delete(`/metas/${id}`);
-          await loadDashboard();
+          removeMetaState(id);
           showNotice('success', 'Meta removida', 'Seu painel de desafios foi atualizado.');
         } catch (err) {
           showNotice('error', 'Não foi possível remover a meta', err.response?.data?.mensagem || 'Tente novamente em instantes.');
@@ -1253,35 +1328,39 @@ export default function Dashboard() {
                         ))}
                       </select>
                     </div>
-                    <DateField
-                      label="De"
-                      value={safeAnalysisStartDate}
-                      onChange={(e) => setAnalysisStartDate(normalizeAnalysisDateValue(e.target.value))}
-                      max={analysisStartMaxDate}
-                      containerClassName="reports-filter-block toolbar-equal-block"
-                      labelClassName="reports-filter-label"
-                      inputClassName="reports-date-input reports-date-input-compact"
-                      buttonClassName="reports-date-picker-btn"
-                      buttonMode="icon"
-                      buttonAriaLabel="Abrir calendário da data inicial da análise"
-                    />
-                    <DateField
-                      label="Até"
-                      value={safeAnalysisEndDate}
-                      onChange={(e) => setAnalysisEndDate(normalizeAnalysisDateValue(e.target.value))}
-                      min={safeAnalysisStartDate || undefined}
-                      max={todayReportDate}
-                      containerClassName="reports-filter-block toolbar-equal-block"
-                      labelClassName="reports-filter-label"
-                      inputClassName="reports-date-input reports-date-input-compact"
-                      buttonClassName="reports-date-picker-btn"
-                      buttonMode="icon"
-                      buttonAriaLabel="Abrir calendário da data final da análise"
-                    />
+                    {isAnalysisCustomPeriod && (
+                      <>
+                        <DateField
+                          label="De"
+                          value={safeAnalysisStartDate}
+                          onChange={(e) => setAnalysisStartDate(normalizeAnalysisDateValue(e.target.value))}
+                          max={analysisStartMaxDate}
+                          containerClassName="reports-filter-block toolbar-equal-block"
+                          labelClassName="reports-filter-label"
+                          inputClassName="reports-date-input reports-date-input-compact"
+                          buttonClassName="reports-date-picker-btn"
+                          buttonMode="icon"
+                          buttonAriaLabel="Abrir calendário da data inicial da análise"
+                        />
+                        <DateField
+                          label="Até"
+                          value={safeAnalysisEndDate}
+                          onChange={(e) => setAnalysisEndDate(normalizeAnalysisDateValue(e.target.value))}
+                          min={safeAnalysisStartDate || undefined}
+                          max={todayReportDate}
+                          containerClassName="reports-filter-block toolbar-equal-block"
+                          labelClassName="reports-filter-label"
+                          inputClassName="reports-date-input reports-date-input-compact"
+                          buttonClassName="reports-date-picker-btn"
+                          buttonMode="icon"
+                          buttonAriaLabel="Abrir calendário da data final da análise"
+                        />
+                      </>
+                    )}
                   </div>
                   <div className="toolbar-footer">
                     <p className="reports-toolbar-caption">{analysisSummaryCaption}</p>
-                    {(safeAnalysisStartDate || safeAnalysisEndDate) && (
+                    {isAnalysisCustomPeriod && (safeAnalysisStartDate || safeAnalysisEndDate) && (
                       <button
                         type="button"
                         className="btn-secondary toolbar-clear-btn"
@@ -1354,35 +1433,39 @@ export default function Dashboard() {
                         ))}
                       </select>
                     </div>
-                    <DateField
-                      label="De"
-                      value={safeReportStartDate}
-                      onChange={(e) => setReportStartDate(normalizeReportDateValue(e.target.value))}
-                      max={reportStartMaxDate}
-                      containerClassName="reports-filter-block toolbar-equal-block"
-                      labelClassName="reports-filter-label"
-                      inputClassName="reports-date-input reports-date-input-compact"
-                      buttonClassName="reports-date-picker-btn"
-                      buttonMode="icon"
-                      buttonAriaLabel="Abrir calendário da data inicial do relatório"
-                    />
-                    <DateField
-                      label="Até"
-                      value={safeReportEndDate}
-                      onChange={(e) => setReportEndDate(normalizeReportDateValue(e.target.value))}
-                      min={safeReportStartDate || undefined}
-                      max={todayReportDate}
-                      containerClassName="reports-filter-block toolbar-equal-block"
-                      labelClassName="reports-filter-label"
-                      inputClassName="reports-date-input reports-date-input-compact"
-                      buttonClassName="reports-date-picker-btn"
-                      buttonMode="icon"
-                      buttonAriaLabel="Abrir calendário da data final do relatório"
-                    />
+                    {isReportCustomPeriod && (
+                      <>
+                        <DateField
+                          label="De"
+                          value={safeReportStartDate}
+                          onChange={(e) => setReportStartDate(normalizeReportDateValue(e.target.value))}
+                          max={reportStartMaxDate}
+                          containerClassName="reports-filter-block toolbar-equal-block"
+                          labelClassName="reports-filter-label"
+                          inputClassName="reports-date-input reports-date-input-compact"
+                          buttonClassName="reports-date-picker-btn"
+                          buttonMode="icon"
+                          buttonAriaLabel="Abrir calendário da data inicial do relatório"
+                        />
+                        <DateField
+                          label="Até"
+                          value={safeReportEndDate}
+                          onChange={(e) => setReportEndDate(normalizeReportDateValue(e.target.value))}
+                          min={safeReportStartDate || undefined}
+                          max={todayReportDate}
+                          containerClassName="reports-filter-block toolbar-equal-block"
+                          labelClassName="reports-filter-label"
+                          inputClassName="reports-date-input reports-date-input-compact"
+                          buttonClassName="reports-date-picker-btn"
+                          buttonMode="icon"
+                          buttonAriaLabel="Abrir calendário da data final do relatório"
+                        />
+                      </>
+                    )}
                   </div>
                   <div className="toolbar-footer">
                     <p className="reports-toolbar-caption">{reportSummaryCaption}</p>
-                    {(safeReportStartDate || safeReportEndDate) && (
+                    {isReportCustomPeriod && (safeReportStartDate || safeReportEndDate) && (
                       <button
                         type="button"
                         className="btn-secondary toolbar-clear-btn"
@@ -1572,7 +1655,9 @@ export default function Dashboard() {
       <MetaFormModal 
         isOpen={isMetaModalOpen} 
         onClose={() => setIsMetaModalOpen(false)} 
-        onSave={loadDashboard} 
+        onSave={(novaMeta) => {
+          setMetas((currentMetas) => [novaMeta, ...currentMetas]);
+        }}
         onStatusChange={(nextNotice) => setNotice({ ...nextNotice, id: Date.now() })}
         user={user} 
       />
