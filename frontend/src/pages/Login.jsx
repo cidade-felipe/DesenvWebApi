@@ -201,7 +201,7 @@ export default function Login() {
                 <input 
                   type="text" 
                   className={`input-field ${fieldErrors.nome ? 'input-field-error' : ''}`.trim()}
-                  placeholder="Ex: Felipe Cidade"
+                  placeholder="Ex: Matheus Catanêo"
                   value={formData.nome}
                   onChange={(e) => updateField('nome', e.target.value)}
                   required={isRegistering}

@@ -71,6 +71,9 @@ export function useDashboardData() {
     metas,
     loadDashboard,
     handleMarcarInsightLido,
-    setInsights
+    setRegistros,
+    setBiometria,
+    setInsights,
+    setMetas
   };
 }
