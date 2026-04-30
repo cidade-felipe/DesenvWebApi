@@ -1,14 +1,19 @@
 import { X } from 'lucide-react';
 import { DateField } from './DateField';
 
-export function DataFormModal({ isOpen, onClose, onSubmit, formData, setFormData, editandoId, ultimaAltura, todayDate }) {
+export function DataFormModal({ isOpen, onClose, onSubmit, formData, setFormData, editandoId, ultimaAltura, todayDate, requireInitialBiometria = false }) {
   if (!isOpen) return null;
 
+  const biometriaObrigatoria = requireInitialBiometria && !editandoId;
+  const registrouPesoHoje = biometriaObrigatoria || formData.registrouPesoHoje;
   const alturaBase = formData.altura || ultimaAltura?.toString() || '';
-  const precisaAlturaManual = formData.registrouPesoHoje && (!alturaBase || formData.atualizarAltura);
+  const precisaAlturaManual = registrouPesoHoje && (!alturaBase || formData.atualizarAltura);
   const helperText = editandoId
     ? 'A data do registro já existente fica travada para preservar o histórico.'
     : undefined;
+  const biometriaPanelCopy = biometriaObrigatoria
+    ? 'No primeiro registro, precisamos de peso e altura para iniciar seus indicadores corporais com uma base confiável.'
+    : 'Se você se pesou hoje, pode registrar aqui. Sua altura fica guardada para não precisar preencher isso sempre.';
   const safeTodayDate = todayDate || (() => {
     const now = new Date();
     const year = now.getFullYear();
@@ -73,93 +78,93 @@ export function DataFormModal({ isOpen, onClose, onSubmit, formData, setFormData
           </div>
 
           <div className="biometria-panel">
-            <div className="biometria-panel-header">
+            <div className={`biometria-panel-header ${biometriaObrigatoria ? 'biometria-panel-header-locked' : ''}`}>
               <div>
                 <span className="input-label biometria-panel-label">Biometria do dia</span>
-                <p className="biometria-panel-copy">
-                  Se você se pesou hoje, pode registrar aqui. Sua altura fica guardada para não precisar preencher isso sempre.
-                </p>
+                <p className="biometria-panel-copy">{biometriaPanelCopy}</p>
               </div>
-              <label className="biometria-toggle">
+              <label className={`biometria-toggle ${biometriaObrigatoria ? 'biometria-toggle-locked' : ''}`}>
                 <input
                   type="checkbox"
-                  checked={formData.registrouPesoHoje}
+                  checked={registrouPesoHoje}
+                  disabled={biometriaObrigatoria}
                   onChange={(e) => setFormData({
                     ...formData,
                     registrouPesoHoje: e.target.checked,
                     atualizarAltura: e.target.checked ? formData.atualizarAltura : false
                   })}
                 />
-                <span>{formData.registrouPesoHoje ? 'Me pesei hoje' : 'Sem pesagem hoje'}</span>
+                <span>{biometriaObrigatoria ? 'Primeiro registro com biometria obrigatória' : registrouPesoHoje ? 'Me pesei hoje' : 'Sem pesagem hoje'}</span>
               </label>
             </div>
 
-            {formData.registrouPesoHoje ? (
-              <div className="modal-two-columns biometria-grid">
-                <div>
-                  <label className="input-label">Peso (kg)</label>
-                  <input
-                    type="number"
-                    step="0.1"
-                    min="10"
-                    max="600"
-                    className="input-field"
-                    value={formData.peso}
-                    onChange={(e) => setFormData({...formData, peso: e.target.value})}
-                    placeholder="Ex: 75.5"
-                    required
-                  />
-                </div>
+            {registrouPesoHoje ? (
+              <div className="biometria-grid-shell">
+                <div className="modal-two-columns biometria-grid">
+                  <div className="biometria-field-column">
+                    <label className="input-label">Peso (kg)</label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      min="10"
+                      max="600"
+                      className="input-field"
+                      value={formData.peso}
+                      onChange={(e) => setFormData({...formData, peso: e.target.value})}
+                      placeholder="Ex: 75.5"
+                      required
+                    />
+                  </div>
 
-                <div>
-                  <label className="input-label">Altura</label>
-                  {alturaBase && !formData.atualizarAltura ? (
-                    <div className="biometria-height-card">
-                      <div>
-                        <strong>{alturaBase} cm</strong>
-                        <span>Vamos usar sua altura já salva.</span>
+                  <div className="biometria-field-column">
+                    <label className="input-label">Altura</label>
+                    {alturaBase && !formData.atualizarAltura ? (
+                      <div className="biometria-height-card">
+                        <span className="biometria-height-value">{alturaBase} cm</span>
                       </div>
-                      <button
-                        type="button"
-                        className="btn-secondary biometria-height-btn"
-                        onClick={() => setFormData({ ...formData, atualizarAltura: true })}
-                      >
-                        Atualizar
-                      </button>
-                    </div>
-                  ) : (
-                    <>
-                      <input
-                        type="number"
-                        min="50"
-                        max="280"
-                        className="input-field"
-                        value={formData.altura}
-                        onChange={(e) => setFormData({...formData, altura: e.target.value})}
-                        placeholder="Ex: 175"
-                        required={precisaAlturaManual}
-                      />
-                      <p className="biometria-helper">
-                        {ultimaAltura
-                          ? 'Só precisa mexer aqui se quiser corrigir sua altura.'
-                          : 'Na primeira vez, precisamos da sua altura para calcular tudo certinho.'}
-                      </p>
-                      {ultimaAltura && (
-                        <button
-                          type="button"
-                          className="biometria-link-btn"
-                          onClick={() => setFormData({
-                            ...formData,
-                            altura: ultimaAltura.toString(),
-                            atualizarAltura: false
-                          })}
-                        >
-                          Manter altura salva ({ultimaAltura} cm)
-                        </button>
-                      )}
-                    </>
-                  )}
+                    ) : (
+                      <>
+                        <input
+                          type="number"
+                          min="50"
+                          max="280"
+                          className="input-field"
+                          value={formData.altura}
+                          onChange={(e) => setFormData({...formData, altura: e.target.value})}
+                          placeholder="Ex: 175"
+                          required={precisaAlturaManual}
+                        />
+                        <p className="biometria-helper">
+                          {ultimaAltura
+                            ? 'Só precisa mexer aqui se quiser corrigir sua altura.'
+                            : 'Na primeira vez, precisamos da sua altura para calcular tudo certinho.'}
+                        </p>
+                        {ultimaAltura && (
+                          <button
+                            type="button"
+                            className="biometria-link-btn"
+                            onClick={() => setFormData({
+                              ...formData,
+                              altura: ultimaAltura.toString(),
+                              atualizarAltura: false
+                            })}
+                          >
+                            Manter altura salva ({ultimaAltura} cm)
+                          </button>
+                        )}
+                      </>
+                    )}
+                  </div>
                 </div>
+                {alturaBase && !formData.atualizarAltura ? (
+                  <button
+                    type="button"
+                    className="btn-secondary biometria-height-btn"
+                    onClick={() => setFormData({ ...formData, atualizarAltura: true })}
+                  >
+                    Atualizar
+                  </button>
+                ) : null}
               </div>
             ) : (
               <p className="biometria-helper biometria-helper-relaxed">

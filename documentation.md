@@ -134,6 +134,11 @@ No frontend, esse fluxo também pode incluir:
 - observações livres sobre o dia
 - biometria opcional, quando o usuário realmente se pesou
 
+No estado atual da interface, existe uma exceção importante:
+
+- se o usuário ainda não tem nenhum histórico biométrico nem registro anterior, o primeiro registro passa a exigir peso e altura
+- essa regra existe para iniciar IMC, faixa de peso e indicadores corporais com uma base minimamente confiável
+
 ### 4.4. Biometria
 
 A biometria é tratada separadamente do registro diário.
@@ -150,6 +155,12 @@ Regras importantes:
 - se o usuário registrar novamente no mesmo dia, o valor do dia é atualizado
 - o histórico do dashboard usa um registro consolidado por data
 
+No frontend, o fluxo mais recente também passou a considerar:
+
+- a altura já salva pode ser reaproveitada nos registros seguintes
+- o usuário só precisa atualizar a altura manualmente quando quiser corrigir esse valor
+- no primeiro registro, a interface trava o fluxo até peso e altura serem informados
+
 ### 4.5. Metas
 
 As metas são ligadas ao usuário e usadas no dashboard para comparar alvo versus situação atual.
@@ -157,12 +168,18 @@ As metas são ligadas ao usuário e usadas no dashboard para comparar alvo versu
 Categorias suportadas:
 
 - `Sono`
-- `Agua`
+- `Agua` (exibida como `Água` na interface)
 - `Humor`
 - `Produtividade`
 - `Energia`
 - `Treino`
 - `Peso`
+
+No estado atual do modal de metas:
+
+- o campo de valor alvo abre vazio, sem sugestão numérica automática
+- a orientação de preenchimento fica no placeholder com faixa mínima e máxima da categoria
+- a interface exibe rótulos humanos, como `Água`, sem alterar o valor técnico persistido
 
 ## 5. Modelo de dados
 
@@ -503,6 +520,7 @@ Além disso:
 - a ordenação da tabela também influencia o que é exportado
 - os cards de resumo usam o mesmo recorte temporal aplicado ao histórico
 - a data exportada segue o mesmo formato visual da interface
+- a tabela de relatórios continua permitindo edição do histórico, mas deixou de expor exclusão direta nessa superfície
 
 O dashboard permite exportar:
 
