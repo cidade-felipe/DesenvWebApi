@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Pencil, Trash2, LayoutDashboard, ClipboardList, Download, BarChart3, Activity, RefreshCw, X, TrendingUp } from 'lucide-react';
+import { Pencil, LayoutDashboard, ClipboardList, Download, BarChart3, Activity, RefreshCw, X, TrendingUp } from 'lucide-react';
 
 import { useDashboardData } from '../hooks/useDashboardData';
 import { DashboardHeader } from '../components/DashboardHeader';
@@ -306,9 +306,6 @@ export default function Dashboard() {
       ...currentBiometria.filter((item) => getDateKey(item.data) !== getDateKey(normalizedBiometria.data)),
       normalizedBiometria
     ]));
-  };
-  const removeRegistroState = (registroId) => {
-    setRegistros((currentRegistros) => currentRegistros.filter((item) => item.id !== registroId));
   };
   const removeBiometriaState = (biometriaId) => {
     setBiometria((currentBiometria) => currentBiometria.filter((item) => item.id !== biometriaId));
@@ -964,25 +961,6 @@ export default function Dashboard() {
     setIsModalOpen(true);
   };
 
-  const handleExcluir = (id) => {
-    setConfirmState({
-      title: 'Excluir registro do dia',
-      message: 'Essa ação remove permanentemente os dados desse dia do seu histórico e dos relatórios.',
-      confirmLabel: 'Excluir registro',
-      tone: 'danger',
-      action: async () => {
-        try {
-          await apiClient.delete(`/registrosdiarios/${id}`);
-          removeRegistroState(id);
-          showNotice('success', 'Registro excluído', 'O dia removido não aparecerá mais no histórico.');
-        } catch (err) {
-          showNotice('error', 'Não foi possível excluir', err.response?.data?.mensagem || 'Tente novamente em instantes.');
-        }
-      }
-    });
-  };
-
-
   // --- Exportações ---
   const handleExportCSV = () => {
     if (historicoOrdenado.length === 0) {
@@ -1611,7 +1589,7 @@ export default function Dashboard() {
                           <th aria-sort={getAriaSort('peso')}>{renderSortableHeader('Biometria', 'peso')}</th>
                           <th aria-sort={getAriaSort('imc')}>{renderSortableHeader('IMC', 'imc')}</th>
                           <th aria-sort={getAriaSort('observacoes')}>{renderSortableHeader('Observações', 'observacoes')}</th>
-                          <th style={{ textAlign: 'right' }}>Ações</th>
+                          <th style={{ textAlign: 'right' }}>Editar</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -1655,8 +1633,14 @@ export default function Dashboard() {
                               {r.observacoes || 'Sem observações'}
                             </td>
                             <td style={{ textAlign: 'right' }}>
-                              <button className="action-btn edit" onClick={() => handleEditar(r)}><Pencil size={18} /></button>
-                              <button className="action-btn delete" onClick={() => handleExcluir(r.id)}><Trash2 size={18} /></button>
+                              <button
+                                className="action-btn edit"
+                                onClick={() => handleEditar(r)}
+                                aria-label={`Editar registro de ${formatDisplayDate(r.data)}`}
+                                title='Editar registro'
+                              >
+                                <Pencil size={18} />
+                              </button>
                             </td>
                           </tr>
                         ))}

@@ -29,6 +29,7 @@ O foco atual do produto está em:
 - CRUD de biometria
 - leitura de insights
 - dashboard com gráficos, cards, filtros e exportação
+- navegação desktop da dashboard com dock lateral animado e alinhado ao conteúdo
 - avisos inline e confirmações visuais no frontend
 
 ### 2.2. O que ainda não está completo
@@ -96,6 +97,12 @@ O frontend é uma SPA React com duas áreas centrais:
 3. O frontend salva a sessão localmente.
 4. O Axios envia automaticamente `Authorization: Bearer ...`.
 
+No estado atual da interface de autenticação:
+
+- o cadastro mostra erros por campo, em vez de depender apenas de mensagens genéricas
+- a data de nascimento aceita digitação manual no formato da interface e também uso do calendário
+- o layout do formulário de cadastro foi refinado para acomodar melhor campos como sexo biológico
+
 ### 4.2. Dashboard
 
 Depois do login, o frontend carrega em paralelo:
@@ -114,6 +121,9 @@ No estado atual da interface:
 - o cabeçalho saúda o usuário pelo primeiro nome, conforme o horário do dia
 - a dashboard usa avisos inline no lugar de interrupções bruscas do navegador
 - as abas de análise e relatórios compartilham uma linguagem visual mais consistente para filtros
+- no desktop, a navegação pode sair da barra superior e virar uma rail lateral alinhada ao conteúdo
+- a animação dessa transição responde à velocidade do scroll para dar leitura mais premium sem quebrar usabilidade
+- mutações como criar meta, excluir meta e salvar registro passaram a atualizar estado local em vez de recarregar toda a dashboard
 
 ### 4.3. Registro diário
 
@@ -441,6 +451,8 @@ No dashboard:
 
 O panorama mostra cards e gráficos de visão geral.
 
+No estado atual, essa aba também passou a ter cabeçalho próprio, mantendo consistência visual com as abas de metas e relatórios.
+
 ## 9.2. Análise
 
 A aba de análise mostra gráficos mais detalhados, com foco em leitura temporal e menos ruído visual.
@@ -451,12 +463,15 @@ Melhorias recentes:
 - tooltip com data completa
 - correções para evitar falha visual ao passar o mouse
 - filtros por período rápido e intervalo customizado
+- modo `Personalizado` para mostrar os campos `De` e `Até` apenas quando o usuário realmente precisa desse nível de controle
 - agrupamento por `Diário`, `Semanal`, `Quinzenal` e `Mensal`
+- ocultação automática do agrupamento `Mensal` quando o recorte ativo geraria apenas um período útil
 - agregação por período para reduzir ruído de leitura em uso real
 - eixo X com densidade adaptativa conforme largura e zoom
 - gráfico próprio para sono
 - gráfico próprio para humor, energia, produtividade e bem-estar
 - reaproveitamento do último peso conhecido quando existe registro no período sem nova pesagem
+- título próprio da aba para reforçar contexto visual dentro do dashboard
 
 ### Observação técnica
 
@@ -480,6 +495,8 @@ Filtros implementados:
 - intervalo customizado
 - foco do histórico em `Todos`, `Treino`, `Biometria` e `Anotações`
 
+No estado atual, o intervalo manual também fica escondido até o usuário escolher `Personalizado`, reduzindo ruído visual e evitando a impressão de que todo filtro exige datas explícitas.
+
 Além disso:
 
 - a exportação respeita os filtros ativos
@@ -491,6 +508,25 @@ O dashboard permite exportar:
 
 - CSV
 - Excel
+
+## 9.4. Navegação desktop da dashboard
+
+No desktop, a dashboard usa dois modos visuais para navegação entre abas:
+
+- barra horizontal no topo, enquanto o usuário está no início da leitura
+- rail lateral, quando a página avança o suficiente para justificar navegação persistente ao lado do conteúdo
+
+Aspectos importantes dessa implementação:
+
+- a transição entre topo e lateral usa histerese no scroll para evitar troca nervosa em poucos pixels
+- a rail lateral ficou estruturalmente alinhada ao grid do conteúdo, em vez de solta na viewport
+- o movimento foi refinado com rotação controlada, overshoot curto e resposta à velocidade do scroll
+
+Impacto prático:
+
+- melhora percepção de acabamento do produto
+- reduz ruído visual durante leitura longa
+- deixa a navegação mais acessível sem roubar atenção dos gráficos
 
 ## 10. Ambiente local
 
