@@ -45,6 +45,8 @@ Hoje o projeto já funciona como um MVP full stack com:
 - login com JWT
 - senhas armazenadas com hash
 - proteção de rotas por usuário autenticado
+- validação inline no cadastro com mensagens por campo
+- campo de data de nascimento com digitação manual e calendário
 
 ### Registro diário
 
@@ -89,14 +91,18 @@ O progresso das metas funciona assim:
 ### Dashboard
 
 - cabeçalho com saudação contextual usando o primeiro nome do usuário
+- navegação de abas no desktop com transição da barra superior para rail lateral alinhada ao conteúdo
 - cards de resumo com leitura agregada de bem-estar, treino, recuperação e corpo
 - gráficos de panorama
-- aba de análise com filtros por período, intervalo customizado e agrupamento diário, semanal, quinzenal e mensal
+- aba de análise com períodos rápidos, modo `Personalizado` e agrupamento diário, semanal, quinzenal e mensal
+- datas `De` e `Até` aparecem apenas quando o usuário escolhe `Personalizado`
+- disponibilidade de agrupamento ajustada ao recorte ativo para evitar gráficos com um único período útil
 - gráfico de peso por período com reaproveitamento do último peso conhecido
 - gráfico de bem-estar com humor, energia, produtividade e linha composta de bem-estar
 - gráfico separado para sono
-- aba de relatórios com filtros por período, intervalo customizado e foco do histórico, como treino, biometria e anotações
+- aba de relatórios com períodos rápidos, modo `Personalizado` e foco do histórico, como treino, biometria e anotações
 - exportação CSV e Excel respeitando os filtros ativos e usando o mesmo formato de data da interface
+- mutações do painel atualizam a interface localmente, sem recarregar a dashboard inteira após cada ação
 
 ## Segurança e robustez já adicionadas
 
