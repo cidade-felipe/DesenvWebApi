@@ -67,6 +67,8 @@ O registro diário usa lógica de upsert por data. Se o usuário salvar novament
 - IMC calculado no backend
 - classificação e cor da faixa de IMC
 - histórico consolidado por dia
+- no primeiro registro do usuário, peso e altura são exigidos para iniciar os indicadores corporais
+- nos registros seguintes, a altura já salva pode ser reaproveitada e atualizada só quando necessário
 
 Se o usuário registrar biometria mais de uma vez no mesmo dia, a API atualiza o valor do dia em vez de criar duplicidade lógica.
 
@@ -75,7 +77,7 @@ Se o usuário registrar biometria mais de uma vez no mesmo dia, a API atualiza o
 Categorias suportadas atualmente:
 
 - Sono
-- Agua
+- Água
 - Humor
 - Produtividade
 - Energia
@@ -87,6 +89,7 @@ O progresso das metas funciona assim:
 - hábitos diários, como sono e água, usam média recente
 - treino usa contagem de dias com exercício
 - peso usa aproximação do alvo, funcionando tanto para perda quanto para ganho de peso
+- o formulário de meta mostra a faixa mínima e máxima por categoria sem preencher o valor alvo automaticamente
 
 ### Dashboard
 
@@ -101,6 +104,7 @@ O progresso das metas funciona assim:
 - gráfico de bem-estar com humor, energia, produtividade e linha composta de bem-estar
 - gráfico separado para sono
 - aba de relatórios com períodos rápidos, modo `Personalizado` e foco do histórico, como treino, biometria e anotações
+- a tabela de relatórios prioriza consulta e edição do histórico, sem exclusão direta nessa superfície
 - exportação CSV e Excel respeitando os filtros ativos e usando o mesmo formato de data da interface
 - mutações do painel atualizam a interface localmente, sem recarregar a dashboard inteira após cada ação
 

@@ -2,19 +2,22 @@ import { useEffect, useState } from 'react';
 import { X, TrendingUp } from 'lucide-react';
 import apiClient from '../api/apiClient';
 
+const getInitialMetaData = () => ({
+  categoria: 'Sono',
+  valorAlvo: '',
+  descricao: '',
+  dataInicio: new Date().toISOString().split('T')[0],
+  ativa: true
+});
+
 export function MetaFormModal({ isOpen, onClose, onSave, onStatusChange, user }) {
-  const [metaData, setMetaData] = useState({
-    categoria: 'Sono',
-    valorAlvo: 8,
-    descricao: '',
-    dataInicio: new Date().toISOString().split('T')[0],
-    ativa: true
-  });
+  const [metaData, setMetaData] = useState(getInitialMetaData);
   const [error, setError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
+      setMetaData(getInitialMetaData());
       setError('');
       setIsSaving(false);
     }
@@ -33,6 +36,25 @@ export function MetaFormModal({ isOpen, onClose, onSave, onStatusChange, user })
   };
 
   const config = getValidationConfig();
+
+  const handleCategoryChange = (e) => {
+    const nextCategoria = e.target.value;
+
+    setMetaData((currentMetaData) => ({
+      ...currentMetaData,
+      categoria: nextCategoria,
+      valorAlvo: ''
+    }));
+    setError('');
+  };
+
+  const handleTargetChange = (e) => {
+    setMetaData((currentMetaData) => ({
+      ...currentMetaData,
+      valorAlvo: e.target.value
+    }));
+    setError('');
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -86,7 +108,7 @@ export function MetaFormModal({ isOpen, onClose, onSave, onStatusChange, user })
             <select 
               className="input-field" 
               value={metaData.categoria} 
-              onChange={(e) => setMetaData({...metaData, categoria: e.target.value})}
+              onChange={handleCategoryChange}
               style={{ background: 'rgba(31, 40, 51, 0.9)' }}
             >
               <option value="Sono">Qualidade de Sono (Média h)</option>
@@ -108,7 +130,7 @@ export function MetaFormModal({ isOpen, onClose, onSave, onStatusChange, user })
               max={config.max}
               className="input-field" 
               value={metaData.valorAlvo} 
-              onChange={(e) => setMetaData({...metaData, valorAlvo: e.target.value})} 
+              onChange={handleTargetChange}
               placeholder={`Min: ${config.min} - Max: ${config.max}`}
             />
           </div>

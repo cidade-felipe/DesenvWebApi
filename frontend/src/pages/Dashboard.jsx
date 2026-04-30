@@ -252,20 +252,25 @@ export default function Dashboard() {
   const formatDateObject = (value) => value.toLocaleDateString('pt-BR');
   const todayReportDate = toDateInputValue();
   const getLatestHeightValue = () => biometria[0]?.altura?.toString() || '';
-  const getInitialFormData = () => ({
-    data: toDateInputValue(),
-    humor: 3,
-    sono: 8,
-    produtividade: 3,
-    energia: 3,
-    exercicio: false,
-    agua: 2.0,
-    observacoes: '',
-    peso: '',
-    altura: getLatestHeightValue(),
-    registrouPesoHoje: false,
-    atualizarAltura: false
-  });
+  const shouldRequireInitialBiometria = (isEditing = false) => !isEditing && registros.length === 0 && biometria.length === 0;
+  const getInitialFormData = (isEditing = false) => {
+    const requireInitialBiometria = shouldRequireInitialBiometria(isEditing);
+
+    return {
+      data: toDateInputValue(),
+      humor: 3,
+      sono: 8,
+      produtividade: 3,
+      energia: 3,
+      exercicio: false,
+      agua: 2.0,
+      observacoes: '',
+      peso: '',
+      altura: getLatestHeightValue(),
+      registrouPesoHoje: requireInitialBiometria,
+      atualizarAltura: requireInitialBiometria
+    };
+  };
   const sortItemsByMostRecentDate = (items) => [...items].sort((left, right) => {
     const dateDiff = toLocalDate(right.data) - toLocalDate(left.data);
     if (dateDiff !== 0) return dateDiff;
@@ -865,6 +870,23 @@ export default function Dashboard() {
       }
 
       const isEditing = Boolean(editandoId);
+      const requireInitialBiometria = shouldRequireInitialBiometria(isEditing);
+      const biometriaDoDia = findBiometriaByDate(formData.data);
+      const alturaBase = formData.atualizarAltura
+        ? formData.altura
+        : formData.altura || biometriaDoDia?.altura?.toString() || biometria[0]?.altura?.toString() || '';
+      const alturaParaBiometria = String(alturaBase || '').trim();
+      const pesoParaBiometria = String(formData.peso || '').trim();
+
+      if (requireInitialBiometria && (!formData.registrouPesoHoje || !pesoParaBiometria || !alturaParaBiometria)) {
+        showNotice(
+          'warning',
+          'Primeiro registro com biometria obrigatória',
+          'Para iniciar seu histórico corporal com consistência, informe peso e altura no primeiro registro.'
+        );
+        return;
+      }
+
       const payload = {
         usuarioId: user.id,
         data: formData.data,
@@ -886,12 +908,6 @@ export default function Dashboard() {
       }
 
       upsertRegistroState(savedRegistro);
-
-      const biometriaDoDia = findBiometriaByDate(formData.data);
-      const alturaBase = formData.atualizarAltura
-        ? formData.altura
-        : formData.altura || biometriaDoDia?.altura?.toString() || biometria[0]?.altura?.toString() || '';
-      const alturaParaBiometria = String(alturaBase || '').trim();
 
       if (formData.registrouPesoHoje && formData.peso && alturaParaBiometria) {
         const savedBiometria = await apiClient.post('/biometria', { 
@@ -1154,6 +1170,20 @@ export default function Dashboard() {
     });
   };
 
+  const getMetaCategoryLabel = (categoria) => {
+    const categoryLabels = {
+      sono: 'Sono',
+      agua: 'Água',
+      humor: 'Humor',
+      produtividade: 'Produtividade',
+      energia: 'Energia',
+      peso: 'Peso',
+      treino: 'Treino'
+    };
+
+    return categoryLabels[categoria?.toLowerCase()] || categoria;
+  };
+
   const getMetaProgress = (meta) => {
     const hoje = new Date();
     const seteDiasAtras = new Date();
@@ -1335,6 +1365,7 @@ export default function Dashboard() {
           formData={formData} setFormData={setFormData} editandoId={editandoId} 
           ultimaAltura={biometria[0]?.altura}
           todayDate={todayReportDate}
+          requireInitialBiometria={shouldRequireInitialBiometria(Boolean(editandoId))}
         />
 
         <main className={`main-content dashboard-main-layout ${isTabsDocked ? 'dashboard-tabs-docked' : ''}`} style={{ width: '100%' }}>
@@ -1676,7 +1707,7 @@ export default function Dashboard() {
                         <div key={meta.id} className="glass-panel goal-card">
                           <div className="goal-header">
                             <div>
-                              <span className="goal-title">{meta.categoria}</span>
+                              <span className="goal-title">{getMetaCategoryLabel(meta.categoria)}</span>
                               <p style={{ fontSize: '0.8rem', opacity: 0.6, margin: '4px 0 0 0' }}>{meta.descricao || 'Sem contexto informado'}</p>
                             </div>
                             <button 
