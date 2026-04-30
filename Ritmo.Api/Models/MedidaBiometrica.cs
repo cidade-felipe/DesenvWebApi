@@ -20,6 +20,9 @@ public class MedidaBiometrica
     // Data do registro da medida
     public DateTime Data { get; set; } = DateTime.UtcNow;
 
+    // Dia da medição (computado no banco a partir de Data) para garantir unicidade por usuário/dia.
+    public DateOnly DataDia { get; private set; }
+
     // Propriedade de navegação
     [JsonIgnore]
     public Usuario? Usuario { get; set; }

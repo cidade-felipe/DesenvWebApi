@@ -25,6 +25,11 @@ public class AppDbContext : DbContext
             .HasIndex(u => u.Email)
             .IsUnique();
 
+        // Um registro diário por usuário e data (garante a regra de upsert no banco).
+        modelBuilder.Entity<RegistroDiario>()
+            .HasIndex(r => new { r.UsuarioId, r.Data })
+            .IsUnique();
+
         // Relação 1:N — Usuario → RegistrosDiarios (cascade delete)
         modelBuilder.Entity<RegistroDiario>()
             .HasOne(r => r.Usuario)
@@ -59,5 +64,14 @@ public class AppDbContext : DbContext
             .WithMany(u => u.MedidasBiometricas)
             .HasForeignKey(r => r.UsuarioId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        // Um registro de biometria por usuário e dia.
+        modelBuilder.Entity<MedidaBiometrica>()
+            .Property(m => m.DataDia)
+            .HasComputedColumnSql("\"Data\"::date", stored: true);
+
+        modelBuilder.Entity<MedidaBiometrica>()
+            .HasIndex(m => new { m.UsuarioId, m.DataDia })
+            .IsUnique();
     }
 }

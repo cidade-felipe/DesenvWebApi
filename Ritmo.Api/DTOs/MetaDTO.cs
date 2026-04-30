@@ -29,10 +29,27 @@ public class MetaDTO : IValidatableObject
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
-        if (ValorAlvo < 0.1m || ValorAlvo > 100m)
+        if (DataFim.HasValue && DataFim.Value < DataInicio)
         {
             yield return new ValidationResult(
-                "Valor alvo deve estar entre 0,1 e 100.",
+                "Data fim não pode ser anterior à data de início.",
+                [nameof(DataFim)]);
+        }
+
+        var (min, max) = Categoria switch
+        {
+            "Sono" => (0.5m, 24m),
+            "Agua" => (0.1m, 25m),
+            "Treino" => (1m, 7m),
+            "Peso" => (10m, 600m),
+            "Humor" or "Produtividade" or "Energia" => (1m, 5m),
+            _ => (0.1m, 100m)
+        };
+
+        if (ValorAlvo < min || ValorAlvo > max)
+        {
+            yield return new ValidationResult(
+                $"Valor alvo inválido para a categoria {Categoria}. Faixa permitida: {min} a {max}.",
                 [nameof(ValorAlvo)]);
         }
     }
