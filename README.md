@@ -47,6 +47,7 @@ Hoje o projeto já funciona como um MVP full stack com:
 - proteção de rotas por usuário autenticado
 - validação inline no cadastro com mensagens por campo
 - campo de data de nascimento com digitação manual e calendário
+- aba `Configurações` no dashboard para atualizar dados do perfil, trocar senha e excluir conta com confirmação
 
 ### Registro diário
 
@@ -60,6 +61,10 @@ Hoje o projeto já funciona como um MVP full stack com:
 
 O registro diário usa lógica de upsert por data. Se o usuário salvar novamente o mesmo dia, o backend atualiza o registro existente.
 
+**Importante (integridade de dados)**
+
+Além da lógica de serviço, o banco possui índice único para garantir **1 registro por usuário por dia** (`UsuarioId + Data`). Isso reduz risco de duplicidade em concorrência e evita inconsistência no dashboard.
+
 ### Biometria
 
 - peso
@@ -71,6 +76,10 @@ O registro diário usa lógica de upsert por data. Se o usuário salvar novament
 - nos registros seguintes, a altura já salva pode ser reaproveitada e atualizada só quando necessário
 
 Se o usuário registrar biometria mais de uma vez no mesmo dia, a API atualiza o valor do dia em vez de criar duplicidade lógica.
+
+**Importante (integridade de dados)**
+
+O banco possui uma garantia de unicidade para **1 biometria por usuário por dia**. Isso é implementado com uma coluna computada `DataDia` (dia derivado de `Data`) e um índice único (`UsuarioId + DataDia`).
 
 ### Metas
 
@@ -90,6 +99,14 @@ O progresso das metas funciona assim:
 - treino usa contagem de dias com exercício
 - peso usa aproximação do alvo, funcionando tanto para perda quanto para ganho de peso
 - o formulário de meta mostra a faixa mínima e máxima por categoria sem preencher o valor alvo automaticamente
+
+**Faixas de validação (backend)**
+
+- Sono: 0.5 a 24
+- Água: 0.1 a 25
+- Humor, Produtividade, Energia: 1 a 5
+- Treino: 1 a 7 (dias por semana)
+- Peso: 10 a 600
 
 ### Dashboard
 
@@ -118,6 +135,7 @@ O progresso das metas funciona assim:
 - validações semânticas de domínio
 - `appsettings.Local.json` para configuração local fora do Git
 - `AppDbContextFactory` para `dotnet ef`
+- troca de senha e exclusão de conta exigem senha atual
 
 ## Estrutura do projeto
 

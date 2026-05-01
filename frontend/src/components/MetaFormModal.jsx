@@ -27,8 +27,8 @@ export function MetaFormModal({ isOpen, onClose, onSave, onStatusChange, user })
 
   const getValidationConfig = () => {
     switch(metaData.categoria) {
-      case 'Sono': return { min: 0, max: 24, step: 0.5, unit: 'h' };
-      case 'Agua': return { min: 0, max: 25, step: 0.1, unit: 'L' };
+      case 'Sono': return { min: 0.5, max: 24, step: 0.5, unit: 'h' };
+      case 'Agua': return { min: 0.1, max: 25, step: 0.1, unit: 'L' };
       case 'Treino': return { min: 1, max: 7, step: 1, unit: 'dias' };
       case 'Peso': return { min: 10, max: 600, step: 0.1, unit: 'kg' };
       default: return { min: 1, max: 5, step: 0.1, unit: 'pontos' };

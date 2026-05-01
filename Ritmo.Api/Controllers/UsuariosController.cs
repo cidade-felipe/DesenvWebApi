@@ -82,15 +82,42 @@ public class UsuariosController : ControllerBase
         return NoContent();
     }
 
-
-    [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteUsuario(int id)
+    [HttpPut("{id}/perfil")]
+    public async Task<ActionResult<AuthResponse>> PutPerfil(int id, UpdateUsuarioPerfilRequest request)
     {
         var userId = User.GetAuthenticatedUserId();
         if (userId != id)
             return Forbid();
 
-        var sucesso = await _service.Deletar(id);
+        var result = await _service.AtualizarPerfilComToken(id, request);
+        if (result == null)
+            return NotFound(new { mensagem = $"Usuário com ID {id} não encontrado." });
+
+        return Ok(result);
+    }
+
+    [HttpPut("{id}/senha")]
+    public async Task<IActionResult> PutSenha(int id, UpdateUsuarioSenhaRequest request)
+    {
+        var userId = User.GetAuthenticatedUserId();
+        if (userId != id)
+            return Forbid();
+
+        var sucesso = await _service.AlterarSenha(id, request);
+        if (!sucesso)
+            return NotFound(new { mensagem = $"Usuário com ID {id} não encontrado." });
+
+        return NoContent();
+    }
+
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteUsuario(int id, [FromBody] DeleteUsuarioRequest request)
+    {
+        var userId = User.GetAuthenticatedUserId();
+        if (userId != id)
+            return Forbid();
+
+        var sucesso = await _service.DeletarConta(id, request);
         if (!sucesso)
             return NotFound(new { mensagem = $"Usuário com ID {id} não encontrado." });
 

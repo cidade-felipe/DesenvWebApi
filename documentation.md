@@ -29,6 +29,7 @@ O foco atual do produto está em:
 - CRUD de biometria
 - leitura de insights
 - dashboard com gráficos, cards, filtros e exportação
+- aba `Configurações` (perfil, senha e exclusão segura de conta)
 - navegação desktop da dashboard com dock lateral animado e alinhado ao conteúdo
 - avisos inline e confirmações visuais no frontend
 
@@ -124,6 +125,7 @@ No estado atual da interface:
 - no desktop, a navegação pode sair da barra superior e virar uma rail lateral alinhada ao conteúdo
 - a animação dessa transição responde à velocidade do scroll para dar leitura mais premium sem quebrar usabilidade
 - mutações como criar meta, excluir meta e salvar registro passaram a atualizar estado local em vez de recarregar toda a dashboard
+- a aba `Configurações` permite atualizar dados do perfil, trocar senha e excluir a conta com confirmação
 
 ### 4.3. Registro diário
 
@@ -429,6 +431,41 @@ A validação de `ValorAlvo` passou a ser feita com `IValidatableObject`, usando
 - elimina erro interno ao salvar meta
 - reduz dependência da cultura do servidor
 - deixa a validação mais previsível
+
+## 7.4. Validação de metas por categoria
+
+**Fato**
+
+O backend valida `ValorAlvo` por categoria, garantindo coerência com os limites reais de negócio e com o que o dashboard calcula.
+
+Faixas atuais:
+
+- `Sono`: 0.5 a 24
+- `Agua`: 0.1 a 25
+- `Humor`, `Produtividade`, `Energia`: 1 a 5
+- `Treino`: 1 a 7
+- `Peso`: 10 a 600
+
+**Impacto prático**
+
+- reduz erro 400 no cadastro de metas (principalmente `Peso`)
+- evita inconsistência entre frontend e backend
+
+## 7.5. Integridade de dados no banco (unicidade por dia)
+
+**Fato**
+
+Além do upsert na camada de serviço, o banco garante unicidade para mitigar duplicidade em concorrência:
+
+- `RegistrosDiarios`: índice único em (`UsuarioId`, `Data`)
+- `MedidasBiometricas`: índice único em (`UsuarioId`, `DataDia`), onde `DataDia` é uma coluna computada a partir de `Data`
+
+Essa garantia foi adicionada na migration `20260430114117_AddUniquePerDayConstraints`.
+
+**Impacto prático**
+
+- reduz risco de inconsistência no dashboard (ex: dois registros no mesmo dia)
+- mitiga bugs difíceis de reproduzir ligados a requisições simultâneas
 
 ## 8. Regras específicas de metas
 
