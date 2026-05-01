@@ -74,6 +74,7 @@ export function useDashboardData() {
     setRegistros,
     setBiometria,
     setInsights,
-    setMetas
+    setMetas,
+    setUser
   };
 }

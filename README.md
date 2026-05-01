@@ -47,6 +47,7 @@ Hoje o projeto já funciona como um MVP full stack com:
 - proteção de rotas por usuário autenticado
 - validação inline no cadastro com mensagens por campo
 - campo de data de nascimento com digitação manual e calendário
+- aba `Configurações` no dashboard para atualizar dados do perfil, trocar senha e excluir conta com confirmação
 
 ### Registro diário
 
@@ -134,6 +135,7 @@ O progresso das metas funciona assim:
 - validações semânticas de domínio
 - `appsettings.Local.json` para configuração local fora do Git
 - `AppDbContextFactory` para `dotnet ef`
+- troca de senha e exclusão de conta exigem senha atual
 
 ## Estrutura do projeto
 

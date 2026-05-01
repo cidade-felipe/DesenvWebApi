@@ -91,6 +91,32 @@ public class UsuarioService
         return entity == null ? null : CriarAuthResponse(entity);
     }
 
+    public async Task<AuthResponse?> AtualizarPerfilComToken(int id, UpdateUsuarioPerfilRequest request)
+    {
+        ValidateUsuarioPerfilRequest(request);
+
+        var usuarioExistente = await _context.Usuarios.FindAsync(id);
+        if (usuarioExistente == null) return null;
+
+        var emailNormalizado = request.Email.Trim().ToLowerInvariant();
+        var emailEmUso = await _context.Usuarios
+            .AnyAsync(u => u.Email == emailNormalizado && u.Id != id);
+
+        if (emailEmUso)
+        {
+            throw new DomainValidationException("Já existe um usuário cadastrado com esse email.");
+        }
+
+        usuarioExistente.Nome = request.Nome.Trim();
+        usuarioExistente.Email = emailNormalizado;
+        usuarioExistente.DataNascimento = request.DataNascimento;
+        usuarioExistente.Sexo = request.Sexo.Trim().ToUpperInvariant();
+
+        await _context.SaveChangesAsync();
+
+        return CriarAuthResponse(usuarioExistente);
+    }
+
     public async Task<bool> Atualizar(int id, UsuarioRequest request)
     {
         ValidateUsuarioRequest(request);
@@ -99,11 +125,42 @@ public class UsuarioService
 
         if (usuarioExistente == null) return false;
 
+        var emailNormalizado = request.Email.Trim().ToLowerInvariant();
+        var emailEmUso = await _context.Usuarios
+            .AnyAsync(u => u.Email == emailNormalizado && u.Id != id);
+
+        if (emailEmUso)
+        {
+            throw new DomainValidationException("Já existe um usuário cadastrado com esse email.");
+        }
+
         usuarioExistente.Nome = request.Nome.Trim();
+        usuarioExistente.Email = emailNormalizado;
         usuarioExistente.Senha = PasswordHasher.Hash(request.Senha);
         usuarioExistente.DataNascimento = request.DataNascimento;
         usuarioExistente.Sexo = request.Sexo.Trim().ToUpperInvariant();
 
+        await _context.SaveChangesAsync();
+
+        return true;
+    }
+
+    public async Task<bool> AlterarSenha(int id, UpdateUsuarioSenhaRequest request)
+    {
+        var usuarioExistente = await _context.Usuarios.FindAsync(id);
+        if (usuarioExistente == null) return false;
+
+        if (!PasswordHasher.Verify(request.SenhaAtual, usuarioExistente.Senha))
+        {
+            throw new DomainValidationException("Senha atual incorreta.");
+        }
+
+        if (request.SenhaAtual == request.NovaSenha)
+        {
+            throw new DomainValidationException("A nova senha deve ser diferente da senha atual.");
+        }
+
+        usuarioExistente.Senha = PasswordHasher.Hash(request.NovaSenha);
         await _context.SaveChangesAsync();
 
         return true;
@@ -115,6 +172,22 @@ public class UsuarioService
         var usuario = await _context.Usuarios.FindAsync(id);
 
         if (usuario == null) return false;
+
+        _context.Usuarios.Remove(usuario);
+        await _context.SaveChangesAsync();
+
+        return true;
+    }
+
+    public async Task<bool> DeletarConta(int id, DeleteUsuarioRequest request)
+    {
+        var usuario = await _context.Usuarios.FindAsync(id);
+        if (usuario == null) return false;
+
+        if (!PasswordHasher.Verify(request.SenhaAtual, usuario.Senha))
+        {
+            throw new DomainValidationException("Senha atual incorreta.");
+        }
 
         _context.Usuarios.Remove(usuario);
         await _context.SaveChangesAsync();
@@ -135,16 +208,26 @@ public class UsuarioService
 
     private static void ValidateUsuarioRequest(UsuarioRequest request)
     {
+        ValidateDataNascimento(request.DataNascimento);
+    }
+
+    private static void ValidateUsuarioPerfilRequest(UpdateUsuarioPerfilRequest request)
+    {
+        ValidateDataNascimento(request.DataNascimento);
+    }
+
+    private static void ValidateDataNascimento(DateOnly dataNascimento)
+    {
         var hoje = DateOnly.FromDateTime(DateTime.UtcNow);
 
-        if (request.DataNascimento > hoje)
+        if (dataNascimento > hoje)
         {
             throw new DomainValidationException("Data de nascimento não pode estar no futuro.");
         }
 
-        var idade = hoje.Year - request.DataNascimento.Year;
-        if (hoje.Month < request.DataNascimento.Month ||
-            (hoje.Month == request.DataNascimento.Month && hoje.Day < request.DataNascimento.Day))
+        var idade = hoje.Year - dataNascimento.Year;
+        if (hoje.Month < dataNascimento.Month ||
+            (hoje.Month == dataNascimento.Month && hoje.Day < dataNascimento.Day))
         {
             idade--;
         }

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Pencil, LayoutDashboard, ClipboardList, Download, BarChart3, Activity, RefreshCw, X, TrendingUp } from 'lucide-react';
+import { Pencil, LayoutDashboard, ClipboardList, Download, BarChart3, Activity, RefreshCw, X, TrendingUp, Settings } from 'lucide-react';
 
 import { useDashboardData } from '../hooks/useDashboardData';
 import { DashboardHeader } from '../components/DashboardHeader';
@@ -10,6 +10,7 @@ import { MetaFormModal } from '../components/MetaFormModal'; // Novo Import
 import { NoticeBanner } from '../components/NoticeBanner';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { DateField } from '../components/DateField';
+import { SettingsPanel } from '../components/SettingsPanel';
 import apiClient from '../api/apiClient';
 
 const getLocalDateInputValue = (date = new Date()) => {
@@ -46,7 +47,7 @@ const getTabsDockMotionProfile = (scrollVelocity = 0) => {
 export default function Dashboard() {
   const {
     loading, registros, config, insights, user, biometria, metas,
-    handleMarcarInsightLido, setRegistros, setBiometria, setMetas
+    handleMarcarInsightLido, setRegistros, setBiometria, setMetas, setUser
   } = useDashboardData();
 
   const [activeTab, setActiveTab] = useState('panorama'); // 'panorama', 'analise', 'relatorios'
@@ -1324,7 +1325,8 @@ export default function Dashboard() {
     { key: 'panorama', label: 'Panorama', Icon: LayoutDashboard },
     { key: 'analise', label: 'Análise', Icon: BarChart3 },
     { key: 'metas', label: 'Metas', Icon: TrendingUp },
-    { key: 'relatorios', label: 'Relatórios', Icon: ClipboardList }
+    { key: 'relatorios', label: 'Relatórios', Icon: ClipboardList },
+    { key: 'configuracoes', label: 'Configurações', Icon: Settings }
   ];
 
   const renderTabs = (variant) => (
@@ -1747,6 +1749,14 @@ export default function Dashboard() {
                   </div>
                 )}
               </div>
+            )}
+
+            {activeTab === 'configuracoes' && (
+              <SettingsPanel
+                user={user}
+                onUserUpdated={setUser}
+                onStatusChange={(nextNotice) => setNotice({ ...nextNotice, id: Date.now() })}
+              />
             )}
             </div>
             </div>

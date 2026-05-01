@@ -29,6 +29,7 @@ O foco atual do produto está em:
 - CRUD de biometria
 - leitura de insights
 - dashboard com gráficos, cards, filtros e exportação
+- aba `Configurações` (perfil, senha e exclusão segura de conta)
 - navegação desktop da dashboard com dock lateral animado e alinhado ao conteúdo
 - avisos inline e confirmações visuais no frontend
 
@@ -124,6 +125,7 @@ No estado atual da interface:
 - no desktop, a navegação pode sair da barra superior e virar uma rail lateral alinhada ao conteúdo
 - a animação dessa transição responde à velocidade do scroll para dar leitura mais premium sem quebrar usabilidade
 - mutações como criar meta, excluir meta e salvar registro passaram a atualizar estado local em vez de recarregar toda a dashboard
+- a aba `Configurações` permite atualizar dados do perfil, trocar senha e excluir a conta com confirmação
 
 ### 4.3. Registro diário
 

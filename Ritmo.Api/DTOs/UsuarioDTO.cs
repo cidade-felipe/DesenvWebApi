@@ -26,6 +26,43 @@ public class UsuarioRequest
     public string Sexo { get; set; } = null!;
 }
 
+public class UpdateUsuarioPerfilRequest
+{
+    [Required(ErrorMessage = "Nome é obrigatório.")]
+    [StringLength(120, MinimumLength = 3, ErrorMessage = "Nome deve ter entre 3 e 120 caracteres.")]
+    public string Nome { get; set; } = null!;
+
+    [Required(ErrorMessage = "Email é obrigatório.")]
+    [EmailAddress(ErrorMessage = "Email inválido.")]
+    [StringLength(160, ErrorMessage = "Email deve ter no máximo 160 caracteres.")]
+    public string Email { get; set; } = null!;
+
+    [Required(ErrorMessage = "Data de nascimento é obrigatória.")]
+    public DateOnly DataNascimento { get; set; }
+
+    [Required(ErrorMessage = "Sexo é obrigatório.")]
+    [RegularExpression("^(M|F)$", ErrorMessage = "Sexo deve ser 'M' ou 'F'.")]
+    public string Sexo { get; set; } = null!;
+}
+
+public class UpdateUsuarioSenhaRequest
+{
+    [Required(ErrorMessage = "Senha atual é obrigatória.")]
+    [StringLength(128, MinimumLength = 8, ErrorMessage = "Senha atual deve ter entre 8 e 128 caracteres.")]
+    public string SenhaAtual { get; set; } = null!;
+
+    [Required(ErrorMessage = "Nova senha é obrigatória.")]
+    [StringLength(128, MinimumLength = 8, ErrorMessage = "Nova senha deve ter entre 8 e 128 caracteres.")]
+    public string NovaSenha { get; set; } = null!;
+}
+
+public class DeleteUsuarioRequest
+{
+    [Required(ErrorMessage = "Senha atual é obrigatória.")]
+    [StringLength(128, MinimumLength = 8, ErrorMessage = "Senha atual deve ter entre 8 e 128 caracteres.")]
+    public string SenhaAtual { get; set; } = null!;
+}
+
 public class LoginRequest
 {
     [Required(ErrorMessage = "Email é obrigatório.")]
