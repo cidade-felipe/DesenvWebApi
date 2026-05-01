@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AlertTriangle, KeyRound, Save, Shield, Trash2, UserRound } from 'lucide-react';
+import { AlertTriangle, Eye, EyeOff, KeyRound, Save, Shield, Trash2, UserRound } from 'lucide-react';
 
 import apiClient from '../api/apiClient';
 import { clearAuthSession, saveAuthSession } from '../auth/authStorage';
@@ -89,10 +89,16 @@ export function SettingsPanel({ user, onUserUpdated, onStatusChange }) {
     novaSenha: '',
     confirmarSenha: ''
   });
+  const [passwordVisibility, setPasswordVisibility] = useState({
+    senhaAtual: false,
+    novaSenha: false,
+    confirmarSenha: false
+  });
   const [passwordErrors, setPasswordErrors] = useState(initialPasswordErrors);
   const [isSavingPassword, setIsSavingPassword] = useState(false);
 
   const [deleteData, setDeleteData] = useState({ senhaAtual: '' });
+  const [isDeletePasswordVisible, setIsDeletePasswordVisible] = useState(false);
   const [deleteErrors, setDeleteErrors] = useState(initialDeleteErrors);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
@@ -129,6 +135,13 @@ export function SettingsPanel({ user, onUserUpdated, onStatusChange }) {
     }));
   };
 
+  const togglePasswordVisibility = (field) => {
+    setPasswordVisibility((current) => ({
+      ...current,
+      [field]: !current[field]
+    }));
+  };
+
   const updateDeleteField = (value) => {
     setDeleteData({ senhaAtual: value });
     setDeleteErrors((current) => ({
@@ -137,6 +150,10 @@ export function SettingsPanel({ user, onUserUpdated, onStatusChange }) {
       form: ''
     }));
     setIsDeleteConfirmOpen(false);
+  };
+
+  const toggleDeletePasswordVisibility = () => {
+    setIsDeletePasswordVisible((current) => !current);
   };
 
   const validateProfile = () => {
@@ -202,6 +219,8 @@ export function SettingsPanel({ user, onUserUpdated, onStatusChange }) {
 
     if (!deleteData.senhaAtual) {
       nextErrors.senhaAtual = 'Informe sua senha atual para excluir a conta.';
+    } else if (deleteData.senhaAtual.length < 8 || deleteData.senhaAtual.length > 128) {
+      nextErrors.senhaAtual = 'Senha atual deve ter entre 8 e 128 caracteres.';
     }
 
     setDeleteErrors(nextErrors);
@@ -431,40 +450,73 @@ export function SettingsPanel({ user, onUserUpdated, onStatusChange }) {
         <form className="settings-form" onSubmit={handleSavePassword} noValidate>
           {passwordErrors.form ? <div className="settings-form-feedback error">{passwordErrors.form}</div> : null}
 
-          <div className="settings-grid">
+          <div className="settings-grid settings-grid-security">
             <div className="input-group">
               <label className="input-label">Senha atual</label>
-              <input
-                type="password"
-                className={`input-field ${passwordErrors.senhaAtual ? 'input-field-error' : ''}`.trim()}
-                value={passwordData.senhaAtual}
-                onChange={(e) => updatePasswordField('senhaAtual', e.target.value)}
-                autoComplete="current-password"
-              />
+              <div className="password-field">
+                <input
+                  type={passwordVisibility.senhaAtual ? 'text' : 'password'}
+                  className={`input-field password-input ${passwordErrors.senhaAtual ? 'input-field-error' : ''}`.trim()}
+                  value={passwordData.senhaAtual}
+                  onChange={(e) => updatePasswordField('senhaAtual', e.target.value)}
+                  autoComplete="current-password"
+                />
+                <button
+                  type="button"
+                  className="password-toggle"
+                  aria-label={passwordVisibility.senhaAtual ? 'Ocultar senha atual' : 'Mostrar senha atual'}
+                  title={passwordVisibility.senhaAtual ? 'Ocultar senha' : 'Mostrar senha'}
+                  onClick={() => togglePasswordVisibility('senhaAtual')}
+                >
+                  {passwordVisibility.senhaAtual ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
               {passwordErrors.senhaAtual ? <div className="field-error-text">{passwordErrors.senhaAtual}</div> : null}
             </div>
 
             <div className="input-group">
               <label className="input-label">Nova senha</label>
-              <input
-                type="password"
-                className={`input-field ${passwordErrors.novaSenha ? 'input-field-error' : ''}`.trim()}
-                value={passwordData.novaSenha}
-                onChange={(e) => updatePasswordField('novaSenha', e.target.value)}
-                autoComplete="new-password"
-              />
+              <div className="password-field">
+                <input
+                  type={passwordVisibility.novaSenha ? 'text' : 'password'}
+                  className={`input-field password-input ${passwordErrors.novaSenha ? 'input-field-error' : ''}`.trim()}
+                  value={passwordData.novaSenha}
+                  onChange={(e) => updatePasswordField('novaSenha', e.target.value)}
+                  autoComplete="new-password"
+                />
+                <button
+                  type="button"
+                  className="password-toggle"
+                  aria-label={passwordVisibility.novaSenha ? 'Ocultar nova senha' : 'Mostrar nova senha'}
+                  title={passwordVisibility.novaSenha ? 'Ocultar senha' : 'Mostrar senha'}
+                  onClick={() => togglePasswordVisibility('novaSenha')}
+                >
+                  {passwordVisibility.novaSenha ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
               {passwordErrors.novaSenha ? <div className="field-error-text">{passwordErrors.novaSenha}</div> : null}
             </div>
 
-            <div className="input-group settings-grid-span-2">
+            <div className="input-group">
               <label className="input-label">Confirmar nova senha</label>
-              <input
-                type="password"
-                className={`input-field ${passwordErrors.confirmarSenha ? 'input-field-error' : ''}`.trim()}
-                value={passwordData.confirmarSenha}
-                onChange={(e) => updatePasswordField('confirmarSenha', e.target.value)}
-                autoComplete="new-password"
-              />
+              <div className="password-field">
+                <input
+                  type={passwordVisibility.confirmarSenha ? 'text' : 'password'}
+                  className={`input-field password-input ${passwordErrors.confirmarSenha ? 'input-field-error' : ''}`.trim()}
+                  value={passwordData.confirmarSenha}
+                  onChange={(e) => updatePasswordField('confirmarSenha', e.target.value)}
+                  autoComplete="new-password"
+                />
+                <button
+                  type="button"
+                  className="password-toggle"
+                  aria-label={passwordVisibility.confirmarSenha ? 'Ocultar confirmação de senha' : 'Mostrar confirmação de senha'}
+                  title={passwordVisibility.confirmarSenha ? 'Ocultar senha' : 'Mostrar senha'}
+                  onClick={() => togglePasswordVisibility('confirmarSenha')}
+                >
+                  {passwordVisibility.confirmarSenha ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
               {passwordErrors.confirmarSenha ? <div className="field-error-text">{passwordErrors.confirmarSenha}</div> : null}
             </div>
           </div>
@@ -494,13 +546,24 @@ export function SettingsPanel({ user, onUserUpdated, onStatusChange }) {
 
           <div className="input-group">
             <label className="input-label">Confirme com sua senha atual</label>
-            <input
-              type="password"
-              className={`input-field ${deleteErrors.senhaAtual ? 'input-field-error' : ''}`.trim()}
-              value={deleteData.senhaAtual}
-              onChange={(e) => updateDeleteField(e.target.value)}
-              autoComplete="current-password"
-            />
+            <div className="password-field">
+              <input
+                type={isDeletePasswordVisible ? 'text' : 'password'}
+                className={`input-field password-input ${deleteErrors.senhaAtual ? 'input-field-error' : ''}`.trim()}
+                value={deleteData.senhaAtual}
+                onChange={(e) => updateDeleteField(e.target.value)}
+                autoComplete="current-password"
+              />
+              <button
+                type="button"
+                className="password-toggle"
+                aria-label={isDeletePasswordVisible ? 'Ocultar senha atual' : 'Mostrar senha atual'}
+                title={isDeletePasswordVisible ? 'Ocultar senha' : 'Mostrar senha'}
+                onClick={toggleDeletePasswordVisibility}
+              >
+                {isDeletePasswordVisible ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
             {deleteErrors.senhaAtual ? <div className="field-error-text">{deleteErrors.senhaAtual}</div> : null}
           </div>
 

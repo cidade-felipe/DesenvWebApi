@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Activity } from 'lucide-react';
+import { Activity, Eye, EyeOff } from 'lucide-react';
 import apiClient from '../api/apiClient';
 import { saveAuthSession } from '../auth/authStorage';
 import { DateField } from '../components/DateField';
@@ -60,6 +60,7 @@ export default function Login() {
     dataNascimento: '',
     sexo: 'M'
   });
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [error, setError] = useState(null);
   const [fieldErrors, setFieldErrors] = useState(initialFieldErrors);
   const todayDate = new Date().toISOString().split('T')[0];
@@ -127,6 +128,7 @@ export default function Login() {
 
   const handleModeToggle = () => {
     setIsRegistering((current) => !current);
+    setIsPasswordVisible(false);
     setError(null);
     setFieldErrors(initialFieldErrors);
   };
@@ -263,18 +265,29 @@ export default function Login() {
 
           <div className="input-group" style={{ marginBottom: '2rem' }}>
             <label className="input-label">Senha</label>
-            <input 
-              type="password" 
-              className={`input-field ${fieldErrors.senha ? 'input-field-error' : ''}`.trim()}
-              placeholder="••••••••"
-              value={formData.senha}
-              onChange={(e) => updateField('senha', e.target.value)}
-              required
-              minLength={8}
-              maxLength={128}
-              autoComplete={isRegistering ? 'new-password' : 'current-password'}
-              aria-invalid={Boolean(fieldErrors.senha)}
-            />
+            <div className="password-field">
+              <input 
+                type={isPasswordVisible ? 'text' : 'password'}
+                className={`input-field password-input ${fieldErrors.senha ? 'input-field-error' : ''}`.trim()}
+                placeholder="••••••••"
+                value={formData.senha}
+                onChange={(e) => updateField('senha', e.target.value)}
+                required
+                minLength={8}
+                maxLength={128}
+                autoComplete={isRegistering ? 'new-password' : 'current-password'}
+                aria-invalid={Boolean(fieldErrors.senha)}
+              />
+              <button
+                type="button"
+                className="password-toggle"
+                aria-label={isPasswordVisible ? 'Ocultar senha' : 'Mostrar senha'}
+                title={isPasswordVisible ? 'Ocultar senha' : 'Mostrar senha'}
+                onClick={() => setIsPasswordVisible((current) => !current)}
+              >
+                {isPasswordVisible ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
             {fieldErrors.senha ? <div className="field-error-text">{fieldErrors.senha}</div> : null}
           </div>
 
