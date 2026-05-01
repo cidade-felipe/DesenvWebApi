@@ -117,6 +117,9 @@ public class UsuariosController : ControllerBase
         if (userId != id)
             return Forbid();
 
+        if (!ModelState.IsValid)
+            return ValidationProblem(ModelState);
+
         var sucesso = await _service.DeletarConta(id, request);
         if (!sucesso)
             return NotFound(new { mensagem = $"Usuário com ID {id} não encontrado." });

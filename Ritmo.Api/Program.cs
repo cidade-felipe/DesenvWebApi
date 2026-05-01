@@ -1,6 +1,8 @@
 // Program.cs
 using System.Text;
+using System.IO;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -15,6 +17,12 @@ AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 // Aqui registramos todos os serviços que a aplicação vai usar.
 // =====================================================================
 var builder = WebApplication.CreateBuilder(args);
+
+// Em alguns ambientes Windows, o provider de EventLog pode falhar por falta de permissão
+// e o Data Protection pode ter chaves antigas protegidas por DPAPI que não descriptografam mais.
+// Isso pode derrubar o host. Para o desenvolvimento, mantemos logging em console e chaves locais.
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
 
 builder.Configuration
     .AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true)
@@ -104,6 +112,10 @@ builder.Services.AddScoped<JwtTokenService>();
 // AddSwaggerGen() gera a documentação interativa da API.
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+builder.Services.AddDataProtection()
+    .PersistKeysToFileSystem(new DirectoryInfo(Path.Combine(builder.Environment.ContentRootPath, ".keys")))
+    .SetApplicationName("Ritmo.Api");
 
 // Configura CORS (Cross-Origin Resource Sharing).
 // Isso permite que o frontend React (que roda em outra porta)
