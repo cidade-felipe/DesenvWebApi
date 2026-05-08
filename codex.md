@@ -1806,6 +1806,7 @@ Panorama:
 - Cards de humor, sono e hidratacao usam essa janela recente, nao o historico completo.
 - Radar de habilidades usa a mesma base de 7 dias.
 - Tendencia de curto prazo recebe a mesma base, ordenada por data crescente.
+- Tendencia de curto prazo nao usa mais tres linhas no mesmo eixo; usa faixas separadas por indicador para impedir sobreposicao quando os valores sao iguais.
 - IMC, peso registrado e faixa de peso ideal continuam sendo leitura de estado atual, nao media de 7 dias.
 - Se nao houver registro nos ultimos 7 dias, a interface mostra empty state nos graficos e zera as medias recentes.
 
@@ -1930,10 +1931,16 @@ Responsabilidades:
 Graficos:
 
 - Radar de habilidades no panorama, usando somente `panoramaRegistros`
-- Linha de tendencia de curto prazo, usando somente `panoramaRegistros`
+- Tendencia de curto prazo em faixas separadas, usando somente `panoramaRegistros`
 - Area de peso por periodo
-- ComposedChart de humor/energia/produtividade/bem-estar
+- Faixas separadas de humor/energia/produtividade/bem-estar
 - Area de sono por periodo
+
+Regra visual importante:
+
+- Evitar multi-linha com varias metricas no mesmo eixo quando as escalas forem iguais.
+- Se os valores coincidirem, linhas sobrepostas escondem informacao e parecem bug.
+- Preferir `metric-lanes`, com uma faixa por indicador, preservando o valor real sem deslocamento artificial.
 
 Detalhes bons:
 
