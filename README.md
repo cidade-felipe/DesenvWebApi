@@ -43,6 +43,7 @@ Hoje o projeto já funciona como um MVP full stack com:
 
 - cadastro de usuário com nome, email, data de nascimento e sexo biológico
 - login com JWT
+- mensagens de login diferentes para usuário inexistente e senha incorreta
 - senhas armazenadas com hash
 - proteção de rotas por usuário autenticado
 - validação inline no cadastro com mensagens por campo
@@ -97,7 +98,9 @@ O progresso das metas funciona assim:
 
 - hábitos diários, como sono e água, usam média recente
 - treino usa contagem de dias com exercício
-- peso usa aproximação do alvo, funcionando tanto para perda quanto para ganho de peso
+- peso usa direção inferida pelo histórico, funcionando para perda, ganho ou manutenção
+- no card de peso, o rótulo da meta permanece limpo, por exemplo `75.0 kg`, sem `ou mais` ou `ou menos`
+- se o usuário começou acima da meta de peso e chegou no alvo ou abaixo dele, a meta aparece como concluída
 - o formulário de meta mostra a faixa mínima e máxima por categoria sem preencher o valor alvo automaticamente
 
 **Faixas de validação (backend)**
@@ -136,6 +139,7 @@ O progresso das metas funciona assim:
 - `appsettings.Local.json` para configuração local fora do Git
 - `AppDbContextFactory` para `dotnet ef`
 - troca de senha e exclusão de conta exigem senha atual
+- login diferencia `404` para email inexistente e `401` para senha incorreta, melhorando a orientação ao usuário
 
 ## Estrutura do projeto
 
@@ -294,7 +298,7 @@ Ele está acima de um protótipo vazio, mas ainda abaixo de um sistema pronto pa
 - testes automatizados
 - pipeline CI/CD
 - observabilidade e métricas operacionais
-- tratamento de erro mais amigável no frontend
+- ampliar padronização de tratamento de erro no frontend fora dos fluxos principais
 
 ## Observação sobre insights
 

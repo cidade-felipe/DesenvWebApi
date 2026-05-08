@@ -3,6 +3,7 @@
 Este arquivo foi criado para funcionar como uma memoria longa do projeto. A ideia e que uma proxima interacao com Codex consiga entender rapidamente o que este repositorio e, como ele funciona, quais decisoes ja foram tomadas, quais riscos existem e por onde continuar sem precisar redescobrir tudo do zero.
 
 Data da criacao deste documento: 07/05/2026  
+Ultima atualizacao documentada: 08/05/2026
 Workspace analisado: `c:\Users\felip\OneDrive\git_work\RitmoApi`  
 Fuso informado no ambiente: `America/Sao_Paulo`  
 Modo de leitura usado: varredura manual do repositorio, leitura de backend, frontend, configuracoes, documentacao, migrations e validacao de build/lint.
@@ -50,6 +51,58 @@ Se for alterar arquivo existente:
 
 Observacao: `codex.md` foi criado como arquivo novo. Como nao havia versao anterior, nao houve backup de arquivo antigo.
 
+## Atualizacao rapida de 08/05/2026
+
+### Fato
+
+Foram adicionadas duas correcoes importantes depois da criacao original deste arquivo:
+
+- Login agora diferencia usuario inexistente de senha incorreta.
+- Meta de peso agora usa historico para inferir reducao, ganho ou manutencao, sem mostrar `kg ou mais` ou `kg ou menos` no rotulo visual.
+
+### Detalhe de autenticacao
+
+`UsuarioService.Login` retorna `LoginResult`, com status semantico:
+
+- `Sucesso`
+- `UsuarioNaoEncontrado`
+- `SenhaInvalida`
+
+`UsuariosController.Login` converte isso em HTTP:
+
+- `404 NotFound` para email inexistente
+- `401 Unauthorized` para senha incorreta
+- `200 OK` para sucesso
+
+O frontend ja exibe `err.response?.data?.mensagem`, entao a mudanca de UX veio do backend.
+
+### Detalhe de meta de peso
+
+`Dashboard.jsx`, em `getMetaProgress`, continua sendo a fonte da regra visual de progresso das metas.
+
+Para peso:
+
+- se existe historico anterior acima do alvo e o peso atual chegou no alvo ou abaixo dele, a meta fica `concluido`
+- se existe historico anterior abaixo do alvo e o peso atual chegou no alvo ou acima dele, a meta fica `concluido`
+- se o usuario ja estava perto do alvo, a meta vira manutencao
+- o label visual fica simples, por exemplo `Meta: 75.0 kg`
+
+Exemplo real validado na conversa:
+
+- meta: `75.0 kg`
+- peso atual: `74.0 kg`
+- historico anterior acima de 75 kg
+- resultado esperado: meta concluida, progresso 100%
+
+### Validacoes executadas nessa atualizacao
+
+- `dotnet build Ritmo.Api\Ritmo.Api.csproj -o Ritmo.Api\obj\codex-validate /p:UseAppHost=false`: sucesso, 0 avisos, 0 erros.
+- `npm run build` em `frontend`: sucesso.
+
+Observacao:
+
+- O build padrao da solution pode falhar se a API estiver aberta segurando `Ritmo.Api.exe` ou `Ritmo.Api.dll`. Nesse caso, validar com output alternativo dentro de `obj` evita interferir na instancia em execucao.
+
 ## 2. Resumo executivo
 
 ### Fato
@@ -62,12 +115,14 @@ O produto ja tem fluxo real ponta a ponta:
 
 - cadastro de usuario
 - login com JWT
+- mensagens especificas para usuario inexistente e senha incorreta no login
 - hash de senha no backend
 - carregamento de dashboard autenticada
 - CRUD ou fluxo equivalente de registros diarios
 - upsert de registro diario por data
 - biometria historica com peso, altura e IMC calculado
 - metas por categoria
+- meta de peso com direcao inferida pelo historico
 - insights persistidos e marcacao como lido
 - configuracoes de perfil
 - atualizacao de perfil
@@ -139,6 +194,11 @@ Comandos que passaram na ultima varredura:
 - `dotnet build RitmoApi.sln`
 - `npm run build` dentro de `frontend`
 - `npm run lint` dentro de `frontend`
+
+Comandos que passaram na atualizacao de 08/05/2026:
+
+- `dotnet build Ritmo.Api\Ritmo.Api.csproj -o Ritmo.Api\obj\codex-validate /p:UseAppHost=false`
+- `npm run build` dentro de `frontend`
 
 Testes:
 
@@ -833,6 +893,31 @@ Arquivo: `frontend/src/api/apiClient.js`
 - Injeta `Authorization: Bearer <token>` em cada request.
 - Em 401, limpa sessao e redireciona para `/login`.
 
+### Respostas de login
+
+Arquivos:
+
+- `Ritmo.Api/Services/UsuarioService.cs`
+- `Ritmo.Api/Controllers/UsuariosController.cs`
+- `frontend/src/pages/Login.jsx`
+
+Fato:
+
+- `UsuarioService.Login` retorna `LoginResult`.
+- `LoginResult.Status` pode ser `Sucesso`, `UsuarioNaoEncontrado` ou `SenhaInvalida`.
+- `UsuariosController.Login` retorna `404` para usuario inexistente e `401` para senha incorreta.
+- `Login.jsx` consome a mensagem do backend por `err.response?.data?.mensagem`.
+
+Impacto:
+
+- Usuário que nao existe recebe orientacao para conferir o email ou se registrar.
+- Usuario existente com senha errada recebe feedback de senha incorreta.
+
+Trade-off:
+
+- A UX melhora, mas a API passa a revelar se determinado email existe.
+- Para producao publica, combinar com rate limiting, auditoria de tentativas e monitoramento de abuso.
+
 ### Riscos de seguranca atuais
 
 Fato:
@@ -1074,7 +1159,8 @@ Endpoints:
 - `POST /api/usuarios/login`
   - Anonymous.
   - Retorna token se credenciais corretas.
-  - Retorna `401 Unauthorized` se email/senha incorretos.
+  - Retorna `404 NotFound` se o email nao existir.
+  - Retorna `401 Unauthorized` se a senha estiver incorreta.
 
 - `PUT /api/usuarios/{id}`
   - Atualiza usuario completo incluindo senha.
@@ -1234,16 +1320,19 @@ Login:
 1. Usuario envia email e senha.
 2. Backend normaliza email.
 3. Busca usuario por email.
-4. Verifica senha.
-5. Se senha antiga em texto puro, regrava com hash.
-6. Retorna JWT e usuario.
-7. Front salva sessao e navega.
+4. Se nao encontrar usuario, retorna `404` com mensagem de conta nao encontrada.
+5. Verifica senha.
+6. Se senha estiver incorreta, retorna `401` com mensagem de senha incorreta.
+7. Se senha antiga em texto puro, regrava com hash.
+8. Retorna JWT e usuario.
+9. Front salva sessao e navega.
 
 Impacto:
 
 - Cadastro ja entra logado.
 - UX e simples.
 - Rehash legado reduz friccao de migracao.
+- Usuario recebe feedback mais especifico quando email nao existe ou senha esta errada.
 
 ## 19. Fluxo de carregamento da dashboard
 
@@ -1435,17 +1524,21 @@ Categorias e progresso no frontend:
 - `Produtividade`: media dos ultimos 7 dias
 - `Energia`: media dos ultimos 7 dias
 - `Treino`: contagem de dias com exercicio nos ultimos 7 dias
-- `Peso`: logica especial de aproximacao do alvo
+- `Peso`: logica especial por direcao historica, alvo e cruzamento da meta
 
 Meta de peso:
 
 - Ordena biometricas por data.
-- Pega baseline a partir de `DataInicio` da meta quando possivel.
-- Compara peso inicial, peso atual e peso alvo.
+- Pega baseline proximo ao inicio da meta quando possivel.
+- Tambem consulta pesos anteriores ao atual para nao depender apenas do baseline.
+- Compara peso inicial, maior/menor peso anterior, peso atual e peso alvo.
 - Funciona para:
   - perda de peso
   - ganho de peso
   - manutencao proxima do alvo
+- Se havia peso anterior acima do alvo e o peso atual chegou no alvo ou abaixo, status vira `concluido`.
+- Se havia peso anterior abaixo do alvo e o peso atual chegou no alvo ou acima, status vira `concluido`.
+- O label visual da meta fica simples, por exemplo `75.0 kg`, sem `ou mais` ou `ou menos`.
 
 Opiniao tecnica:
 
@@ -2910,6 +3003,12 @@ Se adicionar categoria nova:
 Risco:
 
 - Front e backend duplicam validacao de faixas. Se mudar em um e esquecer outro, UX quebra.
+- A regra de progresso de `Peso` esta no frontend e depende de historico. Ao alterar, testar pelo menos estes cenarios:
+  - usuario estava acima do alvo e ficou abaixo dele
+  - usuario estava abaixo do alvo e ficou acima dele
+  - usuario iniciou perto do alvo e precisa manter
+  - nao ha biometria suficiente
+- Evitar voltar com rotulos `kg ou mais` ou `kg ou menos` para peso, porque isso confundiu a leitura de meta como limite minimo/maximo.
 
 ## 55. Pontos de atencao ao mexer em biometria
 
@@ -2963,6 +3062,8 @@ Se adicionar refresh token:
 Risco:
 
 - Mudar autenticacao afeta todo app.
+- O login agora diferencia usuario inexistente de senha incorreta. Se a decisao de produto mudar para esconder existencia de emails, alterar `LoginResult`/`UsuariosController.Login` e revisar mensagens em `Login.jsx`.
+- Para producao, adicionar rate limiting antes de manter mensagens especificas em ambiente publico.
 
 ## 57. Principais decisoes tecnicas ja tomadas
 
@@ -3053,12 +3154,14 @@ O que esta solido:
 
 - autenticacao JWT
 - hash de senha PBKDF2
+- login com resultado semantico para usuario inexistente e senha incorreta
 - autorizacao por dono
 - validacoes de dominio
 - upsert de registro diario
 - upsert/consolidacao de biometria por dia
 - constraints unicas no banco
 - dashboard funcional com graficos, filtros e exportacao
+- metas de peso com conclusao por direcao historica
 
 O que esta pendente:
 

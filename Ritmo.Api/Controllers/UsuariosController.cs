@@ -62,10 +62,14 @@ public class UsuariosController : ControllerBase
     public async Task<ActionResult<AuthResponse>> Login(LoginRequest request)
     {
         var result = await _service.Login(request);
-        if (result == null)
-            return Unauthorized(new { mensagem = "Email ou senha incorretos." });
 
-        return Ok(result);
+        if (result.Status == LoginStatus.UsuarioNaoEncontrado)
+            return NotFound(new { mensagem = "Não encontramos uma conta com esse email. Confira o endereço ou registre-se." });
+
+        if (result.Status == LoginStatus.SenhaInvalida)
+            return Unauthorized(new { mensagem = "Senha incorreta." });
+
+        return Ok(result.AuthResponse);
     }
 
     [HttpPut("{id}")]
