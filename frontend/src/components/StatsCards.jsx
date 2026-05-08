@@ -1,6 +1,16 @@
 import { Scale, TrendingUp, Activity, Brain, Moon, Droplets } from 'lucide-react';
 
-export function StatsCards({ imc, imcMeta, pesoAtual, pesoAnterior, pesoIdeal, avgHumor, avgSono, avgAgua }) {
+export function StatsCards({ imc, imcMeta, pesoAtual, pesoAnterior, pesoIdeal, avgHumor, avgSono, avgAgua, metricWindowLabel = '' }) {
+  const metricWindowStyle = {
+    display: 'block',
+    marginTop: '0.25rem',
+    color: 'var(--text-main)',
+    fontSize: '0.75rem',
+    fontWeight: 600,
+    letterSpacing: '0.02em',
+    opacity: 0.72
+  };
+
   return (
     <div className="dashboard-grid animate-fade-up" style={{ marginBottom: '2.5rem', gridTemplateColumns: 'repeat(3, 1fr)' }}>
       
@@ -56,7 +66,10 @@ export function StatsCards({ imc, imcMeta, pesoAtual, pesoAnterior, pesoIdeal, a
       {/* Média de Humor */}
       <div className="glass-panel">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h3 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--text-main)' }}>Média de Humor</h3>
+          <div>
+            <h3 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--text-main)' }}>Média de Humor</h3>
+            {metricWindowLabel && <span style={metricWindowStyle}>{metricWindowLabel}</span>}
+          </div>
           <Brain size={24} color="var(--accent-purple)" />
         </div>
         <div className="stat-value" style={{ marginTop: '1rem' }}>{avgHumor} <span style={{fontSize: '1rem'}}>/ 5</span></div>
@@ -65,7 +78,10 @@ export function StatsCards({ imc, imcMeta, pesoAtual, pesoAnterior, pesoIdeal, a
       {/* Média de Sono */}
       <div className="glass-panel">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h3 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--text-main)' }}>Média de Sono</h3>
+          <div>
+            <h3 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--text-main)' }}>Média de Sono</h3>
+            {metricWindowLabel && <span style={metricWindowStyle}>{metricWindowLabel}</span>}
+          </div>
           <Moon size={24} color="var(--accent-cyan-dim)" />
         </div>
         <div className="stat-value" style={{ marginTop: '1rem' }}>{avgSono} <span style={{fontSize: '1rem'}}>h / noite</span></div>
@@ -74,7 +90,10 @@ export function StatsCards({ imc, imcMeta, pesoAtual, pesoAnterior, pesoIdeal, a
       {/* Hidratação */}
       <div className="glass-panel">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h3 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--text-main)' }}>Média de Hidratação</h3>
+          <div>
+            <h3 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--text-main)' }}>Média de Hidratação</h3>
+            {metricWindowLabel && <span style={metricWindowStyle}>{metricWindowLabel}</span>}
+          </div>
           <Droplets size={24} color="#3498db" />
         </div>
         <div className="stat-value" style={{ marginTop: '1rem' }}>{avgAgua} <span style={{fontSize: '1rem'}}>L / dia</span></div>

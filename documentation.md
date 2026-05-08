@@ -544,6 +544,8 @@ No dashboard:
 
 O panorama mostra cards e gráficos de visão geral.
 
+As médias de humor, sono, hidratação e o polígono de habilidades usam apenas os últimos 7 dias. Essa decisão evita que registros muito antigos distorçam a leitura atual do usuário. A tendência de curto prazo também usa o mesmo recorte, mantendo os dois gráficos da aba coerentes com os cards.
+
 No estado atual, essa aba também passou a ter cabeçalho próprio, mantendo consistência visual com as abas de metas e relatórios.
 
 ## 9.2. Análise

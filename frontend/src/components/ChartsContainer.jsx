@@ -57,6 +57,14 @@ const formatTooltipDate = (value) => {
   return normalizedValue;
 };
 
+const getChartTimestamp = (value) => {
+  const normalizedValue = String(value ?? '').split('T')[0];
+  const date = new Date(`${normalizedValue}T00:00:00`);
+  const time = date.getTime();
+
+  return Number.isNaN(time) ? 0 : time;
+};
+
 const tooltipSeriesConfig = {
   peso: { label: 'Peso', unit: ' kg' },
   sono: { label: 'Sono', unit: ' h' },
@@ -150,7 +158,8 @@ export function ChartsContainer({
   weightDataForChart,
   analysisHabitsSubtitle,
   analysisSleepSubtitle,
-  analysisWeightSubtitle
+  analysisWeightSubtitle,
+  panoramaWindowLabel = 'Últimos 7 dias'
 }) {
   const [chartRenderState, setChartRenderState] = useState({ type: null, ready: false });
   const [weightChartRef, weightChartWidth] = useElementWidth();
@@ -181,6 +190,8 @@ export function ChartsContainer({
       tick: { fill: 'var(--text-main)', fontSize: shouldShowAllTicks ? 10 : 10 }
     };
   };
+  const panoramaTrendData = [...(data ?? [])].sort((left, right) => getChartTimestamp(left.data) - getChartTimestamp(right.data));
+  const hasPanoramaData = panoramaTrendData.length > 0;
 
   useEffect(() => {
     const frame = requestAnimationFrame(() => {
@@ -200,35 +211,53 @@ export function ChartsContainer({
     return (
       <div className="dashboard-grid" style={{ gridTemplateColumns: '1fr 2fr', gap: '1.5rem', minWidth: 0 }}>
         <div className="glass-panel" style={{ height: '400px', display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 0 }}>
-          <h4 style={{ marginBottom: '0.5rem', color: 'var(--text-main)', width: '100%', textAlign: 'left' }}>Polígono de Habilidades</h4>
-          <ResponsiveContainer width="100%" height={320} minWidth={0}>
-            <RadarChart cx="50%" cy="50%" outerRadius="75%" data={radarData}>
-              <PolarGrid stroke="rgba(255,255,255,0.1)" />
-              <PolarAngleAxis dataKey="metric" tick={{ fill: 'var(--text-main)', fontSize: 12 }} />
-              <PolarRadiusAxis domain={[0, 5]} tick={false} axisLine={false} />
-              <Radar name="Suas Médias" dataKey="value" stroke="var(--accent-purple)" fill="var(--accent-purple)" fillOpacity={0.5} />
-              <RechartsTooltip contentStyle={{ backgroundColor: 'var(--bg-color-alt)', border: '1px solid var(--accent-purple)', borderRadius: '8px' }} />
-            </RadarChart>
-          </ResponsiveContainer>
+          <div style={{ width: '100%', marginBottom: '0.5rem' }}>
+            <h4 style={{ margin: 0, color: 'var(--text-main)', textAlign: 'left' }}>Polígono de Habilidades</h4>
+            <p className="chart-panel-subtitle">Leitura concentrada nos {panoramaWindowLabel.toLowerCase()}.</p>
+          </div>
+          {radarData?.length > 0 ? (
+            <ResponsiveContainer width="100%" height={300} minWidth={0}>
+              <RadarChart cx="50%" cy="50%" outerRadius="75%" data={radarData}>
+                <PolarGrid stroke="rgba(255,255,255,0.1)" />
+                <PolarAngleAxis dataKey="metric" tick={{ fill: 'var(--text-main)', fontSize: 12 }} />
+                <PolarRadiusAxis domain={[0, 5]} tick={false} axisLine={false} />
+                <Radar name="Suas Médias" dataKey="value" stroke="var(--accent-purple)" fill="var(--accent-purple)" fillOpacity={0.5} />
+                <RechartsTooltip contentStyle={{ backgroundColor: 'var(--bg-color-alt)', border: '1px solid var(--accent-purple)', borderRadius: '8px' }} />
+              </RadarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="chart-empty-state" style={{ minHeight: '300px' }}>
+              <strong>Sem registros recentes</strong>
+              <p>Cadastre pelo menos um dia nos últimos 7 dias para montar o polígono.</p>
+            </div>
+          )}
         </div>
         
         <div className="glass-panel" style={{ height: '400px', minWidth: 0 }}>
-          <h4 style={{ marginBottom: '1.5rem', color: 'var(--text-main)' }}>Tendência de Curto Prazo</h4>
-          <ResponsiveContainer width="100%" height={300} minWidth={0}>
-            <LineChart data={data.slice().reverse().slice(-7)}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-              <XAxis dataKey="data" stroke="var(--text-main)" fontSize={11} tickFormatter={formatAxisDate} />
-              <YAxis stroke="var(--text-main)" fontSize={11} />
-              <RechartsTooltip
-                labelFormatter={formatTooltipDate}
-                formatter={formatTooltipEntry}
-                contentStyle={{ backgroundColor: 'var(--bg-color-alt)', border: '1px solid var(--glass-border)', borderRadius: '8px' }}
-              />
-              <Line type="monotone" dataKey="humor" stroke="var(--accent-purple)" strokeWidth={2} dot={false} />
-              <Line type="monotone" dataKey="energia" stroke="var(--accent-cyan)" strokeWidth={2} dot={false} />
-              <Line type="monotone" dataKey="produtividade" stroke="#2ecc71" strokeWidth={2} dot={false} />
-            </LineChart>
-          </ResponsiveContainer>
+          <h4 style={{ marginBottom: '0.35rem', color: 'var(--text-main)' }}>Tendência de Curto Prazo</h4>
+          <p className="chart-panel-subtitle" style={{ marginBottom: '1.1rem' }}>Humor, energia e produtividade nos {panoramaWindowLabel.toLowerCase()}.</p>
+          {hasPanoramaData ? (
+            <ResponsiveContainer width="100%" height={280} minWidth={0}>
+              <LineChart data={panoramaTrendData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                <XAxis dataKey="data" stroke="var(--text-main)" fontSize={11} tickFormatter={formatAxisDate} />
+                <YAxis stroke="var(--text-main)" fontSize={11} />
+                <RechartsTooltip
+                  labelFormatter={formatTooltipDate}
+                  formatter={formatTooltipEntry}
+                  contentStyle={{ backgroundColor: 'var(--bg-color-alt)', border: '1px solid var(--glass-border)', borderRadius: '8px' }}
+                />
+                <Line type="monotone" dataKey="humor" stroke="var(--accent-purple)" strokeWidth={2} dot={false} />
+                <Line type="monotone" dataKey="energia" stroke="var(--accent-cyan)" strokeWidth={2} dot={false} />
+                <Line type="monotone" dataKey="produtividade" stroke="#2ecc71" strokeWidth={2} dot={false} />
+              </LineChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="chart-empty-state" style={{ minHeight: '280px' }}>
+              <strong>Sem tendência recente</strong>
+              <p>Registre novos dias para visualizar a evolução de curto prazo.</p>
+            </div>
+          )}
         </div>
       </div>
     );
