@@ -515,6 +515,8 @@ Por isso, a regra implementada é:
 - para metas novas de peso, usa a direção salva no cadastro: `reduzir`, `ganhar` ou `manter`
 - para metas novas de peso, salva o peso conhecido no momento da criação como `ValorInicial` para contexto histórico
 - a barra de progresso mostra a proximidade entre o peso atual e o alvo, não apenas a jornada desde a criação da meta
+- o marcador percentual da barra de peso é exibido acima da barra para não sobrepor os textos inferiores
+- a cor da barra muda por faixa de proximidade, indo de tons de alerta para ciano e verde quando o alvo está muito próximo ou concluído
 - calcula um peso de referência próximo ao início da meta
 - para metas antigas sem direção salva, analisa o histórico anterior ao peso atual para inferir se a meta é de redução ou de ganho
 - se o usuário começou acima do alvo, considera concluído quando o peso atual chega ao alvo ou fica abaixo dele
@@ -534,6 +536,7 @@ No dashboard:
 - o percentual mede quão próximo o peso atual está do alvo
 - a situação visual vira `concluido` quando o usuário cruza o alvo na direção esperada
 - o texto secundário explica se o objetivo era reduzir, ganhar peso ou manter perto do alvo
+- a cor visual ajuda o usuário a entender rapidamente se a meta está distante, em aproximação ou praticamente batida
 
 ## 9. Gráficos e dashboard
 

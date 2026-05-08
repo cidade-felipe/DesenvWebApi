@@ -51,6 +51,46 @@ Se for alterar arquivo existente:
 
 Observacao: `codex.md` foi criado como arquivo novo. Como nao havia versao anterior, nao houve backup de arquivo antigo.
 
+## 1.1. Regra operacional: ciclo completo de atualizacao do repositorio
+
+Sempre que alguma alteracao for feita no repositorio, perguntar ao usuario antes de finalizar:
+
+```text
+Quer que eu faca o ciclo completo de atualizacao do repo agora?
+```
+
+O ciclo completo solicitado pelo usuario neste projeto significa:
+
+1. Confirmar branch atual e estado do workspace:
+   - `git branch --show-current`
+   - `git status -sb`
+2. Validar o que foi alterado:
+   - revisar `git diff --stat`
+   - rodar validacoes relevantes, por exemplo backend build, frontend build e lint quando fizer sentido
+   - rodar `git diff --check`
+3. Na branch `city`:
+   - garantir que esta na `city`
+   - fazer `git add -A`
+   - criar commit com mensagem clara em portugues do Brasil
+   - enviar para `origin/city`
+4. Atualizar a `main`:
+   - trocar para `main`
+   - executar pull seguro com fast-forward: `git pull --ff-only origin main`
+   - fazer merge da `city` com commit explicito, preferindo `git merge --no-ff city -m "mensagem em portugues"`
+   - validar novamente quando a mudanca for relevante
+   - enviar para `origin/main`
+5. Voltar para `city`:
+   - `git checkout city`
+   - confirmar `git status -sb`
+   - confirmar `git branch -vv`
+
+Observacoes importantes:
+
+- Se o GitHub falhar com `SSL certificate problem: unable to get local issuer certificate`, usar `git -c http.sslBackend=schannel ...` no comando de rede.
+- Nao fazer esse ciclo automaticamente sem perguntar, a menos que o usuario tenha pedido explicitamente no turno atual.
+- Se houver mudancas do usuario ou arquivos inesperados, pausar e explicar antes de commitar.
+- Backups locais em `Backup/` nao devem entrar no Git.
+
 ## Atualizacao rapida de 08/05/2026
 
 ### Fato
@@ -62,6 +102,8 @@ Foram adicionadas duas correcoes importantes depois da criacao original deste ar
 - Metas novas de peso agora salvam `direcao`, com valores `reduzir`, `ganhar` ou `manter`, para nao depender apenas de inferencia.
 - Metas novas de peso tambem salvam `ValorInicial`, usando a biometria mais recente como contexto historico.
 - A barra de peso mostra proximidade do peso atual com o alvo. Exemplo: `75 kg` para meta `73 kg` ou `77 kg` deve aparecer quase cheio, porque ja esta perto.
+- A barra de peso usa marcador percentual acima da trilha e cor progressiva por proximidade: alerta quando longe, ciano quando perto e verde quando praticamente concluida.
+- Foi adicionada a regra operacional de sempre perguntar se o usuario quer executar o ciclo completo de atualizacao do repo apos mudancas.
 
 ### Detalhe de autenticacao
 
@@ -87,6 +129,8 @@ Para peso:
 
 - metas novas usam `meta.direcao`
 - metas novas podem ter `meta.valorInicial`, mas a barra usa proximidade entre peso atual e alvo
+- a UI de metas de peso usa `weight-progress-marker` acima da barra para evitar que a porcentagem caia sobre os textos inferiores
+- a cor da barra vem de `getProgressColor`, variando conforme o percentual de proximidade
 - se existe historico anterior acima do alvo e o peso atual chegou no alvo ou abaixo dele, a meta fica `concluido`
 - se existe historico anterior abaixo do alvo e o peso atual chegou no alvo ou acima dele, a meta fica `concluido`
 - se o usuario ja estava perto do alvo, a meta vira manutencao

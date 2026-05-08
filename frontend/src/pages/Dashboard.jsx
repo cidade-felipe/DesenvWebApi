@@ -1185,6 +1185,14 @@ export default function Dashboard() {
     return categoryLabels[categoria?.toLowerCase()] || categoria;
   };
 
+  const getProgressColor = (percent, status) => {
+    if (status === 'concluido' || percent >= 98) return '#2ecc71';
+    if (percent >= 90) return '#00f5ff';
+    if (percent >= 70) return '#f1c40f';
+    if (percent >= 40) return '#ff9f43';
+    return '#ff6b6b';
+  };
+
   const getMetaProgress = (meta) => {
     const hoje = new Date();
     const seteDiasAtras = new Date();
@@ -1745,7 +1753,7 @@ export default function Dashboard() {
                       const prog = getMetaProgress(meta);
                       const isTreino = meta.categoria.toLowerCase() === 'treino';
                       const isPeso = meta.categoria.toLowerCase() === 'peso';
-                      const color = prog.status === 'concluido' ? '#2ecc71' : prog.status === 'em_dia' ? 'var(--accent-cyan)' : '#f1c40f';
+                      const color = getProgressColor(prog.percent, prog.status);
                       
                       return (
                         <div key={meta.id} className="glass-panel goal-card">
@@ -1771,12 +1779,21 @@ export default function Dashboard() {
                             <div className={`progress-track${isPeso ? ' weight-progress-track' : ''}`}>
                               <div 
                                 className="progress-fill" 
-                                style={{ width: `${prog.visualPercent ?? prog.percent}%`, backgroundColor: color, color: color }}
+                                style={{
+                                  width: `${prog.visualPercent ?? prog.percent}%`,
+                                  backgroundColor: color,
+                                  color,
+                                  '--progress-color': color
+                                }}
                               ></div>
                               {isPeso ? (
                                 <span
                                   className="weight-progress-marker"
-                                  style={{ left: `${prog.visualPercent ?? prog.percent}%`, color }}
+                                  style={{
+                                    left: `clamp(22px, ${prog.visualPercent ?? prog.percent}%, calc(100% - 22px))`,
+                                    color,
+                                    '--progress-color': color
+                                  }}
                                 >
                                   {prog.percent}%
                                 </span>
