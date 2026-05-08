@@ -1860,6 +1860,48 @@ h1, h2, h3, h4 {
   box-shadow: 0 0 15px currentColor;
 }
 
+.weight-progress-track {
+  position: relative;
+  overflow: visible;
+  margin-top: 1.05rem;
+}
+
+.weight-progress-track::before {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  border-radius: inherit;
+  background: linear-gradient(90deg, rgba(0, 245, 255, 0.18), rgba(255, 255, 255, 0.03));
+  pointer-events: none;
+}
+
+.weight-progress-marker {
+  position: absolute;
+  top: 50%;
+  min-width: 34px;
+  padding-top: 1.1rem;
+  font-size: 0.68rem;
+  font-weight: 800;
+  line-height: 1;
+  text-align: center;
+  transform: translate(-50%, -50%);
+  text-shadow: 0 0 12px currentColor;
+  transition: left 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.weight-progress-marker::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 16px currentColor;
+  transform: translate(-50%, -50%);
+}
+
 .goal-badges {
   display: flex;
   gap: 0.5rem;

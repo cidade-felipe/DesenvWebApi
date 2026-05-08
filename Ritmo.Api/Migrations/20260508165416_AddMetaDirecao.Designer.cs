@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Ritmo.Api.Data;
@@ -11,9 +12,11 @@ using Ritmo.Api.Data;
 namespace Ritmo.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260508165416_AddMetaDirecao")]
+    partial class AddMetaDirecao
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -164,9 +167,6 @@ namespace Ritmo.Api.Migrations
                         .HasColumnType("integer");
 
                     b.Property<decimal>("ValorAlvo")
-                        .HasColumnType("numeric");
-
-                    b.Property<decimal?>("ValorInicial")
                         .HasColumnType("numeric");
 
                     b.HasKey("Id");

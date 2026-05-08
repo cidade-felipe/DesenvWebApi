@@ -59,6 +59,9 @@ Foram adicionadas duas correcoes importantes depois da criacao original deste ar
 
 - Login agora diferencia usuario inexistente de senha incorreta.
 - Meta de peso agora usa historico para inferir reducao, ganho ou manutencao, sem mostrar `kg ou mais` ou `kg ou menos` no rotulo visual.
+- Metas novas de peso agora salvam `direcao`, com valores `reduzir`, `ganhar` ou `manter`, para nao depender apenas de inferencia.
+- Metas novas de peso tambem salvam `ValorInicial`, usando a biometria mais recente como contexto historico.
+- A barra de peso mostra proximidade do peso atual com o alvo. Exemplo: `75 kg` para meta `73 kg` ou `77 kg` deve aparecer quase cheio, porque ja esta perto.
 
 ### Detalhe de autenticacao
 
@@ -82,10 +85,13 @@ O frontend ja exibe `err.response?.data?.mensagem`, entao a mudanca de UX veio d
 
 Para peso:
 
+- metas novas usam `meta.direcao`
+- metas novas podem ter `meta.valorInicial`, mas a barra usa proximidade entre peso atual e alvo
 - se existe historico anterior acima do alvo e o peso atual chegou no alvo ou abaixo dele, a meta fica `concluido`
 - se existe historico anterior abaixo do alvo e o peso atual chegou no alvo ou acima dele, a meta fica `concluido`
 - se o usuario ja estava perto do alvo, a meta vira manutencao
 - o label visual fica simples, por exemplo `Meta: 75.0 kg`
+- metas antigas sem `direcao` continuam usando inferencia pelo historico como fallback
 
 Exemplo real validado na conversa:
 
@@ -1068,6 +1074,8 @@ Campos:
 - `UsuarioId`: maior que zero
 - `Categoria`: obrigatoria, regex de categorias atuais
 - `ValorAlvo`
+- `Direcao`: opcional no DTO geral, obrigatoria para `Peso` em novas criacoes, valores `reduzir`, `ganhar` ou `manter`
+- `ValorInicial`: opcional, usado principalmente para persistir o peso inicial de uma meta de peso
 - `Descricao`: max 300
 - `DataInicio`: obrigatoria
 - `DataFim`: opcional
@@ -1529,6 +1537,8 @@ Categorias e progresso no frontend:
 Meta de peso:
 
 - Ordena biometricas por data.
+- Usa `Direcao` salva quando existir.
+- Mantem `ValorInicial` salvo quando existir, mas o percentual visual usa proximidade atual com o alvo.
 - Pega baseline proximo ao inicio da meta quando possivel.
 - Tambem consulta pesos anteriores ao atual para nao depender apenas do baseline.
 - Compara peso inicial, maior/menor peso anterior, peso atual e peso alvo.
@@ -1539,6 +1549,7 @@ Meta de peso:
 - Se havia peso anterior acima do alvo e o peso atual chegou no alvo ou abaixo, status vira `concluido`.
 - Se havia peso anterior abaixo do alvo e o peso atual chegou no alvo ou acima, status vira `concluido`.
 - O label visual da meta fica simples, por exemplo `75.0 kg`, sem `ou mais` ou `ou menos`.
+- Para metas antigas sem `Direcao`, o dashboard infere a direcao pelo historico.
 
 Opiniao tecnica:
 

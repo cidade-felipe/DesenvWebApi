@@ -84,11 +84,19 @@ Fato: esse arquivo concentra bastante regra de produto. Para evoluções maiores
 
 Peso não é tratado como “quanto maior, melhor”.
 
-A regra atual usa o histórico para inferir intenção:
+No cadastro de uma meta de peso, a interface pede o objetivo:
+
+- reduzir até o peso alvo
+- ganhar até o peso alvo
+- manter perto do peso alvo
+
+A regra atual usa essa direção salva para calcular o progresso. Para metas antigas sem direção, o dashboard ainda usa o histórico como fallback:
 
 - se o usuário estava acima do alvo, a meta é redução
 - se o usuário estava abaixo do alvo, a meta é ganho
 - se já estava perto do alvo, a meta é manutenção
+
+Metas novas de peso também recebem um valor inicial salvo pelo backend, baseado na biometria mais recente do usuário. A barra, porém, mostra proximidade do peso atual em relação ao alvo. Assim, se o usuário está em `75 kg` e cria meta para `73 kg` ou `77 kg`, a barra já aparece quase cheia porque ele já está perto da meta.
 
 Exemplo:
 

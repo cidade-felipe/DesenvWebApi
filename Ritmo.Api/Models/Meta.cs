@@ -25,6 +25,13 @@ public class Meta
     // Valor alvo da meta (ex: 7.5 para 7h30 de sono, 3 para humor ≥ 3).
     public decimal ValorAlvo { get; set; }
 
+    // Direção da meta para categorias em que o sentido importa, especialmente Peso.
+    // Valores esperados para Peso: "reduzir", "ganhar" ou "manter".
+    public string? Direcao { get; set; }
+
+    // Valor usado como ponto de partida da meta, principalmente peso no momento da criação.
+    public decimal? ValorInicial { get; set; }
+
     // Descrição livre da meta (opcional).
     // Exemplos: "Dormir cedo para melhorar o humor", "Estudar todos os dias"
     public string? Descricao { get; set; }

@@ -5,6 +5,7 @@ import apiClient from '../api/apiClient';
 const getInitialMetaData = () => ({
   categoria: 'Sono',
   valorAlvo: '',
+  direcao: '',
   descricao: '',
   dataInicio: new Date().toISOString().split('T')[0],
   ativa: true
@@ -43,7 +44,8 @@ export function MetaFormModal({ isOpen, onClose, onSave, onStatusChange, user })
     setMetaData((currentMetaData) => ({
       ...currentMetaData,
       categoria: nextCategoria,
-      valorAlvo: ''
+      valorAlvo: '',
+      direcao: ''
     }));
     setError('');
   };
@@ -65,13 +67,19 @@ export function MetaFormModal({ isOpen, onClose, onSave, onStatusChange, user })
       return;
     }
 
+    if (metaData.categoria === 'Peso' && !metaData.direcao) {
+      setError('Informe se a meta de peso é para reduzir, ganhar ou manter.');
+      return;
+    }
+
     try {
       setIsSaving(true);
       setError('');
       const payload = {
         ...metaData,
         usuarioId: user.id,
-        valorAlvo: val
+        valorAlvo: val,
+        direcao: metaData.categoria === 'Peso' ? metaData.direcao : null
       };
       const novaMeta = await apiClient.post('/metas', payload);
       await onSave?.(novaMeta);
@@ -134,6 +142,26 @@ export function MetaFormModal({ isOpen, onClose, onSave, onStatusChange, user })
               placeholder={`Min: ${config.min} - Max: ${config.max}`}
             />
           </div>
+
+          {metaData.categoria === 'Peso' ? (
+            <div>
+              <label className="input-label">Objetivo do peso</label>
+              <select
+                className="input-field"
+                value={metaData.direcao}
+                onChange={(e) => setMetaData({ ...metaData, direcao: e.target.value })}
+                style={{ background: 'rgba(31, 40, 51, 0.9)' }}
+              >
+                <option value="">Selecione o objetivo</option>
+                <option value="reduzir">Reduzir até o peso alvo</option>
+                <option value="ganhar">Ganhar até o peso alvo</option>
+                <option value="manter">Manter perto do peso alvo</option>
+              </select>
+              <p style={{ margin: '0.45rem 0 0', color: 'var(--text-soft)', fontSize: '0.82rem' }}>
+                Isso define como o progresso será calculado. Ex: ganhar peso só conclui ao chegar no alvo ou passar dele.
+              </p>
+            </div>
+          ) : null}
 
           <div>
             <label className="input-label">Por que esta meta é importante?</label>

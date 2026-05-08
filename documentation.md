@@ -217,6 +217,8 @@ classDiagram
         +int UsuarioId
         +string Categoria
         +decimal ValorAlvo
+        +string Direcao
+        +decimal ValorInicial
         +string Descricao
         +date DataInicio
         +date DataFim
@@ -317,6 +319,8 @@ O IMC não é persistido como coluna principal de negócio. Ele é calculado na 
 - `UsuarioId`
 - `Categoria`
 - `ValorAlvo`
+- `Direcao`
+- `ValorInicial`
 - `Descricao`
 - `DataInicio`
 - `DataFim`
@@ -508,8 +512,11 @@ Meta de peso não pode usar a lógica simples de “quanto maior, melhor”.
 
 Por isso, a regra implementada é:
 
+- para metas novas de peso, usa a direção salva no cadastro: `reduzir`, `ganhar` ou `manter`
+- para metas novas de peso, salva o peso conhecido no momento da criação como `ValorInicial` para contexto histórico
+- a barra de progresso mostra a proximidade entre o peso atual e o alvo, não apenas a jornada desde a criação da meta
 - calcula um peso de referência próximo ao início da meta
-- analisa o histórico anterior ao peso atual para inferir se a meta é de redução ou de ganho
+- para metas antigas sem direção salva, analisa o histórico anterior ao peso atual para inferir se a meta é de redução ou de ganho
 - se o usuário começou acima do alvo, considera concluído quando o peso atual chega ao alvo ou fica abaixo dele
 - se o usuário começou abaixo do alvo, considera concluído quando o peso atual chega ao alvo ou fica acima dele
 - se o usuário começou muito perto do alvo, trata como manutenção dentro da faixa de tolerância
@@ -524,7 +531,7 @@ Essa abordagem é melhor porque funciona para:
 No dashboard:
 
 - o card mostra `Peso atual`
-- o percentual mede o caminho percorrido na direção correta
+- o percentual mede quão próximo o peso atual está do alvo
 - a situação visual vira `concluido` quando o usuário cruza o alvo na direção esperada
 - o texto secundário explica se o objetivo era reduzir, ganhar peso ou manter perto do alvo
 
