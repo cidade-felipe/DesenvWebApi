@@ -9,10 +9,12 @@ namespace Ritmo.Api.Services;
 public class BiometriaService
 {
     private readonly AppDbContext _context;
+    private readonly InsightNotificationService _insightNotificationService;
 
-    public BiometriaService(AppDbContext context)
+    public BiometriaService(AppDbContext context, InsightNotificationService insightNotificationService)
     {
         _context = context;
+        _insightNotificationService = insightNotificationService;
     }
 
     public async Task<IEnumerable<MedidaBiometricaResponse>> ListarPorUsuario(int usuarioId)
@@ -73,6 +75,7 @@ public class BiometriaService
             }
 
             await _context.SaveChangesAsync();
+            await _insightNotificationService.GerarAvisosDeProgressoAsync(dto.UsuarioId);
 
             return MedidaBiometricaResponse.FromEntity(medidaExistente, usuario.DataNascimento);
         }
@@ -80,6 +83,7 @@ public class BiometriaService
         var novaMedida = dto.ToEntity();
         _context.MedidasBiometricas.Add(novaMedida);
         await _context.SaveChangesAsync();
+        await _insightNotificationService.GerarAvisosDeProgressoAsync(dto.UsuarioId);
 
         return MedidaBiometricaResponse.FromEntity(novaMedida, usuario.DataNascimento);
     }

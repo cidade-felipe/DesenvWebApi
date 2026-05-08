@@ -9,10 +9,12 @@ namespace Ritmo.Api.Services;
 public class RegistroDiarioService
 {
     private readonly AppDbContext _context;
+    private readonly InsightNotificationService _insightNotificationService;
 
-    public RegistroDiarioService(AppDbContext context)
+    public RegistroDiarioService(AppDbContext context, InsightNotificationService insightNotificationService)
     {
         _context = context;
+        _insightNotificationService = insightNotificationService;
     }
 
     public async Task<IEnumerable<RegistroDiarioResponse>> ListarTodos()
@@ -53,12 +55,14 @@ public class RegistroDiarioService
             dto.UpdateEntity(registroExistente);
             _context.RegistrosDiarios.Update(registroExistente);
             await _context.SaveChangesAsync();
+            await _insightNotificationService.GerarAvisosDeProgressoAsync(dto.UsuarioId);
             return RegistroDiarioResponse.FromEntity(registroExistente);
         }
 
         var novoRegistro = dto.ToEntity();
         _context.RegistrosDiarios.Add(novoRegistro);
         await _context.SaveChangesAsync();
+        await _insightNotificationService.GerarAvisosDeProgressoAsync(dto.UsuarioId);
 
         return RegistroDiarioResponse.FromEntity(novoRegistro);
     }
@@ -72,6 +76,7 @@ public class RegistroDiarioService
 
         dto.UpdateEntity(registroExistente);
         await _context.SaveChangesAsync();
+        await _insightNotificationService.GerarAvisosDeProgressoAsync(dto.UsuarioId);
         return true;
     }
 

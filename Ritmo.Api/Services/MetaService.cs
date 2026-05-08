@@ -9,10 +9,12 @@ namespace Ritmo.Api.Services;
 public class MetaService
 {
     private readonly AppDbContext _context;
+    private readonly InsightNotificationService _insightNotificationService;
 
-    public MetaService(AppDbContext context)
+    public MetaService(AppDbContext context, InsightNotificationService insightNotificationService)
     {
         _context = context;
+        _insightNotificationService = insightNotificationService;
     }
 
     public async Task<IEnumerable<MetaDTO>> ListarPorUsuario(int usuarioId)
@@ -57,6 +59,7 @@ public class MetaService
 
         _context.Metas.Add(novaMeta);
         await _context.SaveChangesAsync();
+        await _insightNotificationService.GerarAvisosDeProgressoAsync(dto.UsuarioId);
 
         dto.Id = novaMeta.Id;
         dto.Direcao = novaMeta.Direcao;
@@ -82,6 +85,7 @@ public class MetaService
         metaExistente.Ativa = dto.Ativa;
 
         await _context.SaveChangesAsync();
+        await _insightNotificationService.GerarAvisosDeProgressoAsync(dto.UsuarioId);
         return true;
     }
 

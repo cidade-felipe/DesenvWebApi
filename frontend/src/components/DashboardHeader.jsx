@@ -29,6 +29,11 @@ export function DashboardHeader({ user, config, insights, onMarkAsRead }) {
     clearAuthSession();
     navigate('/login');
   };
+  const getInsightClassName = (nivel) => {
+    const normalizedLevel = String(nivel || 'info').trim().toLowerCase();
+
+    return `insight-item insight-item-${normalizedLevel}`;
+  };
 
   return (
     <nav className="top-nav animate-fade-up">
@@ -65,7 +70,7 @@ export function DashboardHeader({ user, config, insights, onMarkAsRead }) {
                   </p>
                 ) : (
                   insights.map(insight => (
-                    <div key={insight.id} className="insight-item">
+                    <div key={insight.id} className={getInsightClassName(insight.nivel)}>
                       <div style={{ flex: 1 }}>
                         <span style={{ display: 'block', color: 'var(--accent-cyan)', fontSize: '0.75rem', fontWeight: 600, marginBottom: '2px' }}>
                           {insight.categoria.toUpperCase()}

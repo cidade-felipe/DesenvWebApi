@@ -1619,18 +1619,22 @@ Backend:
 - Cria insight via POST.
 - Marca lido via PATCH.
 - Deleta via DELETE.
+- `InsightNotificationService` gera avisos automaticos iniciais apos salvar registro diario, biometria ou meta.
 
 Fato:
 
-- Nao ha motor automatico consolidado de insights no backend.
+- Existe um motor automatico inicial de insights no backend.
+- O motor atual cobre metas atingidas, metas de peso atingidas e peso dentro da faixa saudavel por IMC.
+- A geracao respeita `ReceberNotificacoes`.
+- A mesma mensagem nao e duplicada para o mesmo usuario dentro do mesmo dia.
 
 Inferencia:
 
-- O modelo e controller foram preparados para insights automaticos, mas a inteligencia analitica ainda esta pendente.
+- O motor ainda nao e uma inteligencia analitica completa de correlacoes e tendencias complexas.
 
 Opiniao tecnica:
 
-Esse e um bom ponto para evoluir o produto. Insights automaticos podem aumentar valor percebido porque transformam dados crus em recomendacao. Mas precisam ser feitos com cuidado para nao parecerem aleatorios ou clinicamente irresponsaveis.
+Esse e um bom ponto para evoluir o produto. Insights automaticos aumentam valor percebido porque transformam dados crus em feedback acionavel. Mas precisam continuar conservadores para nao parecerem aleatorios ou clinicamente irresponsaveis.
 
 ## 24. Fluxo de configuracoes e conta
 
@@ -2031,7 +2035,7 @@ Contem:
 Pontos bons:
 
 - Documenta explicitamente integridade por dia.
-- Reconhece que insights automaticos nao estao completos.
+- Reconhece que insights automaticos existem em versao inicial, mas ainda nao sao motor analitico maduro.
 
 ### documentation.md
 
@@ -2189,15 +2193,15 @@ Impacto:
 
 - Risco de brute force.
 
-### 6. Insights ainda nao sao motor analitico
+### 6. Insights ainda nao sao motor analitico maduro
 
 Fato:
 
-- Existe CRUD, nao motor maduro.
+- Existe CRUD e geracao automatica inicial para metas e peso.
 
 Impacto:
 
-- Produto promete analise, mas insight automatico ainda nao entrega todo potencial.
+- Produto ganha feedback automatico util, mas insight automatico ainda nao entrega todo potencial analitico de correlacoes, tendencias e explicacoes com amostra.
 
 ### 7. ConfiguracaoPerfil subutilizada
 
@@ -2772,6 +2776,7 @@ Assumir com cuidado:
 Documentacao atual ja corrige a expectativa:
 
 - Existe estrutura de insights.
+- Existe geracao automatica inicial para metas atingidas e peso.
 - Motor automatico maduro nao esta completo.
 
 ### Frontend README
@@ -2788,7 +2793,7 @@ Alguns comentarios nos models mencionam coisas antigas:
 
 - `Usuario.Senha` fala em substituir por hash/BCrypt, mas hash PBKDF2 ja existe.
 - `Meta.Categoria` comenta `Estudo`, mas categoria atual nao aceita `Estudo`.
-- `Insight` comenta que backend calcula e persiste automaticamente, mas isso ainda nao esta consolidado.
+- `Insight` agora tem geracao automatica inicial, mas o comentario ainda pode ser refinado para deixar claro que nao e motor analitico completo.
 
 Opiniao tecnica:
 
@@ -3241,7 +3246,7 @@ O que esta pendente:
 - rate limiting
 - observabilidade
 - CI/CD
-- motor automatico maduro de insights
+- evoluir o motor automatico inicial de insights para analises mais maduras
 - reduzir acoplamento do dashboard
 - configuracao por ambiente no frontend
 

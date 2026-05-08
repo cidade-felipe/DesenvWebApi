@@ -105,6 +105,7 @@ builder.Services.AddScoped<Ritmo.Api.Services.RegistroDiarioService>();
 builder.Services.AddScoped<Ritmo.Api.Services.UsuarioService>();
 builder.Services.AddScoped<Ritmo.Api.Services.MetaService>();
 builder.Services.AddScoped<Ritmo.Api.Services.BiometriaService>();
+builder.Services.AddScoped<Ritmo.Api.Services.InsightNotificationService>();
 builder.Services.AddScoped<JwtTokenService>();
 
 // Adiciona o Swagger/OpenAPI — interface web para testar a API.

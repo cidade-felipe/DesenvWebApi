@@ -583,7 +583,22 @@ Os gráficos da aba de análise não trabalham mais apenas com registros diário
 - peso usa o último valor conhecido em cada período
 - isso melhora leitura histórica quando o volume de dados cresce
 
-## 9.3. Relatórios
+## 9.3. Notificações e insights
+
+O sino do dashboard exibe insights não lidos persistidos no backend.
+
+A geração automática inicial acontece quando o usuário salva registro diário, biometria ou meta. O backend avalia:
+
+- metas de hábito atingidas pela média dos últimos 7 dias
+- meta de treino atingida pela contagem de dias com exercício nos últimos 7 dias
+- meta de peso atingida conforme direção da meta: reduzir, ganhar ou manter
+- peso dentro da faixa saudável pelo IMC
+
+O sistema respeita `ReceberNotificacoes`. Se a preferência estiver desativada, novos insights automáticos não são gerados.
+
+Para evitar spam, o backend não duplica a mesma mensagem para o mesmo usuário dentro do mesmo dia.
+
+## 9.4. Relatórios
 
 A aba de relatórios agora combina visualização tabular, resumo agregado e filtros mais ricos.
 
@@ -608,7 +623,7 @@ O dashboard permite exportar:
 - CSV
 - Excel
 
-## 9.4. Navegação desktop da dashboard
+## 9.5. Navegação desktop da dashboard
 
 No desktop, a dashboard usa dois modos visuais para navegação entre abas:
 
