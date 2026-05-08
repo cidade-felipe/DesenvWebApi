@@ -13,6 +13,26 @@ export function useDashboardData() {
   const [user, setUser] = useState(null);
   const [biometria, setBiometria] = useState([]);
 
+  const refreshInsights = useCallback(async () => {
+    const usuarioLogado = getLoggedUser();
+    if (!usuarioLogado) return [];
+
+    try {
+      const insightsFetch = await apiClient.get(`/insights/usuario/${usuarioLogado.id}?apenasNaoLidos=true`);
+      setInsights(insightsFetch);
+      return insightsFetch;
+    } catch (err) {
+      if (err.response?.status === 401 || err.response?.status === 403) {
+        clearAuthSession();
+        navigate('/login');
+        return [];
+      }
+
+      console.error("Falha ao atualizar insights:", err);
+      return [];
+    }
+  }, [navigate]);
+
   const loadDashboard = useCallback(async () => {
     const usuarioLogado = getLoggedUser();
     if (!usuarioLogado) return navigate('/login');
@@ -71,6 +91,7 @@ export function useDashboardData() {
     metas,
     loadDashboard,
     handleMarcarInsightLido,
+    refreshInsights,
     setRegistros,
     setBiometria,
     setInsights,

@@ -307,4 +307,6 @@ Ele está acima de um protótipo vazio, mas ainda abaixo de um sistema pronto pa
 
 ## Observação sobre insights
 
-O sistema possui entidade, endpoints e interface para insights, mas a geração automática ainda não está consolidada como motor analítico completo no backend. A documentação anterior dava essa funcionalidade como pronta, o que hoje seria impreciso.
+O sistema possui entidade, endpoints, interface no sino e geração automática inicial de insights. Hoje o backend cria avisos para metas atingidas, metas de peso concluídas e peso dentro da faixa saudável pelo IMC, respeitando a preferência `ReceberNotificacoes`.
+
+Ainda não é um motor analítico completo de correlações avançadas. A evolução natural é ampliar os insights com tendências, tamanho da amostra e explicações mais contextuais.

@@ -47,7 +47,7 @@ const getTabsDockMotionProfile = (scrollVelocity = 0) => {
 export default function Dashboard() {
   const {
     loading, registros, config, insights, user, biometria, metas,
-    handleMarcarInsightLido, setRegistros, setBiometria, setMetas, setUser
+    handleMarcarInsightLido, refreshInsights, setRegistros, setBiometria, setMetas, setUser
   } = useDashboardData();
 
   const [activeTab, setActiveTab] = useState('panorama'); // 'panorama', 'analise', 'relatorios'
@@ -933,6 +933,7 @@ export default function Dashboard() {
         removeBiometriaState(biometriaDoDia.id);
       }
 
+      await refreshInsights();
       setIsModalOpen(false);
       setEditandoId(null);
       setFormData(getInitialFormData());
@@ -1853,8 +1854,9 @@ export default function Dashboard() {
       <MetaFormModal 
         isOpen={isMetaModalOpen} 
         onClose={() => setIsMetaModalOpen(false)} 
-        onSave={(novaMeta) => {
+        onSave={async (novaMeta) => {
           setMetas((currentMetas) => [novaMeta, ...currentMetas]);
+          await refreshInsights();
         }}
         onStatusChange={(nextNotice) => setNotice({ ...nextNotice, id: Date.now() })}
         user={user} 

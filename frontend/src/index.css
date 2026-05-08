@@ -1176,6 +1176,22 @@ h1, h2, h3, h4 {
   background: rgba(0,0,0,0.4);
 }
 
+.insight-item-positivo {
+  border-left-color: #2ecc71;
+  background:
+    linear-gradient(90deg, rgba(46, 204, 113, 0.14), rgba(0, 0, 0, 0.18));
+}
+
+.insight-item-atencao {
+  border-left-color: #f1c40f;
+  background:
+    linear-gradient(90deg, rgba(241, 196, 15, 0.14), rgba(0, 0, 0, 0.18));
+}
+
+.insight-item-info {
+  border-left-color: var(--accent-cyan);
+}
+
 .insight-close-btn {
   background: none;
   border: none;
