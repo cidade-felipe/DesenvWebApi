@@ -73,7 +73,7 @@ Ele coordena:
 - carregamento de registros, metas, biometria, insights e perfil
 - registro diário
 - biometria opcional por dia
-- gráficos de panorama e análise
+- gráficos de panorama, agora calculados sobre os últimos 7 dias, e análise
 - metas por categoria
 - relatórios com filtros e exportação
 - configurações de perfil, troca de senha e exclusão de conta

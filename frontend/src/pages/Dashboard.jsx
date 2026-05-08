@@ -499,6 +499,16 @@ export default function Dashboard() {
 
     return matchesStart && matchesEnd;
   });
+  const panoramaWindowLabel = 'Últimos 7 dias';
+  const panoramaDateRange = {
+    effectiveStart: getPeriodStartDate('7d'),
+    effectiveEnd: toLocalDate(todayReportDate)
+  };
+  const panoramaRegistros = filterItemsByDateRange(
+    registros,
+    panoramaDateRange,
+    (registro) => toLocalDate(registro.data)
+  ).sort((a, b) => toLocalDate(a.data) - toLocalDate(b.data));
   const stripTrailingDot = (value) => value.replace('.', '');
   const formatMonthShort = (date) => stripTrailingDot(date.toLocaleDateString('pt-BR', { month: 'short' }));
   const addDays = (date, days) => {
@@ -1059,9 +1069,9 @@ export default function Dashboard() {
     label: biometria.length > 0 && imcAtual ? biometria[0].imcClassificacao : 'Aguardando Dados',
     color: biometria.length > 0 && imcAtual ? biometria[0].imcCor : 'gray'
   };
-  const avgHumor = registros.length > 0 ? (registros.reduce((acc, r) => acc + r.humor, 0) / registros.length).toFixed(1) : '0';
-  const avgAgua = registros.length > 0 ? (registros.reduce((acc, r) => acc + r.agua, 0) / registros.length).toFixed(1) : '0';
-  const avgSono = registros.length > 0 ? (registros.reduce((acc, r) => acc + r.sono, 0) / registros.length).toFixed(1) : '0';
+  const avgHumor = panoramaRegistros.length > 0 ? (panoramaRegistros.reduce((acc, r) => acc + r.humor, 0) / panoramaRegistros.length).toFixed(1) : '0';
+  const avgAgua = panoramaRegistros.length > 0 ? (panoramaRegistros.reduce((acc, r) => acc + r.agua, 0) / panoramaRegistros.length).toFixed(1) : '0';
+  const avgSono = panoramaRegistros.length > 0 ? (panoramaRegistros.reduce((acc, r) => acc + r.sono, 0) / panoramaRegistros.length).toFixed(1) : '0';
 
   // Faixa de peso ideal: IMC saudável (18.5 a 24.9) aplicado à altura atual
   const calcPesoIdeal = () => {
@@ -1075,12 +1085,15 @@ export default function Dashboard() {
   };
   const pesoIdeal = calcPesoIdeal();
 
-  const radarData = registros.length > 0 ? [
+  const radarData = panoramaRegistros.length > 0 ? [
     { metric: 'Humor', value: Number(avgHumor) },
-    { metric: 'Energia', value: Number((registros.reduce((acc, r) => acc + r.energia, 0) / registros.length).toFixed(1)) },
-    { metric: 'Produtividade', value: Number((registros.reduce((acc, r) => acc + r.produtividade, 0) / registros.length).toFixed(1)) },
-    { metric: 'Ação Física', value: Number(((registros.filter(r => r.exercicio).length / registros.length) * 5).toFixed(1)) }
+    { metric: 'Energia', value: Number((panoramaRegistros.reduce((acc, r) => acc + r.energia, 0) / panoramaRegistros.length).toFixed(1)) },
+    { metric: 'Produtividade', value: Number((panoramaRegistros.reduce((acc, r) => acc + r.produtividade, 0) / panoramaRegistros.length).toFixed(1)) },
+    { metric: 'Ação Física', value: Number(((panoramaRegistros.filter(r => r.exercicio).length / panoramaRegistros.length) * 5).toFixed(1)) }
   ] : [];
+  const panoramaScopeDescription = panoramaRegistros.length > 0
+    ? `Médias e gráficos calculados com ${panoramaRegistros.length} registro${panoramaRegistros.length === 1 ? '' : 's'} dos últimos 7 dias.`
+    : 'Sem registros nos últimos 7 dias. Cadastre um novo dia para atualizar este panorama.';
   const analysisRecords = filterItemsByDateRange(registros, analysisDateRange, (registro) => toLocalDate(registro.data));
   const analysisBiometria = filterItemsByDateRange(biometria, analysisDateRange, (registro) => toLocalDate(registro.data));
   const analysisTimelineEntries = [...analysisRecords, ...analysisBiometria];
@@ -1431,10 +1444,13 @@ export default function Dashboard() {
             {activeTab === 'panorama' && (
               <div className="animate-fade-up">
                 <div className="chart-header">
-                  <h3 style={{ color: 'var(--text-light)' }}>Panorama</h3>
+                  <div>
+                    <h3 style={{ color: 'var(--text-light)', marginBottom: 0 }}>Panorama</h3>
+                    <p className="chart-panel-subtitle">{panoramaScopeDescription}</p>
+                  </div>
                 </div>
-                <StatsCards imc={imcAtual} imcMeta={imcMeta} pesoAtual={biometria[0]?.peso} pesoAnterior={biometria[1]?.peso} pesoIdeal={pesoIdeal} avgHumor={avgHumor} avgSono={avgSono} avgAgua={avgAgua} />
-                <ChartsContainer type="panorama" data={registros} radarData={radarData} />
+                <StatsCards imc={imcAtual} imcMeta={imcMeta} pesoAtual={biometria[0]?.peso} pesoAnterior={biometria[1]?.peso} pesoIdeal={pesoIdeal} avgHumor={avgHumor} avgSono={avgSono} avgAgua={avgAgua} metricWindowLabel={panoramaWindowLabel} />
+                <ChartsContainer type="panorama" data={panoramaRegistros} radarData={radarData} panoramaWindowLabel={panoramaWindowLabel} />
               </div>
             )}
 

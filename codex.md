@@ -1800,6 +1800,15 @@ Abas:
 - `relatorios`
 - `configuracoes`
 
+Panorama:
+
+- Usa `panoramaRegistros`, uma janela movel de 7 dias encerrada no dia atual.
+- Cards de humor, sono e hidratacao usam essa janela recente, nao o historico completo.
+- Radar de habilidades usa a mesma base de 7 dias.
+- Tendencia de curto prazo recebe a mesma base, ordenada por data crescente.
+- IMC, peso registrado e faixa de peso ideal continuam sendo leitura de estado atual, nao media de 7 dias.
+- Se nao houver registro nos ultimos 7 dias, a interface mostra empty state nos graficos e zera as medias recentes.
+
 ### Opiniao tecnica
 
 Esse arquivo entrega muito valor, mas virou o maior risco de manutencao. Um bug em transformacao de datas pode afetar graficos, relatorios, exportacao e metas ao mesmo tempo.
@@ -1920,8 +1929,8 @@ Responsabilidades:
 
 Graficos:
 
-- Radar de habilidades no panorama
-- Linha de tendencia de curto prazo
+- Radar de habilidades no panorama, usando somente `panoramaRegistros`
+- Linha de tendencia de curto prazo, usando somente `panoramaRegistros`
 - Area de peso por periodo
 - ComposedChart de humor/energia/produtividade/bem-estar
 - Area de sono por periodo
