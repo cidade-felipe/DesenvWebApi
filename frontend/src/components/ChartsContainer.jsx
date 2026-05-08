@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, AreaChart, Area,
-  Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ComposedChart
+  Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis
 } from 'recharts';
 
 const formatAxisDate = (value) => {
@@ -103,6 +103,31 @@ const formatTooltipSeriesLabel = (name) => {
   return normalizedName.charAt(0).toUpperCase() + normalizedName.slice(1);
 };
 
+const wellbeingSeries = [
+  { key: 'humor', label: 'Humor', color: 'var(--accent-purple)', suffix: '/5' },
+  { key: 'energia', label: 'Energia', color: 'var(--accent-cyan)', suffix: '/5' },
+  { key: 'produtividade', label: 'Produtividade', color: '#2ecc71', suffix: '/5' },
+  { key: 'bemEstar', label: 'Bem-estar', color: '#f1c40f', suffix: '/5' }
+];
+
+const panoramaSeries = wellbeingSeries.filter((serie) => serie.key !== 'bemEstar');
+
+const getLatestSeriesValue = (items, key) => {
+  const latestItem = [...items]
+    .reverse()
+    .find((item) => item?.[key] !== null && item?.[key] !== undefined && item?.[key] !== '');
+
+  return latestItem ? latestItem[key] : null;
+};
+
+const formatLatestSeriesValue = (items, serie) => {
+  const latestValue = getLatestSeriesValue(items, serie.key);
+
+  if (latestValue === null) return '—';
+
+  return `${formatTooltipNumber(latestValue)}${serie.suffix ?? ''}`;
+};
+
 const formatTooltipSeriesValue = (name, value) => {
   const config = tooltipSeriesConfig[name] || {};
   const formattedNumber = formatTooltipNumber(value);
@@ -162,6 +187,7 @@ export function ChartsContainer({
   panoramaWindowLabel = 'Últimos 7 dias'
 }) {
   const [chartRenderState, setChartRenderState] = useState({ type: null, ready: false });
+  const [panoramaTrendRef, panoramaTrendWidth] = useElementWidth();
   const [weightChartRef, weightChartWidth] = useElementWidth();
   const [wellbeingChartRef, wellbeingChartWidth] = useElementWidth();
   const [sleepChartRef, sleepChartWidth] = useElementWidth();
@@ -192,6 +218,67 @@ export function ChartsContainer({
   };
   const panoramaTrendData = [...(data ?? [])].sort((left, right) => getChartTimestamp(left.data) - getChartTimestamp(right.data));
   const hasPanoramaData = panoramaTrendData.length > 0;
+  const renderSeparatedMetricLanes = (items, series, options = {}) => {
+    const { compact = false, chartWidth = 720 } = options;
+    const laneHeight = compact ? 58 : 66;
+
+    return (
+      <div className={`metric-lanes ${compact ? 'metric-lanes-compact' : ''}`}>
+        {series.map((serie, index) => {
+          const isLastLane = index === series.length - 1;
+          const xAxisProps = getAnalysisXAxisProps(items, chartWidth);
+
+          return (
+            <div className="metric-lane" key={serie.key} style={{ '--series-color': serie.color }}>
+              <div className="metric-lane-label">
+                <span className="metric-lane-dot" aria-hidden="true" />
+                <span className="metric-lane-name">{serie.label}</span>
+                <strong>{formatLatestSeriesValue(items, serie)}</strong>
+              </div>
+              <div className="metric-lane-chart" style={{ height: `${laneHeight}px` }}>
+                <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+                  <LineChart data={items} margin={{ top: 8, right: 12, left: -12, bottom: isLastLane ? 4 : 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                    <XAxis
+                      dataKey="data"
+                      {...xAxisProps}
+                      height={isLastLane ? 24 : 6}
+                      axisLine={isLastLane}
+                      tickLine={isLastLane}
+                      tick={isLastLane ? xAxisProps.tick : false}
+                    />
+                    <YAxis
+                      domain={[0, 5]}
+                      ticks={[1, 3, 5]}
+                      width={30}
+                      stroke="var(--text-main)"
+                      tick={{ fill: 'var(--text-main)', fontSize: 10 }}
+                      tickLine={false}
+                      axisLine={false}
+                    />
+                    <RechartsTooltip
+                      labelFormatter={(label, payload) => formatTooltipDate(payload?.[0]?.payload?.fullDate ?? label)}
+                      formatter={formatTooltipEntry}
+                      contentStyle={{ backgroundColor: 'var(--bg-color-alt)', border: '1px solid var(--glass-border)', borderRadius: '12px' }}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey={serie.key}
+                      stroke={serie.color}
+                      strokeWidth={compact ? 2.4 : 2.8}
+                      dot={{ r: compact ? 2.4 : 3, fill: 'var(--bg-color-alt)', stroke: serie.color, strokeWidth: 2 }}
+                      activeDot={{ r: compact ? 4 : 5, fill: serie.color, stroke: 'var(--bg-color-alt)', strokeWidth: 2 }}
+                      isAnimationActive={false}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
 
   useEffect(() => {
     const frame = requestAnimationFrame(() => {
@@ -233,25 +320,11 @@ export function ChartsContainer({
           )}
         </div>
         
-        <div className="glass-panel" style={{ height: '400px', minWidth: 0 }}>
+        <div ref={panoramaTrendRef} className="glass-panel" style={{ height: '400px', minWidth: 0 }}>
           <h4 style={{ marginBottom: '0.35rem', color: 'var(--text-main)' }}>Tendência de Curto Prazo</h4>
-          <p className="chart-panel-subtitle" style={{ marginBottom: '1.1rem' }}>Humor, energia e produtividade nos {panoramaWindowLabel.toLowerCase()}.</p>
+          <p className="chart-panel-subtitle" style={{ marginBottom: '1.1rem' }}>Humor, energia e produtividade em faixas separadas nos {panoramaWindowLabel.toLowerCase()}.</p>
           {hasPanoramaData ? (
-            <ResponsiveContainer width="100%" height={280} minWidth={0}>
-              <LineChart data={panoramaTrendData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                <XAxis dataKey="data" stroke="var(--text-main)" fontSize={11} tickFormatter={formatAxisDate} />
-                <YAxis stroke="var(--text-main)" fontSize={11} />
-                <RechartsTooltip
-                  labelFormatter={formatTooltipDate}
-                  formatter={formatTooltipEntry}
-                  contentStyle={{ backgroundColor: 'var(--bg-color-alt)', border: '1px solid var(--glass-border)', borderRadius: '8px' }}
-                />
-                <Line type="monotone" dataKey="humor" stroke="var(--accent-purple)" strokeWidth={2} dot={false} />
-                <Line type="monotone" dataKey="energia" stroke="var(--accent-cyan)" strokeWidth={2} dot={false} />
-                <Line type="monotone" dataKey="produtividade" stroke="#2ecc71" strokeWidth={2} dot={false} />
-              </LineChart>
-            </ResponsiveContainer>
+            renderSeparatedMetricLanes(panoramaTrendData, panoramaSeries, { compact: true, chartWidth: panoramaTrendWidth })
           ) : (
             <div className="chart-empty-state" style={{ minHeight: '280px' }}>
               <strong>Sem tendência recente</strong>
@@ -314,22 +387,7 @@ export function ChartsContainer({
               <p>Ajuste o período ou registre novos dias para ver a evolução do bem-estar.</p>
             </div>
           ) : (
-            <ResponsiveContainer width="100%" height={420} minWidth={0}>
-              <ComposedChart data={data} margin={analysisChartMargin}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                <XAxis dataKey="data" {...getAnalysisXAxisProps(data, wellbeingChartWidth)} />
-                <YAxis stroke="var(--text-main)" domain={[0, 5]} />
-                <RechartsTooltip
-                  labelFormatter={(label, payload) => formatTooltipDate(payload?.[0]?.payload?.fullDate ?? label)}
-                  formatter={formatTooltipEntry}
-                  contentStyle={{ backgroundColor: 'var(--bg-color-alt)', border: '1px solid var(--glass-border)', borderRadius: '12px' }}
-                />
-                <Line type="monotone" dataKey="humor" stroke="var(--accent-purple)" strokeWidth={3} dot={{ r: 4 }} />
-                <Line type="monotone" dataKey="energia" stroke="var(--accent-cyan)" strokeWidth={2.5} />
-                <Line type="monotone" dataKey="produtividade" stroke="#2ecc71" strokeWidth={2.5} dot={{ r: 3 }} />
-                <Line type="monotone" dataKey="bemEstar" stroke="#f1c40f" strokeWidth={3.5} strokeDasharray="6 6" dot={false} />
-              </ComposedChart>
-            </ResponsiveContainer>
+            renderSeparatedMetricLanes(data, wellbeingSeries, { chartWidth: wellbeingChartWidth })
           )}
         </div>
 

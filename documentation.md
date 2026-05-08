@@ -546,6 +546,8 @@ O panorama mostra cards e gráficos de visão geral.
 
 As médias de humor, sono, hidratação e o polígono de habilidades usam apenas os últimos 7 dias. Essa decisão evita que registros muito antigos distorçam a leitura atual do usuário. A tendência de curto prazo também usa o mesmo recorte, mantendo os dois gráficos da aba coerentes com os cards.
 
+Quando mais de um indicador temporal é exibido junto, a interface usa faixas separadas por métrica. Isso evita que humor, energia e produtividade fiquem sobrepostos quando possuem valores iguais ou muito próximos.
+
 No estado atual, essa aba também passou a ter cabeçalho próprio, mantendo consistência visual com as abas de metas e relatórios.
 
 ## 9.2. Análise
@@ -565,6 +567,7 @@ Melhorias recentes:
 - eixo X com densidade adaptativa conforme largura e zoom
 - gráfico próprio para sono
 - gráfico próprio para humor, energia, produtividade e bem-estar
+- indicadores de humor, energia, produtividade e bem-estar em faixas separadas para impedir sobreposição visual
 - reaproveitamento do último peso conhecido quando existe registro no período sem nova pesagem
 - título próprio da aba para reforçar contexto visual dentro do dashboard
 
