@@ -1214,8 +1214,11 @@ export default function Dashboard() {
       }
 
       const dataInicioMeta = new Date(`${meta.dataInicio}T00:00:00`);
+      const fimDoDiaInicioMeta = new Date(dataInicioMeta);
+      fimDoDiaInicioMeta.setHours(23, 59, 59, 999);
+      const medidasAteInicio = medidasOrdenadas.filter(item => new Date(item.data) <= fimDoDiaInicioMeta);
       const medidasDesdeInicio = medidasOrdenadas.filter(item => new Date(item.data) >= dataInicioMeta);
-      const baseline = medidasDesdeInicio[0] || medidasOrdenadas[0];
+      const baseline = medidasAteInicio[medidasAteInicio.length - 1] || medidasDesdeInicio[0] || medidasOrdenadas[0];
       const atual = medidasOrdenadas[medidasOrdenadas.length - 1];
 
       const pesoInicial = Number(baseline.peso);
@@ -1229,42 +1232,62 @@ export default function Dashboard() {
       let secondaryText = '';
       let targetLabel = `${pesoMeta.toFixed(1)} kg`;
 
-      if (Math.abs(pesoInicial - pesoMeta) <= tolerancia) {
-        const distanciaAtual = Math.abs(pesoAtual - pesoMeta);
-        progresso = distanciaAtual <= tolerancia ? 100 : 0;
-        status = distanciaAtual <= tolerancia ? 'concluido' : distanciaAtual <= 2 ? 'em_dia' : 'atrasado';
-        detailText = distanciaAtual <= tolerancia
-          ? 'Meta mantida na faixa do alvo'
-          : pesoAtual > pesoMeta
-            ? `${distanciaAtual.toFixed(1)} kg acima da faixa alvo`
-            : `${distanciaAtual.toFixed(1)} kg abaixo da faixa alvo`;
-        secondaryText = distanciaAtual <= tolerancia
-          ? `Objetivo de manutenção em torno de ${pesoMeta.toFixed(1)} kg`
-          : `Objetivo é voltar para perto de ${pesoMeta.toFixed(1)} kg`;
-      } else if (pesoInicial > pesoMeta) {
-        const distanciaInicial = pesoInicial - pesoMeta;
+      const medidasAntesDoAtual = medidasOrdenadas.slice(0, -1);
+      const pesosAnteriores = medidasAntesDoAtual
+        .map(item => Number(item.peso))
+        .filter(Number.isFinite);
+      const maiorPesoAnterior = pesosAnteriores.length > 0
+        ? Math.max(pesoInicial, ...pesosAnteriores)
+        : pesoInicial;
+      const menorPesoAnterior = pesosAnteriores.length > 0
+        ? Math.min(pesoInicial, ...pesosAnteriores)
+        : pesoInicial;
+      const metaDeReducao = pesoInicial > pesoMeta || (pesoAtual <= pesoMeta && maiorPesoAnterior > pesoMeta);
+      const metaDeGanho = !metaDeReducao && (pesoInicial < pesoMeta || (pesoAtual >= pesoMeta && menorPesoAnterior < pesoMeta));
+
+      if (metaDeReducao) {
+        const distanciaInicial = Math.max(maiorPesoAnterior - pesoMeta, tolerancia);
         const distanciaAtual = Math.max(0, pesoAtual - pesoMeta);
-        progresso = distanciaInicial === 0 ? 100 : ((distanciaInicial - distanciaAtual) / distanciaInicial) * 100;
-        status = pesoAtual <= pesoMeta ? 'concluido' : distanciaAtual <= 2 ? 'em_dia' : 'atrasado';
-        targetLabel = `${pesoMeta.toFixed(1)} kg ou menos`;
-        detailText = pesoAtual <= pesoMeta
-          ? `Meta atingida, ${(pesoMeta - pesoAtual).toFixed(1)} kg abaixo da meta`
+        const metaBatida = pesoAtual <= pesoMeta;
+
+        progresso = metaBatida ? 100 : ((distanciaInicial - distanciaAtual) / distanciaInicial) * 100;
+        status = metaBatida ? 'concluido' : distanciaAtual <= 2 ? 'em_dia' : 'atrasado';
+        detailText = metaBatida
+          ? pesoAtual < pesoMeta
+            ? `Meta concluída, ${(pesoMeta - pesoAtual).toFixed(1)} kg abaixo do alvo`
+            : 'Meta concluída, exatamente no alvo'
           : `${distanciaAtual.toFixed(1)} kg acima da meta`;
-        secondaryText = pesoAtual <= pesoMeta
-          ? `Objetivo era chegar em ${pesoMeta.toFixed(1)} kg ou menos`
-          : `${clampPercent(progresso)}% do caminho até ${pesoMeta.toFixed(1)} kg ou menos`;
-      } else {
-        const distanciaInicial = pesoMeta - pesoInicial;
+        secondaryText = metaBatida
+          ? `Objetivo era reduzir até ${pesoMeta.toFixed(1)} kg`
+          : `${clampPercent(progresso)}% do caminho para chegar a ${pesoMeta.toFixed(1)} kg`;
+      } else if (metaDeGanho) {
+        const distanciaInicial = Math.max(pesoMeta - menorPesoAnterior, tolerancia);
         const distanciaAtual = Math.max(0, pesoMeta - pesoAtual);
-        progresso = distanciaInicial === 0 ? 100 : ((distanciaInicial - distanciaAtual) / distanciaInicial) * 100;
-        status = pesoAtual >= pesoMeta ? 'concluido' : distanciaAtual <= 2 ? 'em_dia' : 'atrasado';
-        targetLabel = `${pesoMeta.toFixed(1)} kg ou mais`;
-        detailText = pesoAtual >= pesoMeta
-          ? `Meta atingida, ${(pesoAtual - pesoMeta).toFixed(1)} kg acima da meta`
+        const metaBatida = pesoAtual >= pesoMeta;
+
+        progresso = metaBatida ? 100 : ((distanciaInicial - distanciaAtual) / distanciaInicial) * 100;
+        status = metaBatida ? 'concluido' : distanciaAtual <= 2 ? 'em_dia' : 'atrasado';
+        detailText = metaBatida
+          ? pesoAtual > pesoMeta
+            ? `Meta concluída, ${(pesoAtual - pesoMeta).toFixed(1)} kg acima do alvo`
+            : 'Meta concluída, exatamente no alvo'
           : `${distanciaAtual.toFixed(1)} kg abaixo da meta`;
-        secondaryText = pesoAtual >= pesoMeta
-          ? `Objetivo era chegar em ${pesoMeta.toFixed(1)} kg ou mais`
-          : `${clampPercent(progresso)}% do caminho até ${pesoMeta.toFixed(1)} kg ou mais`;
+        secondaryText = metaBatida
+          ? `Objetivo era ganhar peso até ${pesoMeta.toFixed(1)} kg`
+          : `${clampPercent(progresso)}% do caminho para chegar a ${pesoMeta.toFixed(1)} kg`;
+      } else {
+        const distanciaAtual = Math.abs(pesoAtual - pesoMeta);
+        const estaNaFaixaAlvo = distanciaAtual <= tolerancia;
+        const direcaoDoDesvio = pesoAtual > pesoMeta ? 'acima' : 'abaixo';
+
+        progresso = estaNaFaixaAlvo ? 100 : 0;
+        status = estaNaFaixaAlvo ? 'concluido' : distanciaAtual <= 2 ? 'em_dia' : 'atrasado';
+        detailText = estaNaFaixaAlvo
+          ? 'Meta mantida, dentro da faixa alvo'
+          : `${distanciaAtual.toFixed(1)} kg ${direcaoDoDesvio} da meta`;
+        secondaryText = estaNaFaixaAlvo
+          ? `Objetivo é manter o peso perto de ${pesoMeta.toFixed(1)} kg`
+          : `Objetivo é voltar para perto de ${pesoMeta.toFixed(1)} kg`;
       }
 
       return {

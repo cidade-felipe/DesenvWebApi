@@ -120,3 +120,34 @@ O IMC é uma ferramenta de triagem eficaz para análises populacionais, mas apre
 - **Variações étnicas**: populações asiáticas, por exemplo, apresentam maior risco metabólico em IMC menor do que o ponto de corte padrão da OMS
 
 Por isso, o IMC deve sempre ser interpretado em conjunto com outros indicadores, como **circunferência da cintura**, **percentual de gordura corporal** e avaliação clínica individualizada.[2][3]
+
+***
+
+## Aplicação no Ritmo
+
+No Ritmo, o IMC é usado como indicador complementar da biometria, não como diagnóstico médico.
+
+**Fato**
+
+O backend calcula IMC a partir de peso e altura e devolve classificação e cor no DTO de biometria. A interface usa esses dados para dar contexto ao histórico corporal do usuário.
+
+**Inferência**
+
+Como o projeto é um painel analítico pessoal, a leitura de peso precisa ser prática e orientada a acompanhamento, mas sem prometer diagnóstico clínico.
+
+**Opinião técnica**
+
+A meta de peso deve ser interpretada como objetivo comportamental, não como regra médica absoluta. Por isso, o card de meta usa o histórico para entender a direção:
+
+- se o usuário estava acima do alvo e chegou ao alvo ou abaixo dele, a meta aparece como concluída
+- se o usuário estava abaixo do alvo e chegou ao alvo ou acima dele, a meta aparece como concluída
+- se o usuário já estava próximo do alvo, a meta passa a ser de manutenção
+
+Exemplo prático:
+
+- peso anterior acima de 75 kg
+- meta cadastrada em 75 kg
+- peso atual em 74 kg
+- resultado esperado no dashboard: meta concluída
+
+Essa regra evita a leitura incorreta de que `75 kg` seria obrigatoriamente `75 kg ou mais`. Para peso, o alvo precisa respeitar o contexto do histórico.

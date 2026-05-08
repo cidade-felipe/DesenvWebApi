@@ -103,6 +103,7 @@ No estado atual da interface de autenticação:
 - o cadastro mostra erros por campo, em vez de depender apenas de mensagens genéricas
 - a data de nascimento aceita digitação manual no formato da interface e também uso do calendário
 - o layout do formulário de cadastro foi refinado para acomodar melhor campos como sexo biológico
+- o login exibe a mensagem específica enviada pela API, diferenciando email inexistente de senha incorreta
 
 ### 4.2. Dashboard
 
@@ -367,7 +368,31 @@ Isso significa que:
 - endpoints protegidos exigem autenticação
 - controllers validam o dono do recurso
 
-## 6.3. CORS
+## 6.3. Resposta de login
+
+**Fato**
+
+O endpoint de login não trata mais todos os erros como `Email ou senha incorretos`.
+
+O fluxo atual diferencia:
+
+- `404 NotFound`, quando não existe conta para o email informado
+- `401 Unauthorized`, quando o email existe, mas a senha está incorreta
+- `200 OK`, quando o login é válido e o token JWT é emitido
+
+Essa diferenciação é feita em `UsuarioService.Login`, que retorna um resultado de login com status semântico, e em `UsuariosController.Login`, que transforma esse status em resposta HTTP.
+
+**Impacto prático**
+
+- melhora a orientação do usuário na tela de login
+- reduz fricção no cadastro, porque o usuário sabe quando precisa se registrar
+- mantém o frontend simples, pois `Login.jsx` já exibe `err.response?.data?.mensagem`
+
+**Trade-off**
+
+Informar que o email não existe melhora UX, mas expõe uma possibilidade de enumeração de contas. Para produção pública, a compensação recomendada é adicionar rate limiting, monitoramento de tentativas e eventualmente mensagens menos específicas em contextos de maior risco.
+
+## 6.4. CORS
 
 O CORS foi deixado configurável por origem, usando `Cors:AllowedOrigins`.
 
@@ -376,7 +401,7 @@ Isso é importante porque:
 - evita abertura total da API
 - permite diferenciar `localhost` e `127.0.0.1`
 
-## 6.4. Configuração local
+## 6.5. Configuração local
 
 O projeto suporta `appsettings.Local.json`, ignorado no Git, para guardar:
 
@@ -483,9 +508,12 @@ Meta de peso não pode usar a lógica simples de “quanto maior, melhor”.
 
 Por isso, a regra implementada é:
 
-- calcula o peso inicial de referência desde o início da meta
-- calcula a distância entre o peso atual e o alvo
-- mede o quanto essa distância diminuiu
+- calcula um peso de referência próximo ao início da meta
+- analisa o histórico anterior ao peso atual para inferir se a meta é de redução ou de ganho
+- se o usuário começou acima do alvo, considera concluído quando o peso atual chega ao alvo ou fica abaixo dele
+- se o usuário começou abaixo do alvo, considera concluído quando o peso atual chega ao alvo ou fica acima dele
+- se o usuário começou muito perto do alvo, trata como manutenção dentro da faixa de tolerância
+- mantém o rótulo visual da meta como alvo simples, por exemplo `75.0 kg`, sem `ou mais` ou `ou menos`
 
 Essa abordagem é melhor porque funciona para:
 
@@ -496,8 +524,9 @@ Essa abordagem é melhor porque funciona para:
 No dashboard:
 
 - o card mostra `Peso atual`
-- o percentual mede aproximação do alvo
-- a situação visual muda conforme a proximidade
+- o percentual mede o caminho percorrido na direção correta
+- a situação visual vira `concluido` quando o usuário cruza o alvo na direção esperada
+- o texto secundário explica se o objetivo era reduzir, ganhar peso ou manter perto do alvo
 
 ## 9. Gráficos e dashboard
 

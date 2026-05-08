@@ -32,15 +32,20 @@ public class UsuarioService
         return usuario != null ? UsuarioResponse.FromEntity(usuario) : null;
     }
 
-    public async Task<AuthResponse?> Login(LoginRequest request)
+    public async Task<LoginResult> Login(LoginRequest request)
     {
         var emailNormalizado = request.Email.Trim().ToLowerInvariant();
         var usuario = await _context.Usuarios
             .FirstOrDefaultAsync(u => u.Email == emailNormalizado);
 
-        if (usuario == null || !PasswordHasher.Verify(request.Senha, usuario.Senha))
+        if (usuario == null)
         {
-            return null;
+            return LoginResult.UsuarioNaoEncontrado();
+        }
+
+        if (!PasswordHasher.Verify(request.Senha, usuario.Senha))
+        {
+            return LoginResult.SenhaInvalida();
         }
 
         if (PasswordHasher.NeedsRehash(usuario.Senha))
@@ -49,7 +54,7 @@ public class UsuarioService
             await _context.SaveChangesAsync();
         }
 
-        return CriarAuthResponse(usuario);
+        return LoginResult.Sucesso(CriarAuthResponse(usuario));
     }
 
     public async Task<UsuarioResponse?> Criar(UsuarioRequest request)
@@ -236,5 +241,43 @@ public class UsuarioService
         {
             throw new DomainValidationException("Data de nascimento deve resultar em idade entre 0 e 120 anos.");
         }
+    }
+}
+
+public enum LoginStatus
+{
+    Sucesso,
+    UsuarioNaoEncontrado,
+    SenhaInvalida
+}
+
+public class LoginResult
+{
+    public LoginStatus Status { get; private init; }
+    public AuthResponse? AuthResponse { get; private init; }
+
+    public static LoginResult Sucesso(AuthResponse authResponse)
+    {
+        return new LoginResult
+        {
+            Status = LoginStatus.Sucesso,
+            AuthResponse = authResponse
+        };
+    }
+
+    public static LoginResult UsuarioNaoEncontrado()
+    {
+        return new LoginResult
+        {
+            Status = LoginStatus.UsuarioNaoEncontrado
+        };
+    }
+
+    public static LoginResult SenhaInvalida()
+    {
+        return new LoginResult
+        {
+            Status = LoginStatus.SenhaInvalida
+        };
     }
 }
