@@ -1194,6 +1194,10 @@ export default function Dashboard() {
     let total = 0;
     const cat = meta.categoria.toLowerCase();
     const clampPercent = (value) => Math.max(0, Math.min(Math.round(value), 100));
+    const getWeightTargetProximity = (currentWeight, targetWeight) => {
+      if (currentWeight <= 0 || targetWeight <= 0) return 0;
+      return (Math.min(currentWeight, targetWeight) / Math.max(currentWeight, targetWeight)) * 100;
+    };
 
     if (cat === 'peso') {
       const medidasOrdenadas = [...biometria]
@@ -1232,8 +1236,10 @@ export default function Dashboard() {
       let secondaryText = '';
       let targetLabel = `${pesoMeta.toFixed(1)} kg`;
 
-      const medidasAntesDoAtual = medidasOrdenadas.slice(0, -1);
-      const pesosAnteriores = medidasAntesDoAtual
+      const medidasReferenciaFallback = medidasDesdeInicio.length > 1
+        ? medidasDesdeInicio.slice(0, -1)
+        : medidasOrdenadas.slice(0, -1);
+      const pesosAnteriores = medidasReferenciaFallback
         .map(item => Number(item.peso))
         .filter(Number.isFinite);
       const maiorPesoAnterior = pesosAnteriores.length > 0
@@ -1242,15 +1248,27 @@ export default function Dashboard() {
       const menorPesoAnterior = pesosAnteriores.length > 0
         ? Math.min(pesoInicial, ...pesosAnteriores)
         : pesoInicial;
-      const metaDeReducao = pesoInicial > pesoMeta || (pesoAtual <= pesoMeta && maiorPesoAnterior > pesoMeta);
-      const metaDeGanho = !metaDeReducao && (pesoInicial < pesoMeta || (pesoAtual >= pesoMeta && menorPesoAnterior < pesoMeta));
+      const direcaoPersistida = String(meta.direcao || '').trim().toLowerCase();
+      const direcoesValidas = ['reduzir', 'ganhar', 'manter'];
+      const direcaoInferida = (() => {
+        if (pesoInicial > pesoMeta || (pesoAtual <= pesoMeta && maiorPesoAnterior > pesoMeta)) {
+          return 'reduzir';
+        }
 
-      if (metaDeReducao) {
-        const distanciaInicial = Math.max(maiorPesoAnterior - pesoMeta, tolerancia);
+        if (pesoInicial < pesoMeta || (pesoAtual >= pesoMeta && menorPesoAnterior < pesoMeta)) {
+          return 'ganhar';
+        }
+
+        return 'manter';
+      })();
+      const direcaoMeta = direcoesValidas.includes(direcaoPersistida) ? direcaoPersistida : direcaoInferida;
+
+      if (direcaoMeta === 'reduzir') {
         const distanciaAtual = Math.max(0, pesoAtual - pesoMeta);
         const metaBatida = pesoAtual <= pesoMeta;
+        const percentualAtual = clampPercent(metaBatida ? 100 : getWeightTargetProximity(pesoAtual, pesoMeta));
 
-        progresso = metaBatida ? 100 : ((distanciaInicial - distanciaAtual) / distanciaInicial) * 100;
+        progresso = percentualAtual;
         status = metaBatida ? 'concluido' : distanciaAtual <= 2 ? 'em_dia' : 'atrasado';
         detailText = metaBatida
           ? pesoAtual < pesoMeta
@@ -1259,13 +1277,13 @@ export default function Dashboard() {
           : `${distanciaAtual.toFixed(1)} kg acima da meta`;
         secondaryText = metaBatida
           ? `Objetivo era reduzir até ${pesoMeta.toFixed(1)} kg`
-          : `${clampPercent(progresso)}% do caminho para chegar a ${pesoMeta.toFixed(1)} kg`;
-      } else if (metaDeGanho) {
-        const distanciaInicial = Math.max(pesoMeta - menorPesoAnterior, tolerancia);
+          : `${percentualAtual}% de proximidade do alvo`;
+      } else if (direcaoMeta === 'ganhar') {
         const distanciaAtual = Math.max(0, pesoMeta - pesoAtual);
         const metaBatida = pesoAtual >= pesoMeta;
+        const percentualAtual = clampPercent(metaBatida ? 100 : getWeightTargetProximity(pesoAtual, pesoMeta));
 
-        progresso = metaBatida ? 100 : ((distanciaInicial - distanciaAtual) / distanciaInicial) * 100;
+        progresso = percentualAtual;
         status = metaBatida ? 'concluido' : distanciaAtual <= 2 ? 'em_dia' : 'atrasado';
         detailText = metaBatida
           ? pesoAtual > pesoMeta
@@ -1274,13 +1292,13 @@ export default function Dashboard() {
           : `${distanciaAtual.toFixed(1)} kg abaixo da meta`;
         secondaryText = metaBatida
           ? `Objetivo era ganhar peso até ${pesoMeta.toFixed(1)} kg`
-          : `${clampPercent(progresso)}% do caminho para chegar a ${pesoMeta.toFixed(1)} kg`;
+          : `${percentualAtual}% de proximidade do alvo`;
       } else {
         const distanciaAtual = Math.abs(pesoAtual - pesoMeta);
         const estaNaFaixaAlvo = distanciaAtual <= tolerancia;
         const direcaoDoDesvio = pesoAtual > pesoMeta ? 'acima' : 'abaixo';
 
-        progresso = estaNaFaixaAlvo ? 100 : 0;
+        progresso = estaNaFaixaAlvo ? 100 : getWeightTargetProximity(pesoAtual, pesoMeta);
         status = estaNaFaixaAlvo ? 'concluido' : distanciaAtual <= 2 ? 'em_dia' : 'atrasado';
         detailText = estaNaFaixaAlvo
           ? 'Meta mantida, dentro da faixa alvo'
@@ -1292,6 +1310,7 @@ export default function Dashboard() {
 
       return {
         percent: clampPercent(progresso),
+        visualPercent: clampPercent(progresso),
         current: pesoAtual.toFixed(1),
         status,
         unit: 'kg',
@@ -1749,11 +1768,19 @@ export default function Dashboard() {
                               <span>{prog.currentLabel}: <strong>{prog.current}{prog.unit ? ` ${prog.unit}` : ''}</strong></span>
                               <span>Meta: {isPeso ? prog.targetLabel : `${meta.valorAlvo}${isTreino ? ` ${prog.unit}` : ''}`}</span>
                             </div>
-                            <div className="progress-track">
+                            <div className={`progress-track${isPeso ? ' weight-progress-track' : ''}`}>
                               <div 
                                 className="progress-fill" 
-                                style={{ width: `${prog.percent}%`, backgroundColor: color, color: color }}
+                                style={{ width: `${prog.visualPercent ?? prog.percent}%`, backgroundColor: color, color: color }}
                               ></div>
+                              {isPeso ? (
+                                <span
+                                  className="weight-progress-marker"
+                                  style={{ left: `${prog.visualPercent ?? prog.percent}%`, color }}
+                                >
+                                  {prog.percent}%
+                                </span>
+                              ) : null}
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '10px' }}>
                               <span style={{ fontSize: '0.75rem', fontWeight: 700, color: color }}>
