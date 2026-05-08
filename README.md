@@ -101,6 +101,7 @@ O progresso das metas funciona assim:
 - peso usa direção inferida pelo histórico, funcionando para perda, ganho ou manutenção
 - novas metas de peso salvam explicitamente a direção: reduzir, ganhar ou manter
 - a barra de meta de peso representa proximidade do peso atual em relação ao alvo
+- o marcador percentual da meta de peso fica acima da barra e a cor muda conforme a proximidade do alvo
 - no card de peso, o rótulo da meta permanece limpo, por exemplo `75.0 kg`, sem `ou mais` ou `ou menos`
 - se o usuário começou acima da meta de peso e chegou no alvo ou abaixo dele, a meta aparece como concluída
 - o formulário de meta mostra a faixa mínima e máxima por categoria sem preencher o valor alvo automaticamente

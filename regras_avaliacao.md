@@ -151,3 +151,5 @@ Exemplo prático:
 - resultado esperado no dashboard: meta concluída
 
 Essa regra evita a leitura incorreta de que `75 kg` seria obrigatoriamente `75 kg ou mais`. Para peso, o alvo precisa respeitar o contexto do histórico.
+
+Na interface atual do Ritmo, a barra da meta de peso comunica proximidade com o alvo, não diagnóstico clínico. Por exemplo, `75 kg` para uma meta de `73 kg` ou `77 kg` aparece quase completo porque o peso atual já está próximo do objetivo, mas o card só deve ser considerado concluído quando o alvo for cruzado na direção escolhida pelo usuário.

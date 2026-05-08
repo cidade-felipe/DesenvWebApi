@@ -98,6 +98,8 @@ A regra atual usa essa direção salva para calcular o progresso. Para metas ant
 
 Metas novas de peso também recebem um valor inicial salvo pelo backend, baseado na biometria mais recente do usuário. A barra, porém, mostra proximidade do peso atual em relação ao alvo. Assim, se o usuário está em `75 kg` e cria meta para `73 kg` ou `77 kg`, a barra já aparece quase cheia porque ele já está perto da meta.
 
+Visualmente, a porcentagem aparece em um marcador acima da barra, com uma haste indicando a posição. A cor também acompanha a proximidade: vermelho/laranja para longe, amarelo para intermediário, ciano para perto e verde quando está praticamente no alvo ou concluído.
+
 Exemplo:
 
 - histórico anterior acima de `75 kg`
