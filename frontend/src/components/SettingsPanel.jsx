@@ -78,7 +78,7 @@ const getProfileFormData = (user) => ({
   sexo: user?.sexo || 'M'
 });
 
-export function SettingsPanel({ user, onUserUpdated, onStatusChange }) {
+export function SettingsPanel({ user, onUserUpdated, onStatusChange, onInsightsRefresh }) {
   const navigate = useNavigate();
   const [profileData, setProfileData] = useState(() => getProfileFormData(user));
   const [profileErrors, setProfileErrors] = useState(initialProfileErrors);
@@ -104,6 +104,18 @@ export function SettingsPanel({ user, onUserUpdated, onStatusChange }) {
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
 
   const todayDate = new Date().toISOString().split('T')[0];
+
+  const refreshAccountInsights = async () => {
+    if (!onInsightsRefresh) {
+      return;
+    }
+
+    try {
+      await onInsightsRefresh();
+    } catch (err) {
+      console.error('Falha ao atualizar notificações da conta:', err);
+    }
+  };
 
   useEffect(() => {
     setProfileData(getProfileFormData(user));
@@ -252,6 +264,7 @@ export function SettingsPanel({ user, onUserUpdated, onStatusChange }) {
         title: 'Perfil atualizado',
         message: 'Seus dados principais já foram atualizados.'
       });
+      await refreshAccountInsights();
     } catch (err) {
       const backendErrors = normalizeBackendErrors(err.response?.data?.erros, profileFieldMap, initialProfileErrors);
       const hasFieldErrors = Object.values(backendErrors).some(Boolean);
@@ -294,6 +307,7 @@ export function SettingsPanel({ user, onUserUpdated, onStatusChange }) {
         title: 'Senha atualizada',
         message: 'Sua senha foi alterada com sucesso.'
       });
+      await refreshAccountInsights();
     } catch (err) {
       const backendErrors = normalizeBackendErrors(err.response?.data?.erros, passwordFieldMap, initialPasswordErrors);
       const hasFieldErrors = Object.values(backendErrors).some(Boolean);

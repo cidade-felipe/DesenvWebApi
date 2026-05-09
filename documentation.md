@@ -127,6 +127,7 @@ No estado atual da interface:
 - a animação dessa transição responde à velocidade do scroll para dar leitura mais premium sem quebrar usabilidade
 - mutações como criar meta, excluir meta e salvar registro passaram a atualizar estado local em vez de recarregar toda a dashboard
 - a aba `Configurações` permite atualizar dados do perfil, trocar senha e excluir a conta com confirmação
+- atualizações de perfil e senha também geram notificações persistidas no sino
 
 ### 4.3. Registro diário
 
@@ -592,12 +593,14 @@ Os gráficos da aba de análise não trabalham mais apenas com registros diário
 
 O sino do dashboard exibe insights não lidos persistidos no backend.
 
-A geração automática inicial acontece quando o usuário salva registro diário, biometria ou meta. O backend avalia:
+A geração automática inicial acontece quando o usuário salva registro diário, biometria, meta ou altera dados sensíveis da conta. O backend avalia:
 
 - metas de hábito atingidas pela média dos últimos 7 dias
 - meta de treino atingida pela contagem de dias com exercício nos últimos 7 dias
 - meta de peso atingida conforme direção da meta: reduzir, ganhar ou manter
 - peso dentro da faixa saudável pelo IMC
+- perfil atualizado com sucesso
+- senha atualizada com alerta de segurança
 
 O sistema respeita `ReceberNotificacoes`. Se a preferência estiver desativada, novos insights automáticos não são gerados.
 

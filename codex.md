@@ -1619,12 +1619,12 @@ Backend:
 - Cria insight via POST.
 - Marca lido via PATCH.
 - Deleta via DELETE.
-- `InsightNotificationService` gera avisos automaticos iniciais apos salvar registro diario, biometria ou meta.
+- `InsightNotificationService` gera avisos automaticos iniciais apos salvar registro diario, biometria, meta, perfil ou senha.
 
 Fato:
 
 - Existe um motor automatico inicial de insights no backend.
-- O motor atual cobre metas atingidas, metas de peso atingidas e peso dentro da faixa saudavel por IMC.
+- O motor atual cobre metas atingidas, metas de peso atingidas, peso dentro da faixa saudavel por IMC, atualizacao de perfil e troca de senha.
 - A geracao respeita `ReceberNotificacoes`.
 - A mesma mensagem nao e duplicada para o mesmo usuario dentro do mesmo dia.
 
@@ -1657,6 +1657,8 @@ Atualizar perfil:
 4. Backend retorna novo token.
 5. Front salva nova sessao.
 6. Atualiza `user` local.
+7. Backend gera insight de categoria `Conta`.
+8. Front chama `refreshInsights` para atualizar o sino sem recarregar a dashboard.
 
 Trocar senha:
 
@@ -1665,6 +1667,8 @@ Trocar senha:
 3. Backend verifica senha atual.
 4. Backend rejeita nova senha igual.
 5. Salva hash.
+6. Backend gera insight de categoria `Segurança` com nivel `atencao`.
+7. Front chama `refreshInsights` para atualizar o sino sem recarregar a dashboard.
 
 Excluir conta:
 
