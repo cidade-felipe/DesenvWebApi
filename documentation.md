@@ -558,6 +558,7 @@ A aba de análise mostra gráficos mais detalhados, com foco em leitura temporal
 
 Melhorias recentes:
 
+- gráfico de humor, energia, produtividade e bem-estar como primeiro painel da análise
 - datas do eixo com ano
 - tooltip com data completa
 - correções para evitar falha visual ao passar o mouse
@@ -569,6 +570,8 @@ Melhorias recentes:
 - eixo X com densidade adaptativa conforme largura e zoom
 - gráfico próprio para sono
 - gráfico próprio para humor, energia, produtividade e bem-estar
+- gráfico próprio para hidratação
+- gráfico próprio para treinos
 - indicadores de humor, energia, produtividade e bem-estar em faixas separadas para impedir sobreposição visual
 - reaproveitamento do último peso conhecido quando existe registro no período sem nova pesagem
 - título próprio da aba para reforçar contexto visual dentro do dashboard
