@@ -101,8 +101,8 @@ Foram adicionadas duas correcoes importantes depois da criacao original deste ar
 - Meta de peso agora usa historico para inferir reducao, ganho ou manutencao, sem mostrar `kg ou mais` ou `kg ou menos` no rotulo visual.
 - Metas novas de peso agora salvam `direcao`, com valores `reduzir`, `ganhar` ou `manter`, para nao depender apenas de inferencia.
 - Metas novas de peso tambem salvam `ValorInicial`, usando a biometria mais recente como contexto historico.
-- A barra de peso mostra proximidade do peso atual com o alvo. Exemplo: `75 kg` para meta `73 kg` ou `77 kg` deve aparecer quase cheio, porque ja esta perto.
-- A barra de peso usa marcador percentual acima da trilha e cor progressiva por proximidade: alerta quando longe, ciano quando perto e verde quando praticamente concluida.
+- A barra de peso agora mede a jornada entre `ValorInicial` e `ValorAlvo`. Exemplo: de `100 kg` para `80 kg`, com peso atual `95 kg`, o progresso e `25%`, porque foram perdidos `5 kg` de uma jornada de `20 kg`.
+- O card de peso mostra uma explicacao curta da conta para nao parecer bug.
 - Foi adicionada a regra operacional de sempre perguntar se o usuario quer executar o ciclo completo de atualizacao do repo apos mudancas.
 
 ### Detalhe de autenticacao
@@ -128,9 +128,9 @@ O frontend ja exibe `err.response?.data?.mensagem`, entao a mudanca de UX veio d
 Para peso:
 
 - metas novas usam `meta.direcao`
-- metas novas podem ter `meta.valorInicial`, mas a barra usa proximidade entre peso atual e alvo
+- metas novas podem ter `meta.valorInicial`, e a barra usa esse valor como inicio da jornada de reducao ou ganho
 - a UI de metas de peso segue o mesmo desenho visual das demais metas, sem marcador flutuante exclusivo
-- a cor da barra vem de `getProgressColor`, variando conforme o percentual de proximidade
+- a cor da barra vem de `getProgressColor`, variando conforme o percentual da jornada concluida
 - se existe historico anterior acima do alvo e o peso atual chegou no alvo ou abaixo dele, a meta fica `concluido`
 - se existe historico anterior abaixo do alvo e o peso atual chegou no alvo ou acima dele, a meta fica `concluido`
 - se o usuario ja estava perto do alvo, a meta vira manutencao
@@ -1582,7 +1582,7 @@ Meta de peso:
 
 - Ordena biometricas por data.
 - Usa `Direcao` salva quando existir.
-- Mantem `ValorInicial` salvo quando existir, mas o percentual visual usa proximidade atual com o alvo.
+- Mantem `ValorInicial` salvo quando existir, e o percentual visual usa a jornada de `ValorInicial` ate `ValorAlvo`.
 - Pega baseline proximo ao inicio da meta quando possivel.
 - Tambem consulta pesos anteriores ao atual para nao depender apenas do baseline.
 - Compara peso inicial, maior/menor peso anterior, peso atual e peso alvo.
@@ -1594,6 +1594,7 @@ Meta de peso:
 - Se havia peso anterior abaixo do alvo e o peso atual chegou no alvo ou acima, status vira `concluido`.
 - O label visual da meta fica simples, por exemplo `75.0 kg`, sem `ou mais` ou `ou menos`.
 - O rodape do card segue o mesmo padrao das demais metas: percentual, `CONCLUIDO!` ou `EM ANDAMENTO`, e `Atualizado agora`.
+- O card mostra uma nota explicativa, como `Progresso desde 100.0 kg: 5.0 de 20.0 kg perdidos.`
 - Para metas antigas sem `Direcao`, o dashboard infere a direcao pelo historico.
 
 Opiniao tecnica:
