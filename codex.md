@@ -1815,6 +1815,12 @@ Panorama:
 - IMC, peso registrado e faixa de peso ideal continuam sendo leitura de estado atual, nao media de 7 dias.
 - Se nao houver registro nos ultimos 7 dias, a interface mostra empty state nos graficos e zera as medias recentes.
 
+Layout:
+
+- `frontend/src/index.css` define `.container` com largura fluida em desktop.
+- A largura usa `96vw`, limitada por `--page-max-width: 2160px`, para aproveitar melhor monitores grandes.
+- Em telas pequenas, o container volta para `width: 100%` com padding de `1rem`.
+
 ### Opiniao tecnica
 
 Esse arquivo entrega muito valor, mas virou o maior risco de manutencao. Um bug em transformacao de datas pode afetar graficos, relatorios, exportacao e metas ao mesmo tempo.

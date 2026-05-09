@@ -8,6 +8,8 @@
   --accent-cyan: #66fcf1;
   --accent-cyan-dim: #45a29e;
   --accent-purple: #9b51e0;
+  --page-max-width: 2160px;
+  --page-desktop-width: 96vw;
   
   --glass-bg: rgba(31, 40, 51, 0.4);
   --glass-border: rgba(102, 252, 241, 0.2);
@@ -80,9 +82,10 @@ h1, h2, h3, h4 {
 
 /* Base Layouts */
 .container {
-  max-width: 1600px;
+  width: min(var(--page-desktop-width), var(--page-max-width));
+  max-width: none;
   margin: 0 auto;
-  padding: 2rem;
+  padding: 2rem 0;
 }
 
 .center-wrapper {
@@ -965,6 +968,11 @@ h1, h2, h3, h4 {
 }
 
 @media (max-width: 760px) {
+  .container {
+    width: 100%;
+    padding: 1rem;
+  }
+
   .top-nav {
     flex-direction: column;
     align-items: flex-start;

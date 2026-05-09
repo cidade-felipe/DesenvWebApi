@@ -634,6 +634,7 @@ No desktop, a dashboard usa dois modos visuais para navegação entre abas:
 
 Aspectos importantes dessa implementação:
 
+- o container principal usa largura fluida em desktop, com `96vw` e limite máximo maior, para reduzir margens vazias em monitores grandes
 - a transição entre topo e lateral usa histerese no scroll para evitar troca nervosa em poucos pixels
 - a rail lateral ficou estruturalmente alinhada ao grid do conteúdo, em vez de solta na viewport
 - o movimento foi refinado com rotação controlada, overshoot curto e resposta à velocidade do scroll
