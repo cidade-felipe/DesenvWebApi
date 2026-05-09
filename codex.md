@@ -1741,6 +1741,7 @@ Tema visual:
 - cards com blur
 - gradientes
 - animações de entrada
+- no historico de relatorios, a classificacao de IMC usa `history-imc-label` com tons vivos, porque a opacidade padrao de textos secundarios deixava sobrepeso/obesidade pouco legiveis
 
 Observacao:
 

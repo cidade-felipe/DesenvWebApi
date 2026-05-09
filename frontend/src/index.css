@@ -853,6 +853,37 @@ h1, h2, h3, h4 {
   opacity: 0.72;
 }
 
+.history-cell-stack .history-imc-label {
+  opacity: 1;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  text-shadow: 0 0 12px color-mix(in srgb, currentColor 38%, transparent);
+}
+
+.history-imc-label.success {
+  color: #00e676;
+}
+
+.history-imc-label.info {
+  color: #00d9ff;
+}
+
+.history-imc-label.warning {
+  color: #ffb020;
+}
+
+.history-imc-label.danger {
+  color: #ff4f5e;
+}
+
+.history-imc-label.danger-high {
+  color: #ff2f7d;
+}
+
+.history-imc-label.neutral {
+  color: var(--text-main);
+}
+
 .history-row.weekend td {
   background: linear-gradient(90deg, rgba(155, 81, 224, 0.08), rgba(102, 252, 241, 0.02));
 }

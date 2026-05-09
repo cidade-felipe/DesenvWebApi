@@ -628,6 +628,7 @@ Além disso:
 - os cards de resumo usam o mesmo recorte temporal aplicado ao histórico
 - a data exportada segue o mesmo formato visual da interface
 - a tabela de relatórios continua permitindo edição do histórico, mas deixou de expor exclusão direta nessa superfície
+- classificações de IMC acima do normal usam cores mais vivas no histórico para preservar legibilidade em fundo escuro
 
 O dashboard permite exportar:
 
