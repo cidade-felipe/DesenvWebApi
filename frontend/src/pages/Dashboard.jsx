@@ -123,6 +123,17 @@ export default function Dashboard() {
     imc: 'IMC',
     observacoes: 'observações'
   };
+  const getImcToneClass = (classificacao = '') => {
+    const normalizedClassificacao = String(classificacao).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+
+    if (normalizedClassificacao.includes('obesidade grau iii')) return 'danger-high';
+    if (normalizedClassificacao.includes('obesidade')) return 'danger';
+    if (normalizedClassificacao.includes('sobrepeso')) return 'warning';
+    if (normalizedClassificacao.includes('normal')) return 'success';
+    if (normalizedClassificacao.includes('magreza')) return 'info';
+
+    return 'neutral';
+  };
   const showNotice = (tone, title, message = '') => setNotice({ tone, title, message, id: Date.now() });
   const tabsDockMotionStyle = {
     '--tabs-rail-start-x': `${tabsDockMotion.railStartX}px`,
@@ -1761,7 +1772,9 @@ export default function Dashboard() {
                               {r.imc ? (
                                 <div className="history-cell-stack">
                                   <strong>{formatMetric(r.imc)}</strong>
-                                  <span style={{ color: r.imcCor }}>{r.imcClassificacao}</span>
+                                  <span className={`history-imc-label ${getImcToneClass(r.imcClassificacao)}`}>
+                                    {r.imcClassificacao}
+                                  </span>
                                 </div>
                               ) : (
                                 <span className="history-muted">Sem IMC</span>
