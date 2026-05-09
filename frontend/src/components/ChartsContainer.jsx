@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, AreaChart, Area,
-  Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis
+  Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, BarChart, Bar
 } from 'recharts';
 
 const formatAxisDate = (value) => {
@@ -68,6 +68,8 @@ const getChartTimestamp = (value) => {
 const tooltipSeriesConfig = {
   peso: { label: 'Peso', unit: ' kg' },
   sono: { label: 'Sono', unit: ' h' },
+  agua: { label: 'Hidratação', unit: ' L' },
+  treinoDias: { label: 'Treino', unit: ' dia(s)' },
   humor: { label: 'Humor', suffix: '/5' },
   energia: { label: 'Energia', suffix: '/5' },
   produtividade: { label: 'Produtividade', suffix: '/5' },
@@ -183,6 +185,8 @@ export function ChartsContainer({
   weightDataForChart,
   analysisHabitsSubtitle,
   analysisSleepSubtitle,
+  analysisHydrationSubtitle,
+  analysisTrainingSubtitle,
   analysisWeightSubtitle,
   panoramaWindowLabel = 'Últimos 7 dias'
 }) {
@@ -191,6 +195,8 @@ export function ChartsContainer({
   const [weightChartRef, weightChartWidth] = useElementWidth();
   const [wellbeingChartRef, wellbeingChartWidth] = useElementWidth();
   const [sleepChartRef, sleepChartWidth] = useElementWidth();
+  const [hydrationChartRef, hydrationChartWidth] = useElementWidth();
+  const [trainingChartRef, trainingChartWidth] = useElementWidth();
   const isChartReady = chartRenderState.ready && chartRenderState.type === type;
   const analysisChartMargin = { top: 12, right: 18, left: 0, bottom: 28 };
   const analysisXAxisBaseProps = {
@@ -339,6 +345,23 @@ export function ChartsContainer({
   if (type === 'analise') {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', minWidth: 0 }}>
+        <div ref={wellbeingChartRef} className="glass-panel" style={{ height: '500px', minWidth: 0 }}>
+          <div className="chart-panel-header">
+            <div>
+              <h4 style={{ color: 'var(--text-main)' }}>Humor, Energia, Produtividade e Bem-estar</h4>
+              <p className="chart-panel-subtitle">{analysisHabitsSubtitle}</p>
+            </div>
+          </div>
+          {data.length === 0 ? (
+            <div className="chart-empty-state">
+              <strong>Sem registros suficientes nesse recorte</strong>
+              <p>Ajuste o período ou registre novos dias para ver a evolução do bem-estar.</p>
+            </div>
+          ) : (
+            renderSeparatedMetricLanes(data, wellbeingSeries, { chartWidth: wellbeingChartWidth })
+          )}
+        </div>
+
         <div ref={weightChartRef} className="glass-panel" style={{ height: '500px', minWidth: 0 }}>
           <div className="chart-panel-header">
             <div>
@@ -374,23 +397,6 @@ export function ChartsContainer({
           )}
         </div>
 
-        <div ref={wellbeingChartRef} className="glass-panel" style={{ height: '500px', minWidth: 0 }}>
-          <div className="chart-panel-header">
-            <div>
-              <h4 style={{ color: 'var(--text-main)' }}>Humor, Energia, Produtividade e Bem-estar</h4>
-              <p className="chart-panel-subtitle">{analysisHabitsSubtitle}</p>
-            </div>
-          </div>
-          {data.length === 0 ? (
-            <div className="chart-empty-state">
-              <strong>Sem registros suficientes nesse recorte</strong>
-              <p>Ajuste o período ou registre novos dias para ver a evolução do bem-estar.</p>
-            </div>
-          ) : (
-            renderSeparatedMetricLanes(data, wellbeingSeries, { chartWidth: wellbeingChartWidth })
-          )}
-        </div>
-
         <div ref={sleepChartRef} className="glass-panel" style={{ height: '500px', minWidth: 0 }}>
           <div className="chart-panel-header">
             <div>
@@ -422,6 +428,71 @@ export function ChartsContainer({
                 />
                 <Area type="monotone" dataKey="sono" stroke="var(--accent-cyan-dim)" strokeWidth={3} fillOpacity={1} fill="url(#colorSonoAnalise)" />
               </AreaChart>
+            </ResponsiveContainer>
+          )}
+        </div>
+
+        <div ref={hydrationChartRef} className="glass-panel" style={{ height: '500px', minWidth: 0 }}>
+          <div className="chart-panel-header">
+            <div>
+              <h4 style={{ color: 'var(--text-main)' }}>Hidratação por Período</h4>
+              <p className="chart-panel-subtitle">{analysisHydrationSubtitle}</p>
+            </div>
+          </div>
+          {data.length === 0 ? (
+            <div className="chart-empty-state">
+              <strong>Sem registros suficientes nesse recorte</strong>
+              <p>Ajuste o período ou registre novos dias para acompanhar sua hidratação.</p>
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height={420} minWidth={0}>
+              <AreaChart data={data} margin={analysisChartMargin}>
+                <defs>
+                  <linearGradient id="colorAguaAnalise" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#3498db" stopOpacity={0.38}/>
+                    <stop offset="95%" stopColor="#3498db" stopOpacity={0.02}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                <XAxis dataKey="data" {...getAnalysisXAxisProps(data, hydrationChartWidth)} />
+                <YAxis stroke="var(--text-main)" />
+                <RechartsTooltip
+                  labelFormatter={(label, payload) => formatTooltipDate(payload?.[0]?.payload?.fullDate ?? label)}
+                  formatter={formatTooltipEntry}
+                  contentStyle={{ backgroundColor: 'var(--bg-color-alt)', border: '1px solid var(--glass-border)', borderRadius: '12px' }}
+                />
+                <Area type="monotone" dataKey="agua" stroke="#3498db" strokeWidth={3} fillOpacity={1} fill="url(#colorAguaAnalise)" />
+              </AreaChart>
+            </ResponsiveContainer>
+          )}
+        </div>
+
+        <div ref={trainingChartRef} className="glass-panel" style={{ height: '500px', minWidth: 0 }}>
+          <div className="chart-panel-header">
+            <div>
+              <h4 style={{ color: 'var(--text-main)' }}>Treinos por Período</h4>
+              <p className="chart-panel-subtitle">{analysisTrainingSubtitle}</p>
+            </div>
+          </div>
+          {data.length === 0 ? (
+            <div className="chart-empty-state">
+              <strong>Sem registros suficientes nesse recorte</strong>
+              <p>Ajuste o período ou marque treinos no diário para acompanhar consistência.</p>
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height={420} minWidth={0}>
+              <BarChart data={data} margin={analysisChartMargin}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                <XAxis dataKey="data" {...getAnalysisXAxisProps(data, trainingChartWidth)} />
+                <YAxis allowDecimals={false} stroke="var(--text-main)" />
+                <RechartsTooltip
+                  cursor={false}
+                  labelFormatter={(label, payload) => formatTooltipDate(payload?.[0]?.payload?.fullDate ?? label)}
+                  formatter={formatTooltipEntry}
+                  contentStyle={{ backgroundColor: 'var(--bg-color-alt)', border: '1px solid var(--glass-border)', borderRadius: '12px' }}
+                />
+                <Bar dataKey="treinoDias" fill="#2ecc71" radius={[10, 10, 2, 2]} />
+              </BarChart>
             </ResponsiveContainer>
           )}
         </div>

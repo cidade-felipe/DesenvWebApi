@@ -1943,9 +1943,13 @@ Graficos:
 
 - Radar de habilidades no panorama, usando somente `panoramaRegistros`
 - Tendencia de curto prazo em faixas separadas, usando somente `panoramaRegistros`
-- Area de peso por periodo
 - Faixas separadas de humor/energia/produtividade/bem-estar
+- Area de peso por periodo
+- Area de hidratacao por periodo
+- Barras de treinos por periodo
 - Area de sono por periodo
+
+Na aba de analise, o grafico de humor/energia/produtividade/bem-estar deve ser o primeiro painel, porque e o resumo mais amplo do estado recente do usuario.
 
 Regra visual importante:
 

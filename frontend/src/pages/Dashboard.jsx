@@ -608,7 +608,9 @@ export default function Dashboard() {
           humor: 0,
           energia: 0,
           sono: 0,
-          produtividade: 0
+          produtividade: 0,
+          agua: 0,
+          treinoDias: 0
         };
 
         currentBucket.count += 1;
@@ -616,6 +618,8 @@ export default function Dashboard() {
         currentBucket.energia += Number(item.energia || 0);
         currentBucket.sono += Number(item.sono || 0);
         currentBucket.produtividade += Number(item.produtividade || 0);
+        currentBucket.agua += Number(item.agua || 0);
+        currentBucket.treinoDias += item.exercicio ? 1 : 0;
         buckets.set(meta.key, currentBucket);
       });
 
@@ -628,6 +632,8 @@ export default function Dashboard() {
         energia: Number((bucket.energia / bucket.count).toFixed(1)),
         sono: Number((bucket.sono / bucket.count).toFixed(1)),
         produtividade: Number((bucket.produtividade / bucket.count).toFixed(1)),
+        agua: Number((bucket.agua / bucket.count).toFixed(1)),
+        treinoDias: bucket.treinoDias,
         bemEstar: Number((((bucket.humor + bucket.energia + bucket.produtividade) / 3) / bucket.count).toFixed(1)),
         totalRegistros: bucket.count
       }));
@@ -1124,21 +1130,29 @@ export default function Dashboard() {
     daily: {
       wellbeingSubtitle: 'Leitura diária de humor, energia, produtividade e bem-estar combinado.',
       sleepSubtitle: 'Horas de sono lançadas em cada dia do período filtrado.',
+      hydrationSubtitle: 'Litros de água lançados em cada dia do período filtrado.',
+      trainingSubtitle: 'Dias com treino marcado no período filtrado.',
       weightSubtitle: 'Último peso conhecido em cada dia do intervalo.'
     },
     weekly: {
       wellbeingSubtitle: 'Médias semanais para reduzir ruído e destacar o bem-estar combinado.',
       sleepSubtitle: 'Média semanal de sono para acompanhar recuperação com menos ruído.',
+      hydrationSubtitle: 'Média semanal de hidratação para enxergar consistência sem ruído diário.',
+      trainingSubtitle: 'Total semanal de dias com treino marcado.',
       weightSubtitle: 'Último peso conhecido em cada semana do intervalo.'
     },
     biweekly: {
       wellbeingSubtitle: 'Médias quinzenais para leitura mais estável do bem-estar ao longo do mês.',
       sleepSubtitle: 'Média quinzenal de sono para comparação mais estável dentro do mês.',
+      hydrationSubtitle: 'Média quinzenal de hidratação para acompanhar padrão de consumo.',
+      trainingSubtitle: 'Total quinzenal de dias com treino marcado.',
       weightSubtitle: 'Último peso conhecido em cada quinzena do intervalo.'
     },
     monthly: {
       wellbeingSubtitle: 'Médias mensais para acompanhar o bem-estar em horizonte mais longo.',
       sleepSubtitle: 'Média mensal de sono para leitura de recuperação no longo prazo.',
+      hydrationSubtitle: 'Média mensal de hidratação para leitura de longo prazo.',
+      trainingSubtitle: 'Total mensal de dias com treino marcado.',
       weightSubtitle: 'Último peso conhecido em cada mês do intervalo.'
     }
   };
@@ -1552,6 +1566,8 @@ export default function Dashboard() {
                   weightDataForChart={analysisWeightData}
                   analysisHabitsSubtitle={analysisGroupingCopy[effectiveAnalysisGrouping].wellbeingSubtitle}
                   analysisSleepSubtitle={analysisGroupingCopy[effectiveAnalysisGrouping].sleepSubtitle}
+                  analysisHydrationSubtitle={analysisGroupingCopy[effectiveAnalysisGrouping].hydrationSubtitle}
+                  analysisTrainingSubtitle={analysisGroupingCopy[effectiveAnalysisGrouping].trainingSubtitle}
                   analysisWeightSubtitle={analysisGroupingCopy[effectiveAnalysisGrouping].weightSubtitle}
                 />
               </div>
