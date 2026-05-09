@@ -515,9 +515,8 @@ Por isso, a regra implementada é:
 
 - para metas novas de peso, usa a direção salva no cadastro: `reduzir`, `ganhar` ou `manter`
 - para metas novas de peso, salva o peso conhecido no momento da criação como `ValorInicial` para contexto histórico
-- a barra de progresso mostra a proximidade entre o peso atual e o alvo, não apenas a jornada desde a criação da meta
-- o marcador percentual da barra de peso é exibido acima da barra para não sobrepor os textos inferiores
-- a cor da barra muda por faixa de proximidade, indo de tons de alerta para ciano e verde quando o alvo está muito próximo ou concluído
+- a barra de progresso de redução ou ganho mede a jornada entre `ValorInicial` e `ValorAlvo`
+- a cor da barra muda conforme o percentual da jornada concluída, indo de tons de alerta para ciano e verde quando o alvo está praticamente batido ou concluído
 - calcula um peso de referência próximo ao início da meta
 - para metas antigas sem direção salva, analisa o histórico anterior ao peso atual para inferir se a meta é de redução ou de ganho
 - se o usuário começou acima do alvo, considera concluído quando o peso atual chega ao alvo ou fica abaixo dele
@@ -534,11 +533,12 @@ Essa abordagem é melhor porque funciona para:
 No dashboard:
 
 - o card mostra `Peso atual`
-- o percentual mede quão próximo o peso atual está do alvo
+- o percentual mede quanto da jornada entre peso inicial e peso alvo já foi concluído
 - a situação visual vira `concluido` quando o usuário cruza o alvo na direção esperada
 - o rodapé visual segue o mesmo padrão das demais metas: percentual, estado (`CONCLUÍDO!` ou `EM ANDAMENTO`) e `Atualizado agora`
 - a cor visual ajuda o usuário a entender rapidamente se a meta está distante, em aproximação ou praticamente batida
 - metas de peso, água, sono, treino, humor, energia e produtividade compartilham o mesmo desenho de card para reduzir ruído visual
+- o card de peso mostra uma explicação curta da conta, por exemplo `Progresso desde 100.0 kg: 5.0 de 20.0 kg perdidos.`
 
 ## 9. Gráficos e dashboard
 

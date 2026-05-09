@@ -1233,6 +1233,7 @@ export default function Dashboard() {
       if (currentWeight <= 0 || targetWeight <= 0) return 0;
       return (Math.min(currentWeight, targetWeight) / Math.max(currentWeight, targetWeight)) * 100;
     };
+    const formatWeightValue = (value) => Number(value).toFixed(1);
 
     if (cat === 'peso') {
       const medidasOrdenadas = [...biometria]
@@ -1260,7 +1261,10 @@ export default function Dashboard() {
       const baseline = medidasAteInicio[medidasAteInicio.length - 1] || medidasDesdeInicio[0] || medidasOrdenadas[0];
       const atual = medidasOrdenadas[medidasOrdenadas.length - 1];
 
-      const pesoInicial = Number(baseline.peso);
+      const valorInicialPersistido = Number(meta.valorInicial ?? meta.ValorInicial);
+      const pesoInicial = Number.isFinite(valorInicialPersistido) && valorInicialPersistido > 0
+        ? valorInicialPersistido
+        : Number(baseline.peso);
       const pesoAtual = Number(atual.peso);
       const pesoMeta = Number(meta.valorAlvo);
       const tolerancia = 0.5;
@@ -1269,7 +1273,8 @@ export default function Dashboard() {
       let status = 'atrasado';
       let detailText = '';
       let secondaryText = '';
-      let targetLabel = `${pesoMeta.toFixed(1)} kg`;
+      let contextText = '';
+      let targetLabel = `${formatWeightValue(pesoMeta)} kg`;
 
       const medidasReferenciaFallback = medidasDesdeInicio.length > 1
         ? medidasDesdeInicio.slice(0, -1)
@@ -1300,34 +1305,50 @@ export default function Dashboard() {
 
       if (direcaoMeta === 'reduzir') {
         const distanciaAtual = Math.max(0, pesoAtual - pesoMeta);
+        const jornadaTotal = Math.max(0, pesoInicial - pesoMeta);
+        const pesoPerdido = Math.max(0, pesoInicial - pesoAtual);
+        const pesoPerdidoVisual = Math.min(pesoPerdido, jornadaTotal);
         const metaBatida = pesoAtual <= pesoMeta;
-        const percentualAtual = clampPercent(metaBatida ? 100 : getWeightTargetProximity(pesoAtual, pesoMeta));
+        const percentualAtual = jornadaTotal > 0
+          ? clampPercent(metaBatida ? 100 : (pesoPerdido / jornadaTotal) * 100)
+          : clampPercent(metaBatida ? 100 : 0);
 
         progresso = percentualAtual;
         status = metaBatida ? 'concluido' : distanciaAtual <= 2 ? 'em_dia' : 'atrasado';
         detailText = metaBatida
           ? pesoAtual < pesoMeta
-            ? `Meta concluída, ${(pesoMeta - pesoAtual).toFixed(1)} kg abaixo do alvo`
+            ? `Meta concluída, ${formatWeightValue(pesoMeta - pesoAtual)} kg abaixo do alvo`
             : 'Meta concluída, exatamente no alvo'
-          : `${distanciaAtual.toFixed(1)} kg acima da meta`;
+          : `${formatWeightValue(distanciaAtual)} kg acima da meta`;
         secondaryText = metaBatida
-          ? `Objetivo era reduzir até ${pesoMeta.toFixed(1)} kg`
-          : `${percentualAtual}% de proximidade do alvo`;
+          ? `Objetivo era reduzir até ${formatWeightValue(pesoMeta)} kg`
+          : `${percentualAtual}% da jornada de perda`;
+        contextText = jornadaTotal > 0
+          ? `Progresso desde ${formatWeightValue(pesoInicial)} kg: ${formatWeightValue(pesoPerdidoVisual)} de ${formatWeightValue(jornadaTotal)} kg perdidos.`
+          : `Progresso calculado pelo alvo porque o peso inicial já estava em ${formatWeightValue(pesoInicial)} kg.`;
       } else if (direcaoMeta === 'ganhar') {
         const distanciaAtual = Math.max(0, pesoMeta - pesoAtual);
+        const jornadaTotal = Math.max(0, pesoMeta - pesoInicial);
+        const pesoGanho = Math.max(0, pesoAtual - pesoInicial);
+        const pesoGanhoVisual = Math.min(pesoGanho, jornadaTotal);
         const metaBatida = pesoAtual >= pesoMeta;
-        const percentualAtual = clampPercent(metaBatida ? 100 : getWeightTargetProximity(pesoAtual, pesoMeta));
+        const percentualAtual = jornadaTotal > 0
+          ? clampPercent(metaBatida ? 100 : (pesoGanho / jornadaTotal) * 100)
+          : clampPercent(metaBatida ? 100 : 0);
 
         progresso = percentualAtual;
         status = metaBatida ? 'concluido' : distanciaAtual <= 2 ? 'em_dia' : 'atrasado';
         detailText = metaBatida
           ? pesoAtual > pesoMeta
-            ? `Meta concluída, ${(pesoAtual - pesoMeta).toFixed(1)} kg acima do alvo`
+            ? `Meta concluída, ${formatWeightValue(pesoAtual - pesoMeta)} kg acima do alvo`
             : 'Meta concluída, exatamente no alvo'
-          : `${distanciaAtual.toFixed(1)} kg abaixo da meta`;
+          : `${formatWeightValue(distanciaAtual)} kg abaixo da meta`;
         secondaryText = metaBatida
-          ? `Objetivo era ganhar peso até ${pesoMeta.toFixed(1)} kg`
-          : `${percentualAtual}% de proximidade do alvo`;
+          ? `Objetivo era ganhar peso até ${formatWeightValue(pesoMeta)} kg`
+          : `${percentualAtual}% da jornada de ganho`;
+        contextText = jornadaTotal > 0
+          ? `Progresso desde ${formatWeightValue(pesoInicial)} kg: ${formatWeightValue(pesoGanhoVisual)} de ${formatWeightValue(jornadaTotal)} kg ganhos.`
+          : `Progresso calculado pelo alvo porque o peso inicial já estava em ${formatWeightValue(pesoInicial)} kg.`;
       } else {
         const distanciaAtual = Math.abs(pesoAtual - pesoMeta);
         const estaNaFaixaAlvo = distanciaAtual <= tolerancia;
@@ -1337,10 +1358,11 @@ export default function Dashboard() {
         status = estaNaFaixaAlvo ? 'concluido' : distanciaAtual <= 2 ? 'em_dia' : 'atrasado';
         detailText = estaNaFaixaAlvo
           ? 'Meta mantida, dentro da faixa alvo'
-          : `${distanciaAtual.toFixed(1)} kg ${direcaoDoDesvio} da meta`;
+          : `${formatWeightValue(distanciaAtual)} kg ${direcaoDoDesvio} da meta`;
         secondaryText = estaNaFaixaAlvo
-          ? `Objetivo é manter o peso perto de ${pesoMeta.toFixed(1)} kg`
-          : `Objetivo é voltar para perto de ${pesoMeta.toFixed(1)} kg`;
+          ? `Objetivo é manter o peso perto de ${formatWeightValue(pesoMeta)} kg`
+          : `Objetivo é voltar para perto de ${formatWeightValue(pesoMeta)} kg`;
+        contextText = `Manutenção: conta como concluída entre ${formatWeightValue(pesoMeta - tolerancia)} kg e ${formatWeightValue(pesoMeta + tolerancia)} kg.`;
       }
 
       return {
@@ -1352,7 +1374,8 @@ export default function Dashboard() {
         currentLabel: 'Peso atual',
         targetLabel,
         detailText,
-        secondaryText
+        secondaryText,
+        contextText
       };
     }
 
@@ -1827,6 +1850,9 @@ export default function Dashboard() {
                                 Atualizado agora
                               </span>
                             </div>
+                            {prog.contextText ? (
+                              <p className="goal-progress-note">{prog.contextText}</p>
+                            ) : null}
                           </div>
                         </div>
                       );
