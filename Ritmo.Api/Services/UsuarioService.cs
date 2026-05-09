@@ -11,11 +11,16 @@ public class UsuarioService
 {
     private readonly AppDbContext _context;
     private readonly JwtTokenService _jwtTokenService;
+    private readonly InsightNotificationService _insightNotificationService;
 
-    public UsuarioService(AppDbContext context, JwtTokenService jwtTokenService)
+    public UsuarioService(
+        AppDbContext context,
+        JwtTokenService jwtTokenService,
+        InsightNotificationService insightNotificationService)
     {
         _context = context;
         _jwtTokenService = jwtTokenService;
+        _insightNotificationService = insightNotificationService;
     }
 
     public async Task<IEnumerable<UsuarioResponse>> ListarTodos()
@@ -118,6 +123,7 @@ public class UsuarioService
         usuarioExistente.Sexo = request.Sexo.Trim().ToUpperInvariant();
 
         await _context.SaveChangesAsync();
+        await _insightNotificationService.GerarAvisoPerfilAtualizadoAsync(id);
 
         return CriarAuthResponse(usuarioExistente);
     }
@@ -167,6 +173,7 @@ public class UsuarioService
 
         usuarioExistente.Senha = PasswordHasher.Hash(request.NovaSenha);
         await _context.SaveChangesAsync();
+        await _insightNotificationService.GerarAvisoSenhaAtualizadaAsync(id);
 
         return true;
     }

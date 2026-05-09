@@ -1858,6 +1858,7 @@ export default function Dashboard() {
               <SettingsPanel
                 user={user}
                 onUserUpdated={setUser}
+                onInsightsRefresh={refreshInsights}
                 onStatusChange={(nextNotice) => setNotice({ ...nextNotice, id: Date.now() })}
               />
             )}

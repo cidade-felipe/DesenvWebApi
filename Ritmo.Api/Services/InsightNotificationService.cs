@@ -14,6 +14,36 @@ public class InsightNotificationService
         _context = context;
     }
 
+    public async Task GerarAvisoPerfilAtualizadoAsync(int usuarioId)
+    {
+        if (!await UsuarioRecebeNotificacoes(usuarioId))
+        {
+            return;
+        }
+
+        await AdicionarInsightDoDiaSeAindaNaoExiste(
+            usuarioId,
+            "Conta",
+            "info",
+            "Seu perfil foi atualizado com sucesso. Confira se nome, email e dados demográficos estão corretos.");
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task GerarAvisoSenhaAtualizadaAsync(int usuarioId)
+    {
+        if (!await UsuarioRecebeNotificacoes(usuarioId))
+        {
+            return;
+        }
+
+        await AdicionarInsightDoDiaSeAindaNaoExiste(
+            usuarioId,
+            "Segurança",
+            "atencao",
+            "Sua senha foi alterada. Se não foi você, troque a senha novamente e revise sua conta.");
+        await _context.SaveChangesAsync();
+    }
+
     public async Task GerarAvisosDeProgressoAsync(int usuarioId)
     {
         if (!await UsuarioRecebeNotificacoes(usuarioId))
