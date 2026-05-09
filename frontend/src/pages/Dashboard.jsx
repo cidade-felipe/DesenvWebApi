@@ -1225,11 +1225,7 @@ export default function Dashboard() {
   };
 
   const getMetaProgress = (meta) => {
-    const hoje = new Date();
-    const seteDiasAtras = new Date();
-    seteDiasAtras.setDate(hoje.getDate() - 7);
-
-    const registrosRecentes = registros.filter(r => new Date(r.data) >= seteDiasAtras);
+    const registrosRecentes = panoramaRegistros;
     let total = 0;
     const cat = meta.categoria.toLowerCase();
     const clampPercent = (value) => Math.max(0, Math.min(Math.round(value), 100));
@@ -1788,8 +1784,8 @@ export default function Dashboard() {
                     {metas.map(meta => {
                       const prog = getMetaProgress(meta);
                       const isTreino = meta.categoria.toLowerCase() === 'treino';
-                      const isPeso = meta.categoria.toLowerCase() === 'peso';
                       const color = getProgressColor(prog.percent, prog.status);
+                      const targetText = prog.targetLabel || `${meta.valorAlvo}${isTreino ? ` ${prog.unit}` : ''}`;
                       
                       return (
                         <div key={meta.id} className="glass-panel goal-card">
@@ -1810,9 +1806,9 @@ export default function Dashboard() {
                           <div className="goal-progress-wrapper">
                             <div className="progress-info">
                               <span>{prog.currentLabel}: <strong>{prog.current}{prog.unit ? ` ${prog.unit}` : ''}</strong></span>
-                              <span>Meta: {isPeso ? prog.targetLabel : `${meta.valorAlvo}${isTreino ? ` ${prog.unit}` : ''}`}</span>
+                              <span>Meta: {targetText}</span>
                             </div>
-                            <div className={`progress-track${isPeso ? ' weight-progress-track' : ''}`}>
+                            <div className="progress-track">
                               <div 
                                 className="progress-fill" 
                                 style={{
@@ -1822,27 +1818,13 @@ export default function Dashboard() {
                                   '--progress-color': color
                                 }}
                               ></div>
-                              {isPeso ? (
-                                <span
-                                  className="weight-progress-marker"
-                                  style={{
-                                    left: `clamp(22px, ${prog.visualPercent ?? prog.percent}%, calc(100% - 22px))`,
-                                    color,
-                                    '--progress-color': color
-                                  }}
-                                >
-                                  {prog.percent}%
-                                </span>
-                              ) : null}
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '10px' }}>
                               <span style={{ fontSize: '0.75rem', fontWeight: 700, color: color }}>
-                                {isPeso
-                                  ? prog.detailText
-                                  : `${prog.percent}% ${prog.percent >= 100 ? 'CONCLUÍDO!' : 'EM ANDAMENTO'}`}
+                                {prog.percent}% {prog.percent >= 100 ? 'CONCLUÍDO!' : 'EM ANDAMENTO'}
                               </span>
                               <span style={{ fontSize: '0.75rem', opacity: 0.5 }}>
-                                {isPeso ? prog.secondaryText : 'Atualizado agora'}
+                                Atualizado agora
                               </span>
                             </div>
                           </div>

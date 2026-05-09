@@ -536,8 +536,9 @@ No dashboard:
 - o card mostra `Peso atual`
 - o percentual mede quão próximo o peso atual está do alvo
 - a situação visual vira `concluido` quando o usuário cruza o alvo na direção esperada
-- o texto secundário explica se o objetivo era reduzir, ganhar peso ou manter perto do alvo
+- o rodapé visual segue o mesmo padrão das demais metas: percentual, estado (`CONCLUÍDO!` ou `EM ANDAMENTO`) e `Atualizado agora`
 - a cor visual ajuda o usuário a entender rapidamente se a meta está distante, em aproximação ou praticamente batida
+- metas de peso, água, sono, treino, humor, energia e produtividade compartilham o mesmo desenho de card para reduzir ruído visual
 
 ## 9. Gráficos e dashboard
 
@@ -601,6 +602,8 @@ A geração automática inicial acontece quando o usuário salva registro diári
 - peso dentro da faixa saudável pelo IMC
 - perfil atualizado com sucesso
 - senha atualizada com alerta de segurança
+
+Para metas de hábito e treino, `DataInicio` define se a meta já está ativa, mas a conclusão é avaliada pela janela móvel dos últimos 7 dias. Isso mantém o sino coerente com o card de metas, que também mostra `Sua média (7d)`.
 
 O sistema respeita `ReceberNotificacoes`. Se a preferência estiver desativada, novos insights automáticos não são gerados.
 

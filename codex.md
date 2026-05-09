@@ -129,7 +129,7 @@ Para peso:
 
 - metas novas usam `meta.direcao`
 - metas novas podem ter `meta.valorInicial`, mas a barra usa proximidade entre peso atual e alvo
-- a UI de metas de peso usa `weight-progress-marker` acima da barra para evitar que a porcentagem caia sobre os textos inferiores
+- a UI de metas de peso segue o mesmo desenho visual das demais metas, sem marcador flutuante exclusivo
 - a cor da barra vem de `getProgressColor`, variando conforme o percentual de proximidade
 - se existe historico anterior acima do alvo e o peso atual chegou no alvo ou abaixo dele, a meta fica `concluido`
 - se existe historico anterior abaixo do alvo e o peso atual chegou no alvo ou acima dele, a meta fica `concluido`
@@ -1593,6 +1593,7 @@ Meta de peso:
 - Se havia peso anterior acima do alvo e o peso atual chegou no alvo ou abaixo, status vira `concluido`.
 - Se havia peso anterior abaixo do alvo e o peso atual chegou no alvo ou acima, status vira `concluido`.
 - O label visual da meta fica simples, por exemplo `75.0 kg`, sem `ou mais` ou `ou menos`.
+- O rodape do card segue o mesmo padrao das demais metas: percentual, `CONCLUIDO!` ou `EM ANDAMENTO`, e `Atualizado agora`.
 - Para metas antigas sem `Direcao`, o dashboard infere a direcao pelo historico.
 
 Opiniao tecnica:
@@ -1627,6 +1628,7 @@ Fato:
 - O motor atual cobre metas atingidas, metas de peso atingidas, peso dentro da faixa saudavel por IMC, atualizacao de perfil e troca de senha.
 - A geracao respeita `ReceberNotificacoes`.
 - A mesma mensagem nao e duplicada para o mesmo usuario dentro do mesmo dia.
+- Para metas de habito e treino, `DataInicio` define se a meta esta ativa, mas o calculo de conclusao usa os ultimos 7 dias, igual ao card de metas do frontend.
 
 Inferencia:
 

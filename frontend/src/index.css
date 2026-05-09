@@ -1957,64 +1957,6 @@ h1, h2, h3, h4 {
   box-shadow: 0 0 15px currentColor;
 }
 
-.weight-progress-track {
-  position: relative;
-  overflow: visible;
-  margin-top: 1.8rem;
-}
-
-.weight-progress-track::before {
-  content: '';
-  position: absolute;
-  inset: 2px;
-  border-radius: inherit;
-  background: linear-gradient(90deg, rgba(0, 245, 255, 0.18), rgba(255, 255, 255, 0.03));
-  pointer-events: none;
-}
-
-.weight-progress-marker {
-  position: absolute;
-  top: -2.05rem;
-  min-width: 42px;
-  padding: 0.32rem 0.45rem;
-  border: 1px solid color-mix(in srgb, currentColor 72%, transparent);
-  border-radius: 999px;
-  background: color-mix(in srgb, currentColor 22%, rgba(10, 15, 24, 0.94));
-  font-size: 0.68rem;
-  font-weight: 800;
-  line-height: 1;
-  text-align: center;
-  transform: translateX(-50%);
-  box-shadow: 0 0 16px color-mix(in srgb, currentColor 45%, transparent);
-  text-shadow: 0 0 12px currentColor;
-  transition: left 0.8s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.weight-progress-marker::before {
-  content: '';
-  position: absolute;
-  top: calc(100% + 0.35rem);
-  left: 50%;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: currentColor;
-  box-shadow: 0 0 16px currentColor;
-  transform: translate(-50%, -50%);
-}
-
-.weight-progress-marker::after {
-  content: '';
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  width: 1px;
-  height: 0.48rem;
-  background: currentColor;
-  opacity: 0.72;
-  transform: translateX(-50%);
-}
-
 .goal-badges {
   display: flex;
   gap: 0.5rem;

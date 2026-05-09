@@ -78,10 +78,7 @@ public class InsightNotificationService
 
         foreach (var meta in metasAtivas.Where(meta => meta.Categoria != "Peso"))
         {
-            var registrosDaMeta = registrosRecentes
-                .Where(registro => registro.Data >= meta.DataInicio)
-                .ToList();
-            var valorAtual = CalcularValorAtualDaMeta(meta, registrosDaMeta);
+            var valorAtual = CalcularValorAtualDaMeta(meta, registrosRecentes);
 
             if (!valorAtual.HasValue || valorAtual.Value < meta.ValorAlvo)
             {
