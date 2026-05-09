@@ -1071,6 +1071,9 @@ export default function Dashboard() {
     color: biometria.length > 0 && imcAtual ? biometria[0].imcCor : 'gray'
   };
   const avgHumor = panoramaRegistros.length > 0 ? (panoramaRegistros.reduce((acc, r) => acc + r.humor, 0) / panoramaRegistros.length).toFixed(1) : '0';
+  const avgBemEstar = panoramaRegistros.length > 0
+    ? (panoramaRegistros.reduce((acc, r) => acc + ((Number(r.humor || 0) + Number(r.energia || 0) + Number(r.produtividade || 0)) / 3), 0) / panoramaRegistros.length).toFixed(1)
+    : '0';
   const avgAgua = panoramaRegistros.length > 0 ? (panoramaRegistros.reduce((acc, r) => acc + r.agua, 0) / panoramaRegistros.length).toFixed(1) : '0';
   const avgSono = panoramaRegistros.length > 0 ? (panoramaRegistros.reduce((acc, r) => acc + r.sono, 0) / panoramaRegistros.length).toFixed(1) : '0';
 
@@ -1450,7 +1453,7 @@ export default function Dashboard() {
                     <p className="chart-panel-subtitle">{panoramaScopeDescription}</p>
                   </div>
                 </div>
-                <StatsCards imc={imcAtual} imcMeta={imcMeta} pesoAtual={biometria[0]?.peso} pesoAnterior={biometria[1]?.peso} pesoIdeal={pesoIdeal} avgHumor={avgHumor} avgSono={avgSono} avgAgua={avgAgua} metricWindowLabel={panoramaWindowLabel} />
+                <StatsCards imc={imcAtual} imcMeta={imcMeta} pesoAtual={biometria[0]?.peso} pesoAnterior={biometria[1]?.peso} pesoIdeal={pesoIdeal} avgBemEstar={avgBemEstar} avgSono={avgSono} avgAgua={avgAgua} metricWindowLabel={panoramaWindowLabel} />
                 <ChartsContainer type="panorama" data={panoramaRegistros} radarData={radarData} panoramaWindowLabel={panoramaWindowLabel} />
               </div>
             )}

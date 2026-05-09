@@ -544,7 +544,9 @@ No dashboard:
 
 O panorama mostra cards e gráficos de visão geral.
 
-As médias de humor, sono, hidratação e o polígono de habilidades usam apenas os últimos 7 dias. Essa decisão evita que registros muito antigos distorçam a leitura atual do usuário. A tendência de curto prazo também usa o mesmo recorte, mantendo os dois gráficos da aba coerentes com os cards.
+As médias de bem-estar, sono, hidratação e o polígono de habilidades usam apenas os últimos 7 dias. Essa decisão evita que registros muito antigos distorçam a leitura atual do usuário. A tendência de curto prazo também usa o mesmo recorte, mantendo os dois gráficos da aba coerentes com os cards.
+
+O card de bem-estar do panorama usa a média composta de humor, energia e produtividade. Humor continua aparecendo como métrica própria no radar e nos gráficos temporais, mas o card principal fica mais representativo do estado geral do usuário.
 
 Quando mais de um indicador temporal é exibido junto, a interface usa faixas separadas por métrica. Isso evita que humor, energia e produtividade fiquem sobrepostos quando possuem valores iguais ou muito próximos.
 

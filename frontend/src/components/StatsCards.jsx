@@ -1,6 +1,6 @@
 import { Scale, TrendingUp, Activity, Brain, Moon, Droplets } from 'lucide-react';
 
-export function StatsCards({ imc, imcMeta, pesoAtual, pesoAnterior, pesoIdeal, avgHumor, avgSono, avgAgua, metricWindowLabel = '' }) {
+export function StatsCards({ imc, imcMeta, pesoAtual, pesoAnterior, pesoIdeal, avgBemEstar, avgSono, avgAgua, metricWindowLabel = '' }) {
   const metricWindowStyle = {
     display: 'block',
     marginTop: '0.25rem',
@@ -63,16 +63,16 @@ export function StatsCards({ imc, imcMeta, pesoAtual, pesoAnterior, pesoIdeal, a
         </div>
       </div>
 
-      {/* Média de Humor */}
+      {/* Bem-estar */}
       <div className="glass-panel">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
-            <h3 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--text-main)' }}>Média de Humor</h3>
+            <h3 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--text-main)' }}>Bem-estar</h3>
             {metricWindowLabel && <span style={metricWindowStyle}>{metricWindowLabel}</span>}
           </div>
           <Brain size={24} color="var(--accent-purple)" />
         </div>
-        <div className="stat-value" style={{ marginTop: '1rem' }}>{avgHumor} <span style={{fontSize: '1rem'}}>/ 5</span></div>
+        <div className="stat-value" style={{ marginTop: '1rem' }}>{avgBemEstar} <span style={{fontSize: '1rem'}}>/ 5</span></div>
       </div>
 
       {/* Média de Sono */}

@@ -1807,7 +1807,8 @@ Abas:
 Panorama:
 
 - Usa `panoramaRegistros`, uma janela movel de 7 dias encerrada no dia atual.
-- Cards de humor, sono e hidratacao usam essa janela recente, nao o historico completo.
+- Cards de bem-estar, sono e hidratacao usam essa janela recente, nao o historico completo.
+- Card de bem-estar usa media composta de humor, energia e produtividade.
 - Radar de habilidades usa a mesma base de 7 dias.
 - Tendencia de curto prazo recebe a mesma base, ordenada por data crescente.
 - Tendencia de curto prazo nao usa mais tres linhas no mesmo eixo; usa faixas separadas por indicador para impedir sobreposicao quando os valores sao iguais.
