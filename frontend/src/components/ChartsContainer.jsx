@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { Info } from 'lucide-react';
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, AreaChart, Area,
   Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, BarChart, Bar
@@ -111,6 +112,8 @@ const wellbeingSeries = [
   { key: 'produtividade', label: 'Produtividade', color: '#2ecc71', suffix: '/5' },
   { key: 'bemEstar', label: 'Bem-estar', color: '#f1c40f', suffix: '/5' }
 ];
+
+const wellbeingCalculationHelp = 'Bem-estar = média de humor, energia e produtividade no período. Fórmula: (humor + energia + produtividade) / 3.';
 
 const panoramaSeries = wellbeingSeries.filter((serie) => serie.key !== 'bemEstar');
 
@@ -348,7 +351,13 @@ export function ChartsContainer({
         <div ref={wellbeingChartRef} className="glass-panel" style={{ height: '500px', minWidth: 0 }}>
           <div className="chart-panel-header">
             <div>
-              <h4 style={{ color: 'var(--text-main)' }}>Humor, Energia, Produtividade e Bem-estar</h4>
+              <div className="chart-title-row">
+                <h4 style={{ color: 'var(--text-main)' }}>Humor, Energia, Produtividade e Bem-estar</h4>
+                <button type="button" className="info-tooltip" aria-label={wellbeingCalculationHelp}>
+                  <Info size={16} aria-hidden="true" />
+                  <span className="info-tooltip-content" role="tooltip">{wellbeingCalculationHelp}</span>
+                </button>
+              </div>
               <p className="chart-panel-subtitle">{analysisHabitsSubtitle}</p>
             </div>
           </div>

@@ -552,6 +552,8 @@ O card de bem-estar do panorama usa a média composta de humor, energia e produt
 
 Esse card também usa acento visual amarelo (`#f1c40f`) na borda lateral, no ícone e no valor principal. A decisão mantém a mesma cor usada para a série de bem-estar na aba de análise, reduzindo ruído visual e ajudando o usuário a reconhecer rapidamente que se trata da mesma métrica em contextos diferentes.
 
+Para reduzir ambiguidade, o card mostra um texto curto explicando o cálculo: o sistema combina humor, energia e produtividade, calcula a média dos três por dia e depois tira a média do período. Na aba de análise, o gráfico correspondente mantém a tela mais limpa e usa apenas um tooltip no cabeçalho para explicar a mesma fórmula.
+
 Quando mais de um indicador temporal é exibido junto, a interface usa faixas separadas por métrica. Isso evita que humor, energia e produtividade fiquem sobrepostos quando possuem valores iguais ou muito próximos.
 
 No estado atual, essa aba também passou a ter cabeçalho próprio, mantendo consistência visual com as abas de metas e relatórios.

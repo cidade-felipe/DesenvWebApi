@@ -74,6 +74,9 @@ export function StatsCards({ imc, imcMeta, pesoAtual, pesoAnterior, pesoIdeal, a
           <Brain size={24} color={wellbeingAccentColor} />
         </div>
         <div className="stat-value" style={{ marginTop: '1rem', color: wellbeingAccentColor }}>{avgBemEstar} <span style={{fontSize: '1rem'}}>/ 5</span></div>
+        <p className="stat-explainer">
+          Combina humor, energia e produtividade: tira a média dos três por dia e depois a média do período.
+        </p>
       </div>
 
       {/* Média de Sono */}

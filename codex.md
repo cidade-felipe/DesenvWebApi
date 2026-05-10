@@ -107,10 +107,12 @@ Se a mudanca for puramente interna e nao justificar documentacao publica, regist
 
 ### Fato
 
-Foram adicionadas duas pequenas atualizacoes de manutencao:
+Foram adicionadas pequenas atualizacoes de manutencao:
 
 - O card de bem-estar em `frontend/src/components/StatsCards.jsx` agora usa acento amarelo (`#f1c40f`) na borda lateral, no icone e no valor principal.
 - Essa cor foi escolhida porque ja era usada para a serie `bemEstar` em `frontend/src/components/ChartsContainer.jsx`, mantendo consistencia visual entre o panorama e a aba de analise.
+- O card de bem-estar tambem mostra um texto curto explicando que o calculo combina humor, energia e produtividade, tira a media dos tres por dia e depois a media do periodo.
+- O grafico de humor, energia, produtividade e bem-estar na aba de analise recebeu apenas um tooltip no cabecalho para explicar a formula sem poluir o painel.
 - Foi adicionada esta regra operacional: sempre atualizar as documentacoes relevantes a cada mudanca no projeto, antes do ciclo completo de atualizacao do repositorio.
 
 ### Validacoes executadas nessa atualizacao
