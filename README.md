@@ -118,7 +118,7 @@ O progresso das metas funciona assim:
 
 - cabeçalho com saudação contextual usando o primeiro nome do usuário
 - navegação de abas no desktop com transição da barra superior para rail lateral alinhada ao conteúdo
-- cards de resumo com leitura agregada de bem-estar, treino, recuperação e corpo
+- cards de resumo com leitura agregada de bem-estar, treino, recuperação e corpo, com acento visual amarelo no bem-estar para manter consistência com a aba de análise
 - gráficos de panorama com médias e tendências restritas aos últimos 7 dias
 - aba de análise com períodos rápidos, modo `Personalizado` e agrupamento diário, semanal, quinzenal e mensal
 - datas `De` e `Até` aparecem apenas quando o usuário escolhe `Personalizado`

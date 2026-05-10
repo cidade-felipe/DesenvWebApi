@@ -550,6 +550,8 @@ As médias de bem-estar, sono, hidratação e o polígono de habilidades usam ap
 
 O card de bem-estar do panorama usa a média composta de humor, energia e produtividade. Humor continua aparecendo como métrica própria no radar e nos gráficos temporais, mas o card principal fica mais representativo do estado geral do usuário.
 
+Esse card também usa acento visual amarelo (`#f1c40f`) na borda lateral, no ícone e no valor principal. A decisão mantém a mesma cor usada para a série de bem-estar na aba de análise, reduzindo ruído visual e ajudando o usuário a reconhecer rapidamente que se trata da mesma métrica em contextos diferentes.
+
 Quando mais de um indicador temporal é exibido junto, a interface usa faixas separadas por métrica. Isso evita que humor, energia e produtividade fiquem sobrepostos quando possuem valores iguais ou muito próximos.
 
 No estado atual, essa aba também passou a ter cabeçalho próprio, mantendo consistência visual com as abas de metas e relatórios.
