@@ -91,6 +91,32 @@ Observacoes importantes:
 - Se houver mudancas do usuario ou arquivos inesperados, pausar e explicar antes de commitar.
 - Backups locais em `Backup/` nao devem entrar no Git.
 
+## 1.2. Regra operacional: documentacao sempre sincronizada
+
+Sempre que qualquer mudanca for feita no projeto, atualizar tambem as documentacoes relevantes antes de finalizar ou executar o ciclo completo do repositorio.
+
+Prioridade pratica:
+
+1. `README.md`, quando a mudanca altera funcionalidade, fluxo de uso, stack, setup ou comportamento visivel para o usuario.
+2. `documentation.md`, quando a mudanca altera regra tecnica, arquitetura, contrato frontend/backend, seguranca, dados, UX importante ou limitacao conhecida.
+3. `codex.md`, quando a mudanca cria regra operacional, decisao tecnica relevante, risco novo, aprendizado de manutencao ou contexto util para uma proxima IA.
+
+Se a mudanca for puramente interna e nao justificar documentacao publica, registrar explicitamente na resposta final que nenhuma documentacao precisou ser alterada e explicar o motivo.
+
+## Atualizacao rapida de 10/05/2026
+
+### Fato
+
+Foram adicionadas duas pequenas atualizacoes de manutencao:
+
+- O card de bem-estar em `frontend/src/components/StatsCards.jsx` agora usa acento amarelo (`#f1c40f`) na borda lateral, no icone e no valor principal.
+- Essa cor foi escolhida porque ja era usada para a serie `bemEstar` em `frontend/src/components/ChartsContainer.jsx`, mantendo consistencia visual entre o panorama e a aba de analise.
+- Foi adicionada esta regra operacional: sempre atualizar as documentacoes relevantes a cada mudanca no projeto, antes do ciclo completo de atualizacao do repositorio.
+
+### Validacoes executadas nessa atualizacao
+
+- `npm run lint` em `frontend`: sucesso.
+
 ## Atualizacao rapida de 08/05/2026
 
 ### Fato

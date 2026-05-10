@@ -10,6 +10,7 @@ export function StatsCards({ imc, imcMeta, pesoAtual, pesoAnterior, pesoIdeal, a
     letterSpacing: '0.02em',
     opacity: 0.72
   };
+  const wellbeingAccentColor = '#f1c40f';
 
   return (
     <div className="dashboard-grid animate-fade-up" style={{ marginBottom: '2.5rem', gridTemplateColumns: 'repeat(3, 1fr)' }}>
@@ -64,15 +65,15 @@ export function StatsCards({ imc, imcMeta, pesoAtual, pesoAnterior, pesoIdeal, a
       </div>
 
       {/* Bem-estar */}
-      <div className="glass-panel">
+      <div className="glass-panel" style={{ borderLeft: `4px solid ${wellbeingAccentColor}` }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
             <h3 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--text-main)' }}>Bem-estar</h3>
             {metricWindowLabel && <span style={metricWindowStyle}>{metricWindowLabel}</span>}
           </div>
-          <Brain size={24} color="var(--accent-purple)" />
+          <Brain size={24} color={wellbeingAccentColor} />
         </div>
-        <div className="stat-value" style={{ marginTop: '1rem' }}>{avgBemEstar} <span style={{fontSize: '1rem'}}>/ 5</span></div>
+        <div className="stat-value" style={{ marginTop: '1rem', color: wellbeingAccentColor }}>{avgBemEstar} <span style={{fontSize: '1rem'}}>/ 5</span></div>
       </div>
 
       {/* Média de Sono */}
